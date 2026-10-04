@@ -100,6 +100,21 @@ def test_adres_inwestycji_z_ulica_i_dzialka_z_ukosnikiem():
             adres["nr_domu"]) == ("1234/5", "121112_4.0001.1234/5", "Rabka-Zdrój", "ul. Polna", "7a")
 
 
+@pytest.mark.parametrize("linia,oczekiwane", [
+    ("Myślenice ul. Polna 18", ("Myślenice", "ul. Polna", "18", "")),
+    ("ul. Słoneczna 8, 34-500 Zakopane", ("Zakopane", "ul. Słoneczna", "8", "34-500")),
+    ("34-500 Zakopane, ul. Słoneczna 8", ("Zakopane", "ul. Słoneczna", "8", "34-500")),
+    ("34-500 Zakopane ul. Słoneczna 8", ("Zakopane", "ul. Słoneczna", "8", "34-500")),
+    ("Zakopane, al. 3 Maja 8a", ("Zakopane", "al. 3 Maja", "8a", "")),
+    ("Pcim 123", ("Pcim", "", "123", "")),
+    ("Myślenice", ("Myślenice", "", "", "")),
+])
+def test_formaty_adresu_inwestycji(linia, oczekiwane):
+    adres = rozbierz_adres_inwestycji(f"dz. ewid. 10/2\n{linia}")
+    assert (adres["miejscowosc"], adres["ulica"], adres["nr_domu"], adres["kod_pocztowy"]) == oczekiwane
+    assert adres["nr_dzialki"] == "10/2"
+
+
 @pytest.mark.parametrize("osoba,plec", [("Anna Nowak", "K"), ("Jacek Nowak", "M"), ("Kuba Nowak", "M")])
 def test_zgadywanie_plci(osoba, plec):
     assert zgadnij_plec(osoba) == plec

@@ -19,7 +19,8 @@ Wszystko działa na Twoim komputerze. Pliki nie są nigdzie wysyłane.
 1. Kliknij ikonę **Dokumenty FILAR**. Otworzy się okno Terminala (nie zamykaj go) i przeglądarka.
 2. Przeciągnij obiegówkę na stronę.
 3. Sprawdź dane. Żółte ramki oznaczają niespójności w obiegówce. Popraw, co trzeba.
-4. Kliknij **Generuj dokumenty**, a pobierze się plik ZIP z pełnomocnictwem i PB-5.
+4. Wybierz folder (przycisk **Wybierz…**) i kliknij **Zapisz dokumenty w folderze**. Program zapamięta folder.
+   Możesz też kliknąć **Pobierz jako ZIP**.
 5. Aby wyłączyć program, kliknij **Zakończ program** albo zamknij okno Terminala.
 
 Szczegóły techniczne: [CLAUDE.md](CLAUDE.md).

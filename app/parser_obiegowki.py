@@ -52,7 +52,8 @@ POROWNYWANE = ["nazwa_inwestycji", "adres_inwestycji", "inwestor", "kategoria_ob
 PROG_PODOBIENSTWA = 0.85
 KOD_POCZTOWY = re.compile(r"(\d{2}-\d{3})\s*,?\s*([^\d,]*)")
 PREFIKS_ULICY = re.compile(r"^(ul|al|os|pl)\.?\s+(.*)$", re.IGNORECASE)
-ULICA_Z_NUMEREM = re.compile(r"^(.*?)[\s,]+(\d+\s?[a-zA-Z]?)(?:\s*(?:/|m\.?|lok\.?)\s*(\w+))?\s*,?$")
+ULICA_W_TEKSCIE = re.compile(r"(?:^|[\s,])((?:ul|al|os|pl)\.?\s.*)$", re.IGNORECASE)
+ULICA_Z_NUMEREM =re.compile(r"^(.*?)[\s,]+(\d+\s?[a-zA-Z]?)(?:\s*(?:/|m\.?|lok\.?)\s*(\w+))?\s*,?$")
 DZIALKA = re.compile(r"dz(?:iałk[ai])?\.?\s*(?:ewid|ew)?\.?\s*(?:nr\.?)?\s*((?:\d+(?:/\d+)?)(?:\s*[,i]\s*\d+(?:/\d+)?)*)",
                      re.IGNORECASE)
 WYJATKI_MESKIE = {"kuba", "barnaba", "bonawentura", "kosma", "jarema", "boryna"}
@@ -198,24 +199,38 @@ def rozbierz_adres_inwestycji(tekst: str) -> dict:
     elif identyfikatory:
         wynik["nr_dzialki"] = ", ".join(i.rsplit(".", 1)[-1] for i in identyfikatory)
 
-    for linia in (_czysc(l).strip(",") for l in reszta.split("\n")):
+    # Obsługiwane m.in.: "Myślenice ul. Polna 18", "ul. Polna 18, 32-400 Myślenice",
+    # "32-400 Myślenice, ul. Polna 18", "Pcim 123".
+    miasto_z_kodu = ""
+    for linia in (_czysc(l).strip(" ,") for l in reszta.split("\n")):
         if not linia or _normalizuj_etykiete(linia) in {"", "OBREB"}:
             continue
         kod = KOD_POCZTOWY.search(linia)
         if kod:
             wynik["kod_pocztowy"] = kod.group(1)
-            linia = _czysc(linia[: kod.start()] + " " + kod.group(2)).strip(",")
-        # "Myślenice ul. Polna 18" → miejscowość + ulica
-        m = re.match(r"^(.*?)[\s,]+((?:ul|al|os|pl)\.?\s.*)$", linia, re.IGNORECASE)
+            po_kodzie = linia[kod.end(1):]
+            ulica_po_kodzie = ULICA_W_TEKSCIE.search(po_kodzie)
+            miasto = _czysc(po_kodzie[: ulica_po_kodzie.start(1)] if ulica_po_kodzie else po_kodzie).strip(" ,")
+            if miasto and not re.search(r"\d", miasto):
+                miasto_z_kodu = miasto
+                po_kodzie = ulica_po_kodzie.group(1) if ulica_po_kodzie else ""
+            linia = _czysc(linia[: kod.start()] + " " + po_kodzie).strip(" ,")
+            if not linia:
+                continue
+        m = ULICA_W_TEKSCIE.search(linia)
         if m:
-            wynik["miejscowosc"] = m.group(1).strip(" ,")
-            wynik.update({k: v for k, v in rozbierz_ulice(m.group(2)).items() if k in ("ulica", "nr_domu") and v})
+            przed = linia[: m.start(1)].strip(" ,")
+            if przed:
+                wynik["miejscowosc"] = przed
+            wynik.update({k: v for k, v in rozbierz_ulice(m.group(1)).items() if k in ("ulica", "nr_domu") and v})
         else:
             czesci = rozbierz_ulice(linia)
             wynik["miejscowosc"] = czesci.get("miejscowosc") or wynik["miejscowosc"] or linia
             wynik["nr_domu"] = czesci.get("nr_domu") or wynik["nr_domu"]
             if czesci.get("ulica"):
                 wynik["ulica"] = czesci["ulica"]
+    if not wynik["miejscowosc"]:
+        wynik["miejscowosc"] = miasto_z_kodu
     return wynik
 
 

@@ -1,4 +1,5 @@
-"""Lokalny serwer (tylko 127.0.0.1): wgranie obiegówki → formularz z danymi → ZIP z dokumentami.
+"""Lokalny serwer (tylko 127.0.0.1): wgranie obiegówki → formularz z danymi → dokumenty
+(zapis do wybranego folderu albo pobranie ZIP).
 
 Uruchomienie: python -m app.main [--port 5050] [--bez-przegladarki]
 """
@@ -14,9 +15,9 @@ import threading
 import traceback
 import webbrowser
 
-from flask import Flask, Response, render_template, request
+from flask import Flask, Response, jsonify, render_template, request
 
-from app import teryt
+from app import teryt, zapis
 from app.generator import generuj_dokumenty, spakuj
 from app.parser_obiegowki import NAZWY_POL, odczytaj_obiegowke
 
@@ -55,7 +56,8 @@ def podglad():
     pola_z_ostrzezeniem = {o["pole"] for o in dane["ostrzezenia"]}
     return render_template("podglad.html", dane=dane, nazwa_pliku=plik.filename,
                            pola_z_ostrzezeniem=pola_z_ostrzezeniem, nazwy_pol=NAZWY_POL,
-                           dzisiaj=datetime.date.today().strftime("%d.%m.%Y"))
+                           dzisiaj=datetime.date.today().strftime("%d.%m.%Y"),
+                           folder_zapisu=zapis.ostatni_folder())
 
 
 def _dane_z_formularza(f) -> dict:
@@ -91,9 +93,39 @@ def generuj():
         return Response("Podaj co najmniej jednego inwestora (imię i nazwisko). Wróć do formularza.", status=400,
                         mimetype="text/plain; charset=utf-8")
     pliki = generuj_dokumenty(dane)
+
+    if request.form.get("akcja") == "zapisz":
+        try:
+            folder = zapis.sprawdz_folder(request.form.get("folder_zapisu", ""))
+            zapisane = zapis.zapisz_pliki(folder, pliki)
+        except ValueError as e:
+            return render_template("zapisano.html", blad=str(e)), 400
+        except OSError as e:
+            return render_template("zapisano.html", blad=f"Nie udało się zapisać plików: {e.strerror}."), 500
+        zapis.zapamietaj_folder(str(folder))
+        return render_template("zapisano.html", folder=folder, zapisane=[p.name for p in zapisane])
+
     nazwa_zip = next(iter(pliki)).replace("Pelnomocnictwo_", "Dokumenty_").replace(".docx", ".zip")
     return Response(spakuj(pliki), mimetype="application/zip",
                     headers={"Content-Disposition": f'attachment; filename="{nazwa_zip}"'})
+
+
+@app.post("/wybierz-folder")
+def wybierz_folder():
+    try:
+        folder = zapis.wybierz_folder_w_oknie(request.form.get("obecny", ""))
+    except Exception as e:
+        return jsonify(blad=str(e))
+    return jsonify(folder=folder) if folder else jsonify(anulowano=True)
+
+
+@app.post("/pokaz-folder")
+def pokaz_folder():
+    try:
+        zapis.pokaz_w_finderze(zapis.sprawdz_folder(request.form.get("folder", "")))
+    except ValueError as e:
+        return jsonify(blad=str(e)), 400
+    return jsonify(ok=True)
 
 
 @app.post("/zakoncz")

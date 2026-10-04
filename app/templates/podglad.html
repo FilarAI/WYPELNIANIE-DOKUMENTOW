@@ -100,8 +100,20 @@
     </dl>
   </details>
 
+  <h2>Zapis</h2>
+  <div class="wybor-folderu">
+    <label class="pole">
+      <span>Zapisz dokumenty w folderze</span>
+      <input type="text" name="folder_zapisu" id="folder_zapisu" value="{{ folder_zapisu }}">
+    </label>
+    <button type="button" class="przycisk przycisk-cichy" id="wybierz-folder" onclick="wybierzFolder()">Wybierz…</button>
+  </div>
+  <p class="podpowiedz" id="komunikat-folderu">Program zapamięta wybrany folder na następny raz. Istniejące pliki nie zostaną nadpisane.</p>
+
   <div class="akcje">
-    <button type="submit" class="przycisk">Generuj dokumenty (.zip)</button>
+    {# Pierwszy przycisk = domyślny po naciśnięciu Enter w polu formularza. #}
+    <button type="submit" name="akcja" value="zapisz" class="przycisk">Zapisz dokumenty w folderze</button>
+    <button type="submit" name="akcja" value="zip" class="przycisk przycisk-cichy">Pobierz jako ZIP</button>
   </div>
 </form>
 
@@ -126,5 +138,25 @@
     numeruj();
   }
   numeruj();
+
+  async function wybierzFolder() {
+    const przycisk = document.getElementById('wybierz-folder');
+    const pole = document.getElementById('folder_zapisu');
+    const komunikat = document.getElementById('komunikat-folderu');
+    przycisk.disabled = true;
+    komunikat.textContent = 'Wybierz folder w oknie, które się otworzyło (może być za oknem przeglądarki).';
+    try {
+      const dane = new FormData();
+      dane.append('obecny', pole.value);
+      const odp = await (await fetch('{{ url_for("wybierz_folder") }}', {method: 'POST', body: dane})).json();
+      if (odp.folder) { pole.value = odp.folder; komunikat.textContent = 'Wybrano folder.'; }
+      else if (odp.blad) { komunikat.textContent = odp.blad; }
+      else { komunikat.textContent = 'Anulowano – folder bez zmian.'; }
+    } catch (e) {
+      komunikat.textContent = 'Nie udało się otworzyć okna wyboru folderu. Wpisz ścieżkę ręcznie.';
+    } finally {
+      przycisk.disabled = false;
+    }
+  }
 </script>
 {% endblock %}

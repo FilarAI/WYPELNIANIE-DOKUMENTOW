@@ -84,3 +84,30 @@ def test_znaki_specjalne_nie_psuja_dokumentu(dane):
     dane["nazwa_inwestycji"] = "BUDOWA <GARAŻU> & WIATY"
     pelnomocnictwo = tekst(next(iter(generuj_dokumenty(dane).values())))
     assert "BUDOWA <GARAŻU> & WIATY" in pelnomocnictwo
+
+
+def test_pelna_obiegowka_testowa_wypelnia_wszystkie_pola():
+    d = odczytaj_obiegowke(FIXTURES / "obiegowka_testowa_pelna.docx")
+    d["data_pelnomocnictwa"] = "04.10.2026"
+    assert d["ostrzezenia"] == []
+    pliki = generuj_dokumenty(d)
+    pb5 = tekst(pliki["PB-5_Testowy_Krzysztof.docx"])
+    sekcje_wypelniane = pb5.split("1. DANE INWESTORA")[1].split("2. DANE OSOBY")[0] + \
+        pb5.split("3. DANE NIERUCHOMOŚCI")[1].split("Liczba stron")[0]
+    assert "……" not in sekcje_wypelniane
+    for fragment in ["Ulica: Przykładowa Nr domu: 12 Nr lokalu: 4",
+                     "Kraj: Polska Województwo: małopolskie Powiat: Kraków Gmina: Kraków",
+                     "Powiat: tatrzański Gmina: Zakopane", "Ulica: Słoneczna Nr domu: 8",
+                     "Miejscowość: Zakopane Kod pocztowy: 34-500", "121701_1.0005.245/7"]:
+        assert fragment in pb5, fragment
+    pelnomocnictwo = tekst(pliki["Pelnomocnictwo_Testowy.docx"])
+    assert "Zakopane ul. Słoneczna 8 dz. ew. 245/7" in pelnomocnictwo
+    assert "zamieszkały: ul. Przykładowa 12/4, 30-001 Kraków" in pelnomocnictwo
+
+
+def test_obiegowka_testowa_dwoje_inwestorow():
+    d = odczytaj_obiegowke(FIXTURES / "obiegowka_testowa_dwoje_inwestorow.docx")
+    assert [i["imie_nazwisko"] for i in d["inwestorzy"]] == ["Marek Przykładny", "Ewa Przykładna"]
+    assert d["ostrzezenia"] == []
+    assert list(generuj_dokumenty(d | {"data_pelnomocnictwa": "04.10.2026"})) == [
+        "Pelnomocnictwo_Przykladny_Przykladna.docx", "PB-5_Przykladny_Marek.docx", "PB-5_Przykladna_Ewa.docx"]

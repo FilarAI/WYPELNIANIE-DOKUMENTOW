@@ -116,3 +116,10 @@ h2 small { font-weight: 400; color: var(--cichy); }
   .pole.waskie { grid-column: span 1; }
   .dodatkowe dl { grid-template-columns: 1fr; }
 }
+
+.wybor-folderu { display: flex; align-items: flex-end; gap: 10px; }
+.wybor-folderu .pole { flex: 1; }
+.podpowiedz { color: var(--cichy); font-size: 13px; margin: 6px 0 0; }
+.akcje { gap: 10px; flex-wrap: wrap; }
+.akcje-lewo { justify-content: flex-start; }
+.przycisk:disabled { opacity: .6; cursor: wait; }

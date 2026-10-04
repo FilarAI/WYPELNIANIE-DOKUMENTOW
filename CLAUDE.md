@@ -24,15 +24,19 @@ Zakres na start: tylko obiegówka i te dwa szablony. Kolejne dokumenty mogą doj
 
 ## Struktura
 ```
-app/main.py              Flask: / (upload) → /podglad (formularz) → /generuj (ZIP z .docx), /zakoncz
+app/main.py              Flask: / (upload) → /podglad (formularz) → /generuj (zapis do folderu lub ZIP),
+                         /wybierz-folder, /pokaz-folder, /zakoncz
 app/parser_obiegowki.py  obiegówka → słownik danych + lista ostrzeżeń (opis pól w docstringu)
 app/teryt.py             identyfikator działki / nazwa miejscowości → województwo, powiat, gmina
 app/generator.py         wypełnianie szablonów (docxtpl), formy gramatyczne pełnomocnictwa
 app/konfiguracja.py      dane pełnomocnika biura (osoba upoważniona w PB-5)
+app/zapis.py             zapis do wybranego folderu (okno macOS przez osascript), pamięć ostatniego folderu
 app/templates/, static/  HTML i CSS formularza
 narzedzia/zbuduj_szablony.py  buduje szablony/*.docx od zera (źródło prawdy dla szablonów)
+narzedzia/zbuduj_obiegowke_testowa.py  obiegówki testowe z fikcyjnymi danymi (tests/fixtures/obiegowka_testowa_*.docx)
 szablony/                gotowe szablony ze znacznikami {{ }}
-tests/                   pytest; tests/fixtures/ = zanonimizowana obiegówka + oczekiwany wynik (JSON)
+tests/                   pytest; fixtures: zanonimizowana obiegówka + oczekiwany wynik (JSON),
+                         obiegówki testowe: pełna (1 inwestor, lokal, adres działki z kodem) i z dwojgiem inwestorów
 start.command            uruchomienie (macOS); przy braku .venv sam instaluje
 instaluj_mac.sh          jednorazowa instalacja: .venv, zależności, ikona na pulpicie (osacompile)
 ```
@@ -75,6 +79,10 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # instalacj
 - PB-5: kraj „Polska”. Województwo, powiat i gmina działki pochodzą z identyfikatora TERYT, a dla inwestora
   z nazwy miejscowości (SIMC; przy niejednoznacznej nazwie wybierana jest ta bliżej działki). Dane osoby upoważnionej
   wpisywane są tylko po zaznaczeniu opcji w formularzu.
+- **Zapis:** domyślnie dokumenty (.docx, bez ZIP) trafiają do folderu wybranego w formularzu. Przycisk „Wybierz…”
+  otwiera systemowe okno macOS (`osascript … choose folder`). Ostatni folder jest zapamiętywany w `~/.dokumenty_filar.json`
+  (w testach zmienna `DOKUMENTY_FILAR_USTAWIENIA`). Istniejące pliki nie są nadpisywane (dopisywane jest „ (2)”).
+  Pobranie ZIP zostaje jako druga opcja.
 - Grafika (logo w nagłówkach) zostanie dodana później. Szablony są na razie bez grafiki, z tekstową stopką biura.
 
 ## Jak dodać nowy dokument (szablon)
