@@ -1,0 +1,130 @@
+{% extends "baza.html" %}
+
+{% macro pole(nazwa, etykieta, wartosc, klasa="") -%}
+<label class="pole {{ klasa }}">
+  <span>{{ etykieta }}</span>
+  <input type="text" name="{{ nazwa }}" value="{{ wartosc or '' }}">
+</label>
+{%- endmacro %}
+
+{% macro inwestor(n, i) -%}
+<fieldset class="inwestor" data-nr="{{ n }}">
+  <legend>Inwestor <span class="numer"></span>
+    <button type="button" class="usun" title="Usuń inwestora" onclick="usunInwestora(this)">✕ usuń</button>
+  </legend>
+  <div class="siatka">
+    {{ pole('inw-%s-imie_nazwisko' % n, 'Imię i nazwisko / nazwa', i.imie_nazwisko, 'szeroko') }}
+    <label class="pole">
+      <span>Forma (do pełnomocnictwa)</span>
+      <select name="inw-{{ n }}-plec">
+        <option value="M" {{ 'selected' if i.plec != 'K' }}>mężczyzna – „zamieszkały”</option>
+        <option value="K" {{ 'selected' if i.plec == 'K' }}>kobieta – „zamieszkała”</option>
+      </select>
+    </label>
+    {{ pole('inw-%s-ulica' % n, 'Ulica', i.ulica) }}
+    {{ pole('inw-%s-nr_domu' % n, 'Nr domu', i.nr_domu, 'waskie') }}
+    {{ pole('inw-%s-nr_lokalu' % n, 'Nr lokalu', i.nr_lokalu, 'waskie') }}
+    {{ pole('inw-%s-kod_pocztowy' % n, 'Kod pocztowy', i.kod_pocztowy, 'waskie') }}
+    {{ pole('inw-%s-miejscowosc' % n, 'Miejscowość', i.miejscowosc) }}
+    {{ pole('inw-%s-poczta' % n, 'Poczta', i.poczta) }}
+    {{ pole('inw-%s-wojewodztwo' % n, 'Województwo', i.wojewodztwo) }}
+    {{ pole('inw-%s-powiat' % n, 'Powiat', i.powiat) }}
+    {{ pole('inw-%s-gmina' % n, 'Gmina', i.gmina) }}
+  </div>
+</fieldset>
+{%- endmacro %}
+
+{% block tresc %}
+<form method="post" action="{{ url_for('generuj') }}" class="karta">
+  <div class="tytul-kroku">
+    <h1>2. Sprawdź dane</h1>
+    <a class="przycisk przycisk-cichy" href="{{ url_for('start') }}">← Inna obiegówka</a>
+  </div>
+  <p class="opis">Odczytano z pliku <b>{{ nazwa_pliku }}</b> (strony: {{ dane.zrodla | join(' · ') }}).
+    Popraw, co trzeba – zmiany trafią tylko do generowanych dokumentów, obiegówka zostaje bez zmian.</p>
+
+  {% if dane.ostrzezenia %}
+  <div class="komunikat ostrzezenie">
+    <b>Uwaga – sprawdź:</b>
+    <ul>{% for o in dane.ostrzezenia %}<li>{{ o.komunikat }}</li>{% endfor %}</ul>
+  </div>
+  {% else %}
+  <div class="komunikat ok">Dane są spójne na wszystkich stronach obiegówki.</div>
+  {% endif %}
+
+  <h2>Inwestycja</h2>
+  <div class="siatka {{ 'z-ostrzezeniem' if 'nazwa_inwestycji' in pola_z_ostrzezeniem }}">
+    <label class="pole cala">
+      <span>Nazwa inwestycji</span>
+      <textarea name="nazwa_inwestycji" rows="2">{{ dane.nazwa_inwestycji }}</textarea>
+    </label>
+  </div>
+
+  <h2>Nieruchomość (działka)</h2>
+  <div class="siatka {{ 'z-ostrzezeniem' if 'adres_inwestycji' in pola_z_ostrzezeniem or 'nieruchomosc' in pola_z_ostrzezeniem }}">
+    {{ pole('adres-nr_dzialki', 'Nr działki', dane.adres_inwestycji.nr_dzialki, 'waskie') }}
+    {{ pole('adres-identyfikator_dzialki', 'Identyfikator działki (TERYT)', dane.adres_inwestycji.identyfikator_dzialki) }}
+    {{ pole('adres-miejscowosc', 'Miejscowość', dane.adres_inwestycji.miejscowosc) }}
+    {{ pole('adres-ulica', 'Ulica', dane.adres_inwestycji.ulica) }}
+    {{ pole('adres-nr_domu', 'Nr domu', dane.adres_inwestycji.nr_domu, 'waskie') }}
+    {{ pole('adres-kod_pocztowy', 'Kod pocztowy', dane.adres_inwestycji.kod_pocztowy, 'waskie') }}
+    {{ pole('nier-wojewodztwo', 'Województwo', dane.nieruchomosc.wojewodztwo) }}
+    {{ pole('nier-powiat', 'Powiat', dane.nieruchomosc.powiat) }}
+    {{ pole('nier-gmina', 'Gmina', dane.nieruchomosc.gmina) }}
+  </div>
+
+  <h2>Inwestorzy <small>– każdy dostaje osobne PB-5, pełnomocnictwo jest wspólne</small></h2>
+  <div id="inwestorzy" class="{{ 'z-ostrzezeniem' if 'inwestor' in pola_z_ostrzezeniem }}">
+    {% for i in dane.inwestorzy %}{{ inwestor(loop.index0, i) }}{% endfor %}
+  </div>
+  <button type="button" class="przycisk przycisk-cichy" onclick="dodajInwestora()">+ Dodaj inwestora</button>
+
+  <h2>Dokumenty</h2>
+  <div class="siatka">
+    {{ pole('data_pelnomocnictwa', 'Data pełnomocnictwa', dzisiaj, 'waskie') }}
+    <label class="pole szeroko zaznacz">
+      <input type="checkbox" name="upowazniony_w_pb5" value="tak">
+      <span>Wpisz w PB-5 osobę upoważnioną (Bartłomiej Filar) – gdy oświadczenie składa pełnomocnik</span>
+    </label>
+  </div>
+
+  <details class="dodatkowe">
+    <summary>Pozostałe dane z obiegówki (tylko podgląd)</summary>
+    <dl>
+      <dt>Kategoria obiektu</dt><dd>{{ dane.kategoria_obiektu or '—' }}</dd>
+      <dt>Data opracowania</dt><dd>{{ dane.data_opracowania or '—' }}</dd>
+      <dt>Projektant główny</dt><dd>{{ dane.projektant_glowny or '—' }}</dd>
+      {% for z in dane.zespol_projektowy %}
+      <dt>{{ z.specjalnosc | capitalize }} – {{ z.rola | lower }}</dt><dd>{{ z.osoba }}{% if z.uprawnienia %} <small>({{ z.uprawnienia }})</small>{% endif %}</dd>
+      {% endfor %}
+    </dl>
+  </details>
+
+  <div class="akcje">
+    <button type="submit" class="przycisk">Generuj dokumenty (.zip)</button>
+  </div>
+</form>
+
+<template id="wzor-inwestora">{{ inwestor('__N__', {'plec': 'M'}) }}</template>
+
+<script>
+  function numeruj() {
+    const bloki = document.querySelectorAll('#inwestorzy .inwestor');
+    bloki.forEach((b, i) => {
+      b.querySelector('.numer').textContent = bloki.length > 1 ? (i + 1) : '';
+      b.querySelector('.usun').hidden = bloki.length === 1;
+    });
+  }
+  function dodajInwestora() {
+    const n = Date.now();
+    const html = document.getElementById('wzor-inwestora').innerHTML.replaceAll('__N__', n);
+    document.getElementById('inwestorzy').insertAdjacentHTML('beforeend', html);
+    numeruj();
+  }
+  function usunInwestora(przycisk) {
+    przycisk.closest('.inwestor').remove();
+    numeruj();
+  }
+  numeruj();
+</script>
+{% endblock %}
