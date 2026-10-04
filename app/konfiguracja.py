@@ -18,3 +18,6 @@ PELNOMOCNIK = {
 
 # Wpisywane w puste pola, żeby można je było uzupełnić długopisem.
 PUSTE_POLE = "……………………"
+
+# „Nr lokalu” w PB-5, gdy adres jest podany, ale bez mieszkania (dom jednorodzinny).
+BRAK_LOKALU = "–"

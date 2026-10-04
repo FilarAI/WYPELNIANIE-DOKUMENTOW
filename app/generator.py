@@ -16,7 +16,7 @@ from pathlib import Path
 
 from docxtpl import DocxTemplate
 
-from app.konfiguracja import PELNOMOCNIK, PUSTE_POLE
+from app.konfiguracja import BRAK_LOKALU, PELNOMOCNIK, PUSTE_POLE
 
 SZABLONY = Path(__file__).resolve().parent.parent / "szablony"
 SZABLON_PELNOMOCNICTWA = SZABLONY / "pelnomocnictwo.docx"
@@ -87,6 +87,14 @@ def kontekst_pelnomocnictwa(dane: dict) -> dict:
     }
 
 
+def _nr_lokalu(osoba: dict) -> str:
+    """Kreska, gdy adres jest podany, ale bez lokalu; puste (→ kropki), gdy adresu brak."""
+    if (osoba.get("nr_lokalu") or "").strip():
+        return osoba["nr_lokalu"]
+    ma_adres = (osoba.get("ulica") or "").strip() or (osoba.get("nr_domu") or "").strip()
+    return BRAK_LOKALU if ma_adres else ""
+
+
 def kontekst_pb5(dane: dict, inwestor: dict) -> dict:
     adres = dane["adres_inwestycji"]
     nieruchomosc = dane.get("nieruchomosc", {})
@@ -100,7 +108,7 @@ def kontekst_pb5(dane: dict, inwestor: dict) -> dict:
             "gmina": inwestor.get("gmina"),
             "ulica": _bez_prefiksu_ulicy(inwestor.get("ulica")),
             "nr_domu": inwestor.get("nr_domu"),
-            "nr_lokalu": inwestor.get("nr_lokalu"),
+            "nr_lokalu": _nr_lokalu(inwestor),
             "miejscowosc": inwestor.get("miejscowosc"),
             "kod_pocztowy": inwestor.get("kod_pocztowy"),
             "poczta": inwestor.get("poczta"),

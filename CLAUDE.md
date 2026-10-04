@@ -79,6 +79,13 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # instalacj
 - PB-5: kraj „Polska”. Województwo, powiat i gmina działki pochodzą z identyfikatora TERYT, a dla inwestora
   z nazwy miejscowości (SIMC; przy niejednoznacznej nazwie wybierana jest ta bliżej działki). Dane osoby upoważnionej
   wpisywane są tylko po zaznaczeniu opcji w formularzu.
+- **Miejscowość działki z TERYT:** gdy obiegówka podaje tylko działkę (bez miejscowości), parser bierze ją z identyfikatora
+  (`teryt.miasto_z_identyfikatora()`): rodzaj 1/4 → nazwa miasta, 8/9 → nazwa powiatu (Warszawa, Kraków), wieś (2/5) → puste.
+  Miejscowość z obiegówki zawsze ma pierwszeństwo.
+- **„↑ Przepisz ten adres do działki”** (przycisk w bloku inwestora, JS w `podglad.html`): kopiuje ulicę, nr domu, kod
+  i miejscowość inwestora do pól działki; województwo/powiat/gminę działki tylko gdy są puste (TERYT jest pewniejszy).
+- **Nr lokalu w PB-5:** „–” (`BRAK_LOKALU`), gdy adres jest podany bez lokalu; kropki tylko gdy brak całego adresu.
+- Port serwera: od 5050 w górę z pominięciem portów blokowanych przez przeglądarki (5060, 5061 – `PORTY_ZABLOKOWANE`).
 - **Zapis:** domyślnie dokumenty (.docx, bez ZIP) trafiają do folderu wybranego w formularzu. Przycisk „Wybierz…”
   otwiera systemowe okno macOS (`osascript … choose folder`). Ostatni folder jest zapamiętywany w `~/.dokumenty_filar.json`
   (w testach zmienna `DOKUMENTY_FILAR_USTAWIENIA`). Istniejące pliki nie są nadpisywane (dopisywane jest „ (2)”).

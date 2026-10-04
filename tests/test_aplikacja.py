@@ -30,6 +30,7 @@ def test_podglad_pokazuje_dane_i_ostrzezenia(klient):
     assert 'value="120903_4.0002.1358"' in html
     assert 'value="myślenicki"' in html
     assert "różni się między stronami" in html
+    assert "Przepisz ten adres do działki" in html
 
 
 def test_zly_plik(klient):
@@ -65,3 +66,25 @@ def test_stopka_pokazuje_wersje_i_folder(klient):
 
     html = klient.get("/").get_data(as_text=True)
     assert WERSJA in html and FOLDER_PROGRAMU in html
+
+
+def test_wolny_port_omija_porty_blokowane_przez_przegladarki(monkeypatch):
+    import socket
+
+    from app import main
+
+    class Zajete5058i5059:
+        def __init__(self, *_):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return False
+
+        def connect_ex(self, adres):
+            return 0 if adres[1] in (5058, 5059) else 1  # 0 = zajęty; 5060/5061 wolne, ale blokowane przez przeglądarki
+
+    monkeypatch.setattr(socket, "socket", Zajete5058i5059)
+    assert main._wolny_port(5058) == 5062

@@ -123,3 +123,4 @@ h2 small { font-weight: 400; color: var(--cichy); }
 .akcje { gap: 10px; flex-wrap: wrap; }
 .akcje-lewo { justify-content: flex-start; }
 .przycisk:disabled { opacity: .6; cursor: wait; }
+.przycisk-maly { margin-top: 10px; padding: 5px 12px; font-size: 13px; }

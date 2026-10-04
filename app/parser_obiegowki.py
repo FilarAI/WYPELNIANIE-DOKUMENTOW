@@ -357,8 +357,11 @@ def odczytaj_obiegowke(plik: str | BinaryIO) -> dict:
             for klucz, v in inny.items():
                 if klucz != "tekst" and v and not adres[klucz]:
                     adres[klucz] = v
+    # Gdy obiegówka podaje tylko działkę, a działka leży w mieście, miejscowość wynika z kodu TERYT.
+    if not adres["miejscowosc"]:
+        adres["miejscowosc"] = teryt.miasto_z_identyfikatora(adres["identyfikator_dzialki"])
 
-    inwestorzy = rozbierz_inwestorow(wartosc("inwestor")) if wartosc("inwestor") else []
+    inwestorzy =rozbierz_inwestorow(wartosc("inwestor")) if wartosc("inwestor") else []
     # Kod pocztowy działki: jeśli działka leży pod adresem inwestora, bierzemy jego kod.
     for inw in inwestorzy:
         if not adres["kod_pocztowy"] and adres["miejscowosc"] and \

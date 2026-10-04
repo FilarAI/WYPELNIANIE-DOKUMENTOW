@@ -31,6 +31,7 @@
     {{ pole('inw-%s-powiat' % n, 'Powiat', i.powiat) }}
     {{ pole('inw-%s-gmina' % n, 'Gmina', i.gmina) }}
   </div>
+  <button type="button" class="przycisk przycisk-cichy przycisk-maly" onclick="adresDoDzialki(this)">↑ Przepisz ten adres do działki</button>
 </fieldset>
 {%- endmacro %}
 
@@ -72,6 +73,7 @@
     {{ pole('nier-powiat', 'Powiat', dane.nieruchomosc.powiat) }}
     {{ pole('nier-gmina', 'Gmina', dane.nieruchomosc.gmina) }}
   </div>
+  <p class="podpowiedz" id="komunikat-dzialki">Działka pod adresem inwestora? Kliknij „↑ Przepisz ten adres do działki” w bloku inwestora.</p>
 
   <h2>Inwestorzy <small>– każdy dostaje osobne PB-5, pełnomocnictwo jest wspólne</small></h2>
   <div id="inwestorzy" class="{{ 'z-ostrzezeniem' if 'inwestor' in pola_z_ostrzezeniem }}">
@@ -138,6 +140,20 @@
     numeruj();
   }
   numeruj();
+
+  function adresDoDzialki(przycisk) {
+    const blok = przycisk.closest('.inwestor');
+    const z = pole => blok.querySelector(`[name$="-${pole}"]`).value.trim();
+    const ustaw = (nazwa, wartosc) => { document.querySelector(`[name="${nazwa}"]`).value = wartosc; };
+    ['ulica', 'nr_domu', 'kod_pocztowy', 'miejscowosc'].forEach(p => ustaw('adres-' + p, z(p)));
+    // Województwo, powiat i gmina z identyfikatora działki są pewniejsze – nadpisujemy tylko puste pola.
+    ['wojewodztwo', 'powiat', 'gmina'].forEach(p => {
+      const cel = document.querySelector(`[name="nier-${p}"]`);
+      if (!cel.value.trim()) cel.value = z(p);
+    });
+    document.getElementById('komunikat-dzialki').textContent =
+      'Przepisano adres działki z: ' + (z('imie_nazwisko') || 'inwestora') + '. Sprawdź pola powyżej.';
+  }
 
   async function wybierzFolder() {
     const przycisk = document.getElementById('wybierz-folder');

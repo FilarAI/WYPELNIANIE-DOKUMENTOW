@@ -116,10 +116,15 @@ def test_obiegowka_testowa_dwoje_inwestorow():
 def test_obiegowka_testowa_tylko_strona_PB():
     d = odczytaj_obiegowke(FIXTURES / "obiegowka_testowa_tylko_PB.docx")
     assert d["zrodla"] == ["PROJEKT BUDOWLANY"] and d["ostrzezenia"] == []
-    assert (d["adres_inwestycji"]["nr_dzialki"], d["adres_inwestycji"]["ulica"]) == ("245/7", "")
-    pb5 = tekst(generuj_dokumenty(d | {"data_pelnomocnictwa": "04.10.2026"})["PB-5_Testowy_Krzysztof.docx"])
+    # Miejscowość działki nie jest podana w obiegówce – wynika z identyfikatora TERYT (121701_1 = miasto Zakopane).
+    adres = d["adres_inwestycji"]
+    assert (adres["nr_dzialki"], adres["ulica"], adres["miejscowosc"]) == ("245/7", "", "Zakopane")
+    pliki = generuj_dokumenty(d | {"data_pelnomocnictwa": "04.10.2026"})
+    pb5 = tekst(pliki["PB-5_Testowy_Krzysztof.docx"])
     assert "Ulica: …………………… Nr domu: ……………………" in pb5
+    assert "Miejscowość: Zakopane Kod pocztowy: ……………………" in pb5
     assert "Powiat: tatrzański Gmina: Zakopane" in pb5
+    assert "Zakopane dz. ew. 245/7" in tekst(pliki["Pelnomocnictwo_Testowy.docx"])
 
 
 def test_obiegowka_testowa_wies_kobieta():
@@ -183,3 +188,19 @@ def test_pelnomocnictwo_bez_grafiki(tmp_path):
     szablon = tmp_path / "pelnomocnictwo.docx"
     assert zbuduj.pelnomocnictwo(cel=szablon, grafika=tmp_path / "brak.png") is False
     assert not docx.Document(szablon).sections[0].header._element.xpath(".//pic:pic")
+
+
+def test_nr_lokalu_kreska_gdy_adres_bez_mieszkania(dane):
+    pb5 = tekst(generuj_dokumenty(dane)["PB-5_Kowalski_Jan.docx"])
+    assert "Ulica: Przykładowa Nr domu: 1 Nr lokalu: –" in pb5
+
+
+def test_nr_lokalu_podany(dane):
+    dane["inwestorzy"][0]["nr_lokalu"] = "7"
+    assert "Nr domu: 1 Nr lokalu: 7" in tekst(generuj_dokumenty(dane)["PB-5_Kowalski_Jan.docx"])
+
+
+def test_nr_lokalu_kropki_gdy_brak_adresu(dane):
+    dane["inwestorzy"][0] |= {"ulica": "", "nr_domu": "", "nr_lokalu": ""}
+    pb5 = tekst(generuj_dokumenty(dane)["PB-5_Kowalski_Jan.docx"])
+    assert "Ulica: …………………… Nr domu: …………………… Nr lokalu: ……………………" in pb5
