@@ -1,0 +1,64 @@
+{
+  "_opis": "Dane z tabeli 'PROJEKT BUDOWLANY' obiegówki testowej. Wzorcowy wynik parsera. Dane inwestora i ulica są zanonimizowane – ten sam zamiennik musi być w tests/fixtures/obiegowka_przyklad.docx.",
+  "jednostka_projektowa": {
+    "nazwa": "FILAR-USŁUGI",
+    "osoba": "mgr inż. arch. Małgorzata Jachimowska-Filar",
+    "adres": "34-700 Rabka-Zdrój ul. Sądecka 33h / 11",
+    "telefon": "695 770 613; 795 130 812"
+  },
+  "nazwa_inwestycji": "NADBUDOWA, PRZEBUDOWA ADAPTACJA NIEUŻYTKOWEGO PODDASZA NA POMIESZCZENIA MIESZKALNE W BUDYNKU MIESZKALNYM JENDORODZINNYM",
+  "adres_inwestycji": {
+    "nr_dzialki": "1358",
+    "identyfikator_dzialki": "120903_4.0002.1358",
+    "miejscowosc": "Myślenice",
+    "ulica": "ul. Przykładowa",
+    "nr_domu": "1"
+  },
+  "inwestorzy": [
+    {
+      "imie_nazwisko": "Jan Kowalski",
+      "ulica": "ul. Przykładowa",
+      "nr_domu": "1",
+      "kod_pocztowy": "32-400",
+      "miejscowosc": "Myślenice"
+    }
+  ],
+  "kategoria_obiektu": "I",
+  "data_opracowania": "STYCZEŃ 2025",
+  "zawartosc_projektu": "ZGODNIE ZE SPISEM TREŚCI",
+  "projektant_glowny": "mgr inż. arch. Artur Basiński",
+  "zespol_projektowy": [
+    {
+      "specjalnosc": "ARCHITEKTURA",
+      "rola": "Projektant",
+      "osoba": "mgr inż. arch. Artur Basiński",
+      "uprawnienia": "upr. do projektowania bez ograniczeń w spec. architektonicznej MPOIA/069/2018"
+    },
+    {
+      "specjalnosc": "ARCHITEKTURA",
+      "rola": "Opracowanie",
+      "osoba": "mgr inż. Bartłomiej Filar",
+      "uprawnienia": ""
+    },
+    {
+      "specjalnosc": "INSTALACJE ELEKTRYCZNE",
+      "rola": "Projektant",
+      "osoba": "mgr inż. Józef Cybulski",
+      "uprawnienia": "Nr ewid. MAP/0160/POOE/07; Nr UAN I-8340/A-67/87"
+    },
+    {
+      "specjalnosc": "INSTALACJE SANITARNE",
+      "rola": "Projektant",
+      "osoba": "mgr inż. Stanisław Bakalarz",
+      "uprawnienia": "UAN-7342/92"
+    }
+  ],
+  "teryt": {
+    "wojewodztwo": "małopolskie",
+    "powiat": "myślenicki",
+    "gmina": "Myślenice"
+  },
+  "oczekiwane_ostrzezenia": [
+    "Adres inwestycji na stronach tytułowych (PZT, PB) nie zawiera miejscowości i ulicy, które są podane w oświadczeniach."
+  ]
+}
