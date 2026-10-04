@@ -83,7 +83,11 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # instalacj
   otwiera systemowe okno macOS (`osascript … choose folder`). Ostatni folder jest zapamiętywany w `~/.dokumenty_filar.json`
   (w testach zmienna `DOKUMENTY_FILAR_USTAWIENIA`). Istniejące pliki nie są nadpisywane (dopisywane jest „ (2)”).
   Pobranie ZIP zostaje jako druga opcja.
-- Grafika (logo w nagłówkach) zostanie dodana później. Szablony są na razie bez grafiki, z tekstową stopką biura.
+- **Grafika:** baner z logo jest tylko w pełnomocnictwie (PB-5 to urzędowy formularz, bez grafiki).
+  Plik `szablony/grafika/naglowek_filar.png`: PNG **2480 × 360 px** (210 × 30 mm przy 300 DPI), treść min. 80 px
+  od boków i 60 px od góry, bez daty (data jest tekstem pod banerem). Baner idzie na całą szerokość kartki dzięki
+  ujemnym wcięciom akapitu nagłówka (`naglowek_z_grafika()`). Gdy pliku brak, szablon powstaje bez banera.
+  Po podmianie grafiki uruchom `narzedzia/zbuduj_szablony.py`. Stopka biura jest tekstem (szara, z linią nad).
 
 ## Jak dodać nowy dokument (szablon)
 1. Dodaj funkcję budującą szablon w `narzedzia/zbuduj_szablony.py` (znaczniki `{{ }}` z nazwami pól parsera).
