@@ -88,7 +88,19 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # instalacj
 - **Wygląd:** zgodnie z `docs/projekt-ui/specyfikacja.md`. Wartości zmienia się w zmiennych CSS, nie w regułach.
   Font systemowy i ikony SVG w kodzie, bez CDN i Google Fonts (brak internetu). Animacje subtelne,
   wyłączane przez „Ogranicz ruch” (`prefers-reduced-motion`). Logo w nagłówku jest tymczasowe.
-- Grafika (logo w nagłówkach) zostanie dodana później. Szablony są na razie bez grafiki, z tekstową stopką biura.
+- **Grafika:** baner z logo jest tylko w pełnomocnictwie (PB-5 to urzędowy formularz, bez grafiki).
+  Plik `szablony/grafika/naglowek_filar.png`: PNG na całą szerokość kartki (obecnie 2000 × 360 px = 21 × 3,8 cm,
+  przycięty z grafiki 2000 × 667 z Canvy), treść min. ~60 px od krawędzi, bez daty (data jest tekstem pod banerem).
+  Górny margines strony liczy się z proporcji obrazu (`wysokosc_banera_cm()` + 0,6 cm). Baner idzie na całą szerokość kartki dzięki
+  ujemnym wcięciom akapitu nagłówka (`naglowek_z_grafika()`). Gdy pliku brak, szablon powstaje bez banera.
+  Po podmianie grafiki uruchom `narzedzia/zbuduj_szablony.py`. Stopka biura jest tekstem (szara, z linią nad).
+
+## Wersje
+- `app/__init__.py` → `WERSJA`: zmieniaj przy każdej paczce `Dokumenty-FILAR.zip` dla biura. Wersja i folder programu
+  są w stopce każdej strony i w Terminalu, więc od razu widać, czy ikona uruchamia aktualny folder
+  (po rozpakowaniu obok starego macOS tworzy „Dokumenty-FILAR 2”, a ikona dalej wskazuje stary folder).
+- Arkusz stylów jest wczytywany z `?v=<czas zmiany pliku>` (`wersja_stylu` w `app/main.py`),
+  więc przeglądarka nie pokazuje starego wyglądu z pamięci podręcznej.
 
 ## Jak dodać nowy dokument (szablon)
 1. Dodaj funkcję budującą szablon w `narzedzia/zbuduj_szablony.py` (znaczniki `{{ }}` z nazwami pól parsera).

@@ -111,3 +111,75 @@ def test_obiegowka_testowa_dwoje_inwestorow():
     assert d["ostrzezenia"] == []
     assert list(generuj_dokumenty(d | {"data_pelnomocnictwa": "04.10.2026"})) == [
         "Pelnomocnictwo_Przykladny_Przykladna.docx", "PB-5_Przykladny_Marek.docx", "PB-5_Przykladna_Ewa.docx"]
+
+
+def test_obiegowka_testowa_tylko_strona_PB():
+    d = odczytaj_obiegowke(FIXTURES / "obiegowka_testowa_tylko_PB.docx")
+    assert d["zrodla"] == ["PROJEKT BUDOWLANY"] and d["ostrzezenia"] == []
+    assert (d["adres_inwestycji"]["nr_dzialki"], d["adres_inwestycji"]["ulica"]) == ("245/7", "")
+    pb5 = tekst(generuj_dokumenty(d | {"data_pelnomocnictwa": "04.10.2026"})["PB-5_Testowy_Krzysztof.docx"])
+    assert "Ulica: …………………… Nr domu: ……………………" in pb5
+    assert "Powiat: tatrzański Gmina: Zakopane" in pb5
+
+
+def test_obiegowka_testowa_wies_kobieta():
+    d = odczytaj_obiegowke(FIXTURES / "obiegowka_testowa_wies_kobieta.docx")
+    assert d["ostrzezenia"] == []
+    inw = d["inwestorzy"][0]
+    assert (inw["imie_nazwisko"], inw["plec"], inw["ulica"], inw["nr_domu"], inw["miejscowosc"], inw["gmina"]) == \
+           ("Anna Testowa", "K", "", "123", "Pcim", "Pcim")
+    pliki = generuj_dokumenty(d | {"data_pelnomocnictwa": "04.10.2026"})
+    pelnomocnictwo = tekst(pliki["Pelnomocnictwo_Testowa.docx"])
+    assert "zamieszkała: Pcim 123, 32-432 Pcim" in pelnomocnictwo
+    assert "Pcim 123 dz. ew. 555/1" in pelnomocnictwo
+    pb5 = tekst(pliki["PB-5_Testowa_Anna.docx"])
+    assert "Ulica: …………………… Nr domu: 123" in pb5
+    assert "Powiat: myślenicki Gmina: Pcim" in pb5
+
+
+def test_obiegowka_testowa_niespojna():
+    d = odczytaj_obiegowke(FIXTURES / "obiegowka_testowa_niespojna.docx")
+    assert sorted(o["pole"] for o in d["ostrzezenia"]) == ["data_opracowania", "inwestor"]
+    # Dane bierzemy ze strony „PROJEKT BUDOWLANY”, a różnice są tylko zgłaszane.
+    assert d["inwestorzy"][0]["imie_nazwisko"] == "Krzysztof Testowy"
+    assert d["data_opracowania"] == "MARZEC 2026"
+
+
+def _maly_png(szerokosc: int, wysokosc: int) -> bytes:
+    """Minimalny, poprawny plik PNG (szary prostokąt) – bez zależności od Pillow."""
+    import struct
+    import zlib
+
+    def blok(typ, dane):
+        return struct.pack(">I", len(dane)) + typ + dane + struct.pack(">I", zlib.crc32(typ + dane) & 0xFFFFFFFF)
+
+    wiersze = b"".join(b"\x00" + b"\xc0" * szerokosc for _ in range(wysokosc))
+    return (b"\x89PNG\r\n\x1a\n" + blok(b"IHDR", struct.pack(">IIBBBBB", szerokosc, wysokosc, 8, 0, 0, 0, 0))
+            + blok(b"IDAT", zlib.compress(wiersze)) + blok(b"IEND", b""))
+
+
+def test_baner_w_naglowku_pelnomocnictwa(tmp_path, monkeypatch, dane):
+    import app.generator as generator
+    import narzedzia.zbuduj_szablony as zbuduj
+
+    grafika = tmp_path / "naglowek_filar.png"
+    grafika.write_bytes(_maly_png(248, 36))
+    szablon = tmp_path / "pelnomocnictwo.docx"
+    assert zbuduj.pelnomocnictwo(cel=szablon, grafika=grafika) is True
+    monkeypatch.setattr(generator, "SZABLON_PELNOMOCNICTWA", szablon)
+
+    wynik = docx.Document(io.BytesIO(generuj_dokumenty(dane)["Pelnomocnictwo_Kowalski.docx"]))
+    naglowek = wynik.sections[0].header
+    assert naglowek._element.xpath(".//pic:pic")  # obraz zachowany po wypełnieniu przez docxtpl
+    szerokosc_banera = int(naglowek._element.xpath(".//wp:extent/@cx")[0])
+    assert abs(szerokosc_banera - wynik.sections[0].page_width) < 10_000  # baner na całą szerokość kartki
+    stopka = wynik.sections[0].footer.paragraphs[0].text
+    assert stopka.startswith("FILAR-USŁUGI adres: ul. Sądecka 33h/11") and "812, e-mail:" in stopka
+
+
+def test_pelnomocnictwo_bez_grafiki(tmp_path):
+    import narzedzia.zbuduj_szablony as zbuduj
+
+    szablon = tmp_path / "pelnomocnictwo.docx"
+    assert zbuduj.pelnomocnictwo(cel=szablon, grafika=tmp_path / "brak.png") is False
+    assert not docx.Document(szablon).sections[0].header._element.xpath(".//pic:pic")

@@ -111,9 +111,11 @@ b, strong { font-weight: 600; }
 .tresc.bardzo-waska { max-width: calc(520px + 64px); display: grid; place-items: center; }
 
 .stopka {
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  padding: 16px 32px 24px; font-size: 12px; line-height: 17px; color: var(--tekst-3);
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 16px 32px 24px; font-size: 12px; line-height: 17px; color: var(--tekst-3); text-align: center;
 }
+.stopka > span { display: inline-flex; align-items: center; gap: 6px; }
+.stopka small { font-size: 11px; line-height: 16px; color: #B4BCC8; overflow-wrap: anywhere; }
 .stopka .ikona { width: 14px; height: 14px; }
 
 /* ---------- Typografia ---------- */

@@ -1,12 +1,15 @@
 """Buduje szablony biura (szablony/*.docx) od zera, wzorowane na dokumentach FILAR-USŁUGI.
 
 Uruchomienie: .venv/bin/python narzedzia/zbuduj_szablony.py
-Znaczniki {{ ... }} wypełnia app/generator.py (docxtpl). Grafika (logo w nagłówku) zostanie dodana później.
+Znaczniki {{ ... }} wypełnia app/generator.py (docxtpl).
+Baner pełnomocnictwa: szablony/grafika/naglowek_filar.png (PNG na całą szerokość kartki, np. 2000 × 360 px).
+Gdy pliku nie ma, pełnomocnictwo powstaje bez banera.
 """
 from pathlib import Path
 
 import docx
 from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.image.image import Image as DocxImage
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
@@ -14,8 +17,11 @@ from docx.shared import Cm, Pt, RGBColor
 
 SZABLONY = Path(__file__).resolve().parent.parent / "szablony"
 SZARE_TLO = "D9D9D9"
-STOPKA_BIURA = ("FILAR-USŁUGI  adres: ul. Sądecka 33h/11, 34-700 Rabka-Zdrój  "
-                "tel.: 695 770 613, 795 130 812  e-mail: biurofilarmf@gmail.com")
+GRAFIKA_NAGLOWKA = SZABLONY / "grafika" / "naglowek_filar.png"
+STOPKA_NAZWA = "FILAR-USŁUGI adres: "
+STOPKA_DANE = ("ul. Sądecka 33h/11, 34-700 Rabka-Zdrój, tel.: 695 770 613, 795 130 812, "
+               "e-mail: biurofilarmf@gmail.com")
+SZARY = RGBColor(0x59, 0x59, 0x59)
 
 
 # ---------------------------------------------------------------- pomocnicze
@@ -70,12 +76,38 @@ def cieniuj(element_pr, kolor: str):
     element_pr.append(shd)
 
 
-def stopka(d, tekst: str, rozmiar: float = 7.5):
+def stopka(d, rozmiar: float = 8):
+    """Tekstowa stopka biura: szara, wyśrodkowana, z cienką linią nad tekstem."""
     p = d.sections[0].footer.paragraphs[0]
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r = p.add_run(tekst)
-    r.font.size = Pt(rozmiar)
-    r.font.color.rgb = RGBColor(0x59, 0x59, 0x59)
+    p.paragraph_format.space_before = Pt(3)
+    obramowanie = OxmlElement("w:pBdr")
+    gora = OxmlElement("w:top")
+    for atrybut, wartosc in {"w:val": "single", "w:sz": "4", "w:space": "4", "w:color": "A6A6A6"}.items():
+        gora.set(qn(atrybut), wartosc)
+    obramowanie.append(gora)
+    p._p.get_or_add_pPr().append(obramowanie)
+    for tekst, pogrubiony in [(STOPKA_NAZWA, True), (STOPKA_DANE, False)]:
+        r = p.add_run(tekst)
+        r.bold = pogrubiony or None
+        r.font.size = Pt(rozmiar)
+        r.font.color.rgb = SZARY
+
+
+def wysokosc_banera_cm(grafika: Path, szerokosc_cm: float = 21.0) -> float:
+    obraz = DocxImage.from_file(str(grafika))
+    return szerokosc_cm * obraz.px_height / obraz.px_width
+
+
+def naglowek_z_grafika(d, grafika: Path, margines_lewy: float, margines_prawy: float):
+    """Baner na całą szerokość kartki: ujemne wcięcia znoszą marginesy, więc nie trzeba pływającego obrazu."""
+    sekcja = d.sections[0]
+    sekcja.header_distance = Cm(0)
+    p = sekcja.header.paragraphs[0]
+    p.paragraph_format.left_indent = Cm(-margines_lewy)
+    p.paragraph_format.right_indent = Cm(-margines_prawy)
+    p.paragraph_format.space_before = p.paragraph_format.space_after = Pt(0)
+    p.add_run().add_picture(str(grafika), width=sekcja.page_width)
 
 
 # ---------------------------------------------------------------- PB-5
@@ -165,10 +197,15 @@ def pb5():
 
 # ---------------------------------------------------------------- Pełnomocnictwo
 
-def pelnomocnictwo():
-    d = nowy_dokument("Arial Narrow", 12, (2.5, 1.75, 1.5, 2.5))
+def pelnomocnictwo(cel: Path = SZABLONY / "pelnomocnictwo.docx", grafika: Path = GRAFIKA_NAGLOWKA):
+    z_banerem = grafika.is_file()
+    # Z banerem tekst zaczyna się 0,6 cm pod nim (wysokość banera z proporcji obrazu przy szerokości 21 cm).
+    gora = wysokosc_banera_cm(grafika) + 0.6 if z_banerem else 2.5
+    d = nowy_dokument("Arial Narrow", 12, (gora, 1.75, 1.5, 2.5))
     sekcja = d.sections[0]
     sekcja.footer_distance = Cm(0.8)
+    if z_banerem:
+        naglowek_z_grafika(d, grafika, margines_lewy=2.5, margines_prawy=1.75)
 
     akapit(d, "Rabka-Zdrój {{ data }}", wyrownanie=WD_ALIGN_PARAGRAPH.RIGHT, po=36)
     akapit(d, "Pełnomocnictwo", wyrownanie=WD_ALIGN_PARAGRAPH.CENTER, po=30, rozmiar=20, pogrubienie=True)
@@ -189,12 +226,13 @@ def pelnomocnictwo():
               "do wykonania niniejszego pełnomocnictwa.", wyrownanie=WD_ALIGN_PARAGRAPH.JUSTIFY, po=48, rozmiar=13)
     akapit(d, "{{ podpisy }}", wyrownanie=WD_ALIGN_PARAGRAPH.RIGHT)
 
-    stopka(d, STOPKA_BIURA)
-    d.save(SZABLONY / "pelnomocnictwo.docx")
+    stopka(d)
+    d.save(cel)
+    return z_banerem
 
 
 if __name__ == "__main__":
     SZABLONY.mkdir(exist_ok=True)
     pb5()
-    pelnomocnictwo()
-    print(f"Zapisano szablony w {SZABLONY}")
+    z_banerem = pelnomocnictwo()
+    print(f"Zapisano szablony w {SZABLONY}" + ("" if z_banerem else f" (bez banera – brak pliku {GRAFIKA_NAGLOWKA})"))
