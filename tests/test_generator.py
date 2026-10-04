@@ -111,3 +111,35 @@ def test_obiegowka_testowa_dwoje_inwestorow():
     assert d["ostrzezenia"] == []
     assert list(generuj_dokumenty(d | {"data_pelnomocnictwa": "04.10.2026"})) == [
         "Pelnomocnictwo_Przykladny_Przykladna.docx", "PB-5_Przykladny_Marek.docx", "PB-5_Przykladna_Ewa.docx"]
+
+
+def test_obiegowka_testowa_tylko_strona_PB():
+    d = odczytaj_obiegowke(FIXTURES / "obiegowka_testowa_tylko_PB.docx")
+    assert d["zrodla"] == ["PROJEKT BUDOWLANY"] and d["ostrzezenia"] == []
+    assert (d["adres_inwestycji"]["nr_dzialki"], d["adres_inwestycji"]["ulica"]) == ("245/7", "")
+    pb5 = tekst(generuj_dokumenty(d | {"data_pelnomocnictwa": "04.10.2026"})["PB-5_Testowy_Krzysztof.docx"])
+    assert "Ulica: …………………… Nr domu: ……………………" in pb5
+    assert "Powiat: tatrzański Gmina: Zakopane" in pb5
+
+
+def test_obiegowka_testowa_wies_kobieta():
+    d = odczytaj_obiegowke(FIXTURES / "obiegowka_testowa_wies_kobieta.docx")
+    assert d["ostrzezenia"] == []
+    inw = d["inwestorzy"][0]
+    assert (inw["imie_nazwisko"], inw["plec"], inw["ulica"], inw["nr_domu"], inw["miejscowosc"], inw["gmina"]) == \
+           ("Anna Testowa", "K", "", "123", "Pcim", "Pcim")
+    pliki = generuj_dokumenty(d | {"data_pelnomocnictwa": "04.10.2026"})
+    pelnomocnictwo = tekst(pliki["Pelnomocnictwo_Testowa.docx"])
+    assert "zamieszkała: Pcim 123, 32-432 Pcim" in pelnomocnictwo
+    assert "Pcim 123 dz. ew. 555/1" in pelnomocnictwo
+    pb5 = tekst(pliki["PB-5_Testowa_Anna.docx"])
+    assert "Ulica: …………………… Nr domu: 123" in pb5
+    assert "Powiat: myślenicki Gmina: Pcim" in pb5
+
+
+def test_obiegowka_testowa_niespojna():
+    d = odczytaj_obiegowke(FIXTURES / "obiegowka_testowa_niespojna.docx")
+    assert sorted(o["pole"] for o in d["ostrzezenia"]) == ["data_opracowania", "inwestor"]
+    # Dane bierzemy ze strony „PROJEKT BUDOWLANY”, a różnice są tylko zgłaszane.
+    assert d["inwestorzy"][0]["imie_nazwisko"] == "Krzysztof Testowy"
+    assert d["data_opracowania"] == "MARZEC 2026"
