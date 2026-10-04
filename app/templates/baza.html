@@ -1,28 +1,36 @@
+{% import "_makra.html" as m %}
 <!doctype html>
 <html lang="pl">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dokumenty FILAR</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%238a4b1f'/><text x='16' y='23' font-size='20' font-family='Arial' font-weight='700' fill='white' text-anchor='middle'>F</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M3 13.5 16 4l13 8v16h-6.5V15.6L16 11.3l-6.5 4.6V28H3Z' fill='%233478F6'/><rect x='12.5' y='17.5' width='7' height='10.5' rx='1.5' fill='%233478F6' opacity='.45'/></svg>">
   <link rel="stylesheet" href="{{ url_for('static', filename='styl.css') }}">
 </head>
 <body>
-  <header class="naglowek">
-    <div class="marka">
-      <span class="logo">F</span>
-      <div>
-        <strong>Dokumenty FILAR</strong>
-        <small>Pełnomocnictwo i PB-5 z obiegówki</small>
+  <div class="aplikacja">
+    {% if not bez_naglowka %}
+    <header class="naglowek">
+      <div class="marka">
+        {{ m.logo() }}
+        <div>
+          <strong>Dokumenty FILAR</strong>
+          <small>FILAR-USŁUGI <span aria-hidden="true">·</span> Rabka-Zdrój</small>
+        </div>
       </div>
-    </div>
-    <form method="post" action="{{ url_for('zakoncz') }}">
-      <button class="przycisk przycisk-cichy" type="submit" title="Wyłącza program">Zakończ program</button>
-    </form>
-  </header>
-  <main>
-    {% block tresc %}{% endblock %}
-  </main>
-  <footer class="stopka">Program działa tylko na tym komputerze – pliki nie są nigdzie wysyłane.</footer>
+      <form method="post" action="{{ url_for('zakoncz') }}">
+        <button class="zakoncz" type="submit" title="Wyłącza program">{{ m.ikona('zasilanie') }} Zakończ program</button>
+      </form>
+    </header>
+    {% endif %}
+    <main class="tresc {{ szerokosc or '' }}">
+      {% if krok %}{{ m.kroki(krok) }}{% endif %}
+      {% block tresc %}{% endblock %}
+    </main>
+    {% if not bez_naglowka %}
+    <footer class="stopka">{{ m.ikona('klodka') }} Program działa tylko na tym komputerze – pliki nie są nigdzie wysyłane.</footer>
+    {% endif %}
+  </div>
 </body>
 </html>

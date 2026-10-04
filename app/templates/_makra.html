@@ -1,0 +1,58 @@
+{# Wspólne elementy interfejsu. Ikony: kształty w stylu Lucide (licencja ISC), wpisane w kod –
+   program nie pobiera niczego z internetu. #}
+
+{% set SCIEZKI_IKON = {
+  'plik': '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/>',
+  'folder': '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+  'ptaszek': '<path d="M20 6 9 17l-5-5"/>',
+  'ostrzezenie': '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  'blad': '<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>',
+  'ok': '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+  'zasilanie': '<path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/>',
+  'kosz': '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/>',
+  'plus': '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  'pobierz': '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
+  'wstecz': '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+  'odswiez': '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
+  'strzalka-dol': '<path d="m6 9 6 6 6-6"/>',
+  'klodka': '<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+} %}
+
+{% macro ikona(nazwa, klasa="") -%}
+<svg class="ikona {{ klasa }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{{ SCIEZKI_IKON[nazwa] | safe }}</svg>
+{%- endmacro %}
+
+{# Znak biura – tymczasowy, do czasu właściwego logo. #}
+{% macro logo() -%}
+<svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
+  <path d="M3 13.5 16 4l13 8v16h-6.5V15.6L16 11.3l-6.5 4.6V28H3Z" fill="#3478F6"/>
+  <rect x="12.5" y="17.5" width="7" height="10.5" rx="1.5" fill="#3478F6" opacity=".45"/>
+</svg>
+{%- endmacro %}
+
+{% macro pole(nazwa, etykieta, wartosc, klasa="") -%}
+<label class="pole {{ klasa }}">
+  <span>{{ etykieta }}</span>
+  <input type="text" name="{{ nazwa }}" value="{{ wartosc or '' }}">
+</label>
+{%- endmacro %}
+
+{# Pasek kroków kreatora: krok = numer aktywnego kroku (1–3). #}
+{% macro kroki(krok) -%}
+<ol class="kroki" aria-label="Postęp">
+  {% for nazwa in ['Wgraj obiegówkę', 'Sprawdź dane', 'Gotowe'] %}
+  {% set nr = loop.index %}
+  <li class="krok {{ 'ukonczony' if nr < krok else ('aktywny' if nr == krok else '') }}"
+      {% if nr == krok %}aria-current="step"{% endif %}>
+    <span class="krok-kolko">{% if nr < krok %}{{ ikona('ptaszek') }}{% else %}{{ nr }}{% endif %}</span>
+    <span class="krok-nazwa">{{ nazwa }}</span>
+  </li>
+  {% endfor %}
+</ol>
+{%- endmacro %}
+
+{# Polska odmiana: 1 dokument, 2–4 dokumenty, 5+ dokumentów (12–14 też „dokumentów”). #}
+{% macro odmiana(n, jeden, kilka, wiele) -%}
+{{ jeden if n == 1 else (kilka if n % 10 in [2, 3, 4] and n % 100 not in [12, 13, 14] else wiele) }}
+{%- endmacro %}

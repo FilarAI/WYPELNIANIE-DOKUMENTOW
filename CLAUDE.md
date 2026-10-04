@@ -31,7 +31,9 @@ app/teryt.py             identyfikator działki / nazwa miejscowości → wojew�
 app/generator.py         wypełnianie szablonów (docxtpl), formy gramatyczne pełnomocnictwa
 app/konfiguracja.py      dane pełnomocnika biura (osoba upoważniona w PB-5)
 app/zapis.py             zapis do wybranego folderu (okno macOS przez osascript), pamięć ostatniego folderu
-app/templates/, static/  HTML i CSS formularza
+app/templates/           HTML: baza.html (obramowanie, nagłówek, pasek kroków), _makra.html (ikony SVG, pola, odmiana)
+app/static/styl.css      wygląd; kolory, odstępy, cienie jako zmienne CSS na początku pliku
+docs/projekt-ui/         specyfikacja interfejsu (źródło prawdy dla wyglądu) i makiety
 narzedzia/zbuduj_szablony.py  buduje szablony/*.docx od zera (źródło prawdy dla szablonów)
 narzedzia/zbuduj_obiegowke_testowa.py  obiegówki testowe z fikcyjnymi danymi (tests/fixtures/obiegowka_testowa_*.docx)
 szablony/                gotowe szablony ze znacznikami {{ }}
@@ -83,6 +85,9 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # instalacj
   otwiera systemowe okno macOS (`osascript … choose folder`). Ostatni folder jest zapamiętywany w `~/.dokumenty_filar.json`
   (w testach zmienna `DOKUMENTY_FILAR_USTAWIENIA`). Istniejące pliki nie są nadpisywane (dopisywane jest „ (2)”).
   Pobranie ZIP zostaje jako druga opcja.
+- **Wygląd:** zgodnie z `docs/projekt-ui/specyfikacja.md`. Wartości zmienia się w zmiennych CSS, nie w regułach.
+  Font systemowy i ikony SVG w kodzie, bez CDN i Google Fonts (brak internetu). Animacje subtelne,
+  wyłączane przez „Ogranicz ruch” (`prefers-reduced-motion`). Logo w nagłówku jest tymczasowe.
 - Grafika (logo w nagłówkach) zostanie dodana później. Szablony są na razie bez grafiki, z tekstową stopką biura.
 
 ## Jak dodać nowy dokument (szablon)

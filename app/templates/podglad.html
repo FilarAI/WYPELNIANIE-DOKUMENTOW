@@ -1,95 +1,141 @@
 {% extends "baza.html" %}
-
-{% macro pole(nazwa, etykieta, wartosc, klasa="") -%}
-<label class="pole {{ klasa }}">
-  <span>{{ etykieta }}</span>
-  <input type="text" name="{{ nazwa }}" value="{{ wartosc or '' }}">
-</label>
-{%- endmacro %}
+{% import "_makra.html" as m %}
+{% set krok = 2 %}
 
 {% macro inwestor(n, i) -%}
 <fieldset class="inwestor" data-nr="{{ n }}">
-  <legend>Inwestor <span class="numer"></span>
-    <button type="button" class="usun" title="Usuń inwestora" onclick="usunInwestora(this)">✕ usuń</button>
+  <legend class="inwestor-naglowek">
+    <span>Inwestor <span class="numer"></span></span>
+    <button type="button" class="usun" title="Usuń inwestora" onclick="usunInwestora(this)">{{ m.ikona('kosz') }} Usuń</button>
   </legend>
   <div class="siatka">
-    {{ pole('inw-%s-imie_nazwisko' % n, 'Imię i nazwisko / nazwa', i.imie_nazwisko, 'szeroko') }}
+    {{ m.pole('inw-%s-imie_nazwisko' % n, 'Imię i nazwisko / nazwa', i.imie_nazwisko, 'szeroko') }}
     <label class="pole">
-      <span>Forma (do pełnomocnictwa)</span>
+      <span>Płeć (forma w pełnomocnictwie)</span>
       <select name="inw-{{ n }}-plec">
-        <option value="M" {{ 'selected' if i.plec != 'K' }}>mężczyzna – „zamieszkały”</option>
-        <option value="K" {{ 'selected' if i.plec == 'K' }}>kobieta – „zamieszkała”</option>
+        <option value="M" {{ 'selected' if i.plec != 'K' }}>Mężczyzna – „zamieszkały”</option>
+        <option value="K" {{ 'selected' if i.plec == 'K' }}>Kobieta – „zamieszkała”</option>
       </select>
     </label>
-    {{ pole('inw-%s-ulica' % n, 'Ulica', i.ulica) }}
-    {{ pole('inw-%s-nr_domu' % n, 'Nr domu', i.nr_domu, 'waskie') }}
-    {{ pole('inw-%s-nr_lokalu' % n, 'Nr lokalu', i.nr_lokalu, 'waskie') }}
-    {{ pole('inw-%s-kod_pocztowy' % n, 'Kod pocztowy', i.kod_pocztowy, 'waskie') }}
-    {{ pole('inw-%s-miejscowosc' % n, 'Miejscowość', i.miejscowosc) }}
-    {{ pole('inw-%s-poczta' % n, 'Poczta', i.poczta) }}
-    {{ pole('inw-%s-wojewodztwo' % n, 'Województwo', i.wojewodztwo) }}
-    {{ pole('inw-%s-powiat' % n, 'Powiat', i.powiat) }}
-    {{ pole('inw-%s-gmina' % n, 'Gmina', i.gmina) }}
+  </div>
+  <p class="podgrupa">Adres zamieszkania</p>
+  <div class="siatka">
+    {{ m.pole('inw-%s-ulica' % n, 'Ulica', i.ulica, 'polowa') }}
+    {{ m.pole('inw-%s-nr_domu' % n, 'Nr domu', i.nr_domu, 'waskie') }}
+    {{ m.pole('inw-%s-nr_lokalu' % n, 'Nr lokalu', i.nr_lokalu, 'waskie') }}
+    {{ m.pole('inw-%s-kod_pocztowy' % n, 'Kod pocztowy', i.kod_pocztowy, 'waskie') }}
+    {{ m.pole('inw-%s-miejscowosc' % n, 'Miejscowość', i.miejscowosc, 'polowa') }}
+    {{ m.pole('inw-%s-poczta' % n, 'Poczta', i.poczta, 'polowa') }}
+  </div>
+  <p class="podgrupa">Jednostka administracyjna <small>(do PB-5)</small></p>
+  <div class="siatka">
+    {{ m.pole('inw-%s-wojewodztwo' % n, 'Województwo', i.wojewodztwo) }}
+    {{ m.pole('inw-%s-powiat' % n, 'Powiat', i.powiat) }}
+    {{ m.pole('inw-%s-gmina' % n, 'Gmina', i.gmina) }}
   </div>
 </fieldset>
 {%- endmacro %}
 
+{% macro znacznik_uwagi(widoczny) -%}
+{% if widoczny %}<span class="znacznik-uwagi">{{ m.ikona('ostrzezenie') }} Do sprawdzenia</span>{% endif %}
+{%- endmacro %}
+
 {% block tresc %}
-<form method="post" action="{{ url_for('generuj') }}" class="karta">
-  <div class="tytul-kroku">
-    <h1>2. Sprawdź dane</h1>
-    <a class="przycisk przycisk-cichy" href="{{ url_for('start') }}">← Inna obiegówka</a>
+{% set uwaga_inwestycja = 'nazwa_inwestycji' in pola_z_ostrzezeniem %}
+{% set uwaga_dzialka = 'adres_inwestycji' in pola_z_ostrzezeniem or 'nieruchomosc' in pola_z_ostrzezeniem %}
+{% set uwaga_inwestorzy = 'inwestor' in pola_z_ostrzezeniem %}
+{% set uwaga_pozostale = pola_z_ostrzezeniem | select('in', ['kategoria_obiektu', 'data_opracowania', 'projektant_glowny', 'jednostka_projektowa']) | list | length > 0 %}
+
+<div class="wejscie">
+  <h1>Sprawdź dane</h1>
+  <p class="podtytul">Dane zostały odczytane z obiegówki. Sprawdź je przed zapisaniem dokumentów.</p>
+</div>
+
+<form method="post" action="{{ url_for('generuj') }}" class="formularz" id="formularz">
+  <div class="plik-zrodlowy">
+    {{ m.ikona('plik') }}
+    <div>
+      <b>{{ nazwa_pliku }}</b>
+      {% set ile = dane.zrodla | length %}
+      <small title="{{ dane.zrodla | join(' · ') }}">Odczytano {{ ile }} {{ m.odmiana(ile, 'stronę', 'strony', 'stron') }} obiegówki. Obiegówka zostaje bez zmian.</small>
+    </div>
+    <a class="przycisk-tekstowy" href="{{ url_for('start') }}">Inna obiegówka</a>
   </div>
-  <p class="opis">Odczytano z pliku <b>{{ nazwa_pliku }}</b> (strony: {{ dane.zrodla | join(' · ') }}).
-    Popraw, co trzeba – zmiany trafią tylko do generowanych dokumentów, obiegówka zostaje bez zmian.</p>
 
   {% if dane.ostrzezenia %}
-  <div class="komunikat ostrzezenie">
-    <b>Uwaga – sprawdź:</b>
-    <ul>{% for o in dane.ostrzezenia %}<li>{{ o.komunikat }}</li>{% endfor %}</ul>
+  <div class="komunikat ostrzezenie" role="alert">
+    {{ m.ikona('ostrzezenie') }}
+    <div>
+      <b>Dane w obiegówce wymagają sprawdzenia</b>
+      <ul>{% for o in dane.ostrzezenia %}<li>{{ o.komunikat }}</li>{% endfor %}</ul>
+    </div>
   </div>
   {% else %}
-  <div class="komunikat ok">Dane są spójne na wszystkich stronach obiegówki.</div>
+  <div class="komunikat sukces">
+    {{ m.ikona('ok') }}
+    <div><b>Dane są spójne na wszystkich stronach obiegówki.</b></div>
+  </div>
   {% endif %}
 
-  <h2>Inwestycja</h2>
-  <div class="siatka {{ 'z-ostrzezeniem' if 'nazwa_inwestycji' in pola_z_ostrzezeniem }}">
-    <label class="pole cala">
-      <span>Nazwa inwestycji</span>
-      <textarea name="nazwa_inwestycji" rows="2">{{ dane.nazwa_inwestycji }}</textarea>
-    </label>
-  </div>
+  <section class="sekcja {{ 'z-ostrzezeniem' if uwaga_inwestycja }}">
+    <h2>Inwestycja {{ znacznik_uwagi(uwaga_inwestycja) }}</h2>
+    <div class="siatka">
+      <label class="pole cala">
+        <span>Nazwa inwestycji</span>
+        <textarea name="nazwa_inwestycji" rows="2">{{ dane.nazwa_inwestycji }}</textarea>
+      </label>
+    </div>
+  </section>
 
-  <h2>Nieruchomość (działka)</h2>
-  <div class="siatka {{ 'z-ostrzezeniem' if 'adres_inwestycji' in pola_z_ostrzezeniem or 'nieruchomosc' in pola_z_ostrzezeniem }}">
-    {{ pole('adres-nr_dzialki', 'Nr działki', dane.adres_inwestycji.nr_dzialki, 'waskie') }}
-    {{ pole('adres-identyfikator_dzialki', 'Identyfikator działki (TERYT)', dane.adres_inwestycji.identyfikator_dzialki) }}
-    {{ pole('adres-miejscowosc', 'Miejscowość', dane.adres_inwestycji.miejscowosc) }}
-    {{ pole('adres-ulica', 'Ulica', dane.adres_inwestycji.ulica) }}
-    {{ pole('adres-nr_domu', 'Nr domu', dane.adres_inwestycji.nr_domu, 'waskie') }}
-    {{ pole('adres-kod_pocztowy', 'Kod pocztowy', dane.adres_inwestycji.kod_pocztowy, 'waskie') }}
-    {{ pole('nier-wojewodztwo', 'Województwo', dane.nieruchomosc.wojewodztwo) }}
-    {{ pole('nier-powiat', 'Powiat', dane.nieruchomosc.powiat) }}
-    {{ pole('nier-gmina', 'Gmina', dane.nieruchomosc.gmina) }}
-  </div>
+  <section class="sekcja {{ 'z-ostrzezeniem' if uwaga_dzialka }}">
+    <h2>Nieruchomość / działka {{ znacznik_uwagi(uwaga_dzialka) }}</h2>
+    <div class="siatka">
+      {{ m.pole('adres-identyfikator_dzialki', 'Identyfikator działki (TERYT)', dane.adres_inwestycji.identyfikator_dzialki, 'szeroko') }}
+      {{ m.pole('adres-nr_dzialki', 'Nr działki', dane.adres_inwestycji.nr_dzialki) }}
+    </div>
+    <p class="podgrupa">Adres inwestycji</p>
+    <div class="siatka">
+      {{ m.pole('adres-miejscowosc', 'Miejscowość', dane.adres_inwestycji.miejscowosc) }}
+      {{ m.pole('adres-ulica', 'Ulica', dane.adres_inwestycji.ulica) }}
+      {{ m.pole('adres-nr_domu', 'Nr domu', dane.adres_inwestycji.nr_domu, 'waskie') }}
+      {{ m.pole('adres-kod_pocztowy', 'Kod pocztowy', dane.adres_inwestycji.kod_pocztowy, 'waskie') }}
+    </div>
+    <p class="podgrupa">Jednostka administracyjna <small>(z identyfikatora działki)</small></p>
+    <div class="siatka">
+      {{ m.pole('nier-wojewodztwo', 'Województwo', dane.nieruchomosc.wojewodztwo) }}
+      {{ m.pole('nier-powiat', 'Powiat', dane.nieruchomosc.powiat) }}
+      {{ m.pole('nier-gmina', 'Gmina', dane.nieruchomosc.gmina) }}
+    </div>
+  </section>
 
-  <h2>Inwestorzy <small>– każdy dostaje osobne PB-5, pełnomocnictwo jest wspólne</small></h2>
-  <div id="inwestorzy" class="{{ 'z-ostrzezeniem' if 'inwestor' in pola_z_ostrzezeniem }}">
-    {% for i in dane.inwestorzy %}{{ inwestor(loop.index0, i) }}{% endfor %}
-  </div>
-  <button type="button" class="przycisk przycisk-cichy" onclick="dodajInwestora()">+ Dodaj inwestora</button>
+  <section class="sekcja {{ 'z-ostrzezeniem' if uwaga_inwestorzy }}">
+    <h2>Inwestorzy {{ znacznik_uwagi(uwaga_inwestorzy) }}</h2>
+    <p class="opis-sekcji">Każdy inwestor dostaje osobne PB-5, pełnomocnictwo jest wspólne.</p>
+    <div id="inwestorzy">
+      {% for i in dane.inwestorzy %}{{ inwestor(loop.index0, i) }}{% endfor %}
+    </div>
+    <button type="button" class="dodaj-inwestora" onclick="dodajInwestora()">{{ m.ikona('plus') }} Dodaj inwestora</button>
+  </section>
 
-  <h2>Dokumenty</h2>
-  <div class="siatka">
-    {{ pole('data_pelnomocnictwa', 'Data pełnomocnictwa', dzisiaj, 'waskie') }}
-    <label class="pole szeroko zaznacz">
+  <section class="sekcja">
+    <h2>Dokumenty</h2>
+    <p class="opis-sekcji">Powstanie pełnomocnictwo i oświadczenie PB-5 dla każdego inwestora.</p>
+    <div class="siatka">
+      {{ m.pole('data_pelnomocnictwa', 'Data pełnomocnictwa', dzisiaj) }}
+    </div>
+    <label class="zaznacz">
       <input type="checkbox" name="upowazniony_w_pb5" value="tak">
+      <span class="pole-wyboru">{{ m.ikona('ptaszek') }}</span>
       <span>Wpisz w PB-5 osobę upoważnioną (Bartłomiej Filar) – gdy oświadczenie składa pełnomocnik</span>
     </label>
-  </div>
+  </section>
 
-  <details class="dodatkowe">
-    <summary>Pozostałe dane z obiegówki (tylko podgląd)</summary>
+  <details class="sekcja dodatkowe {{ 'z-ostrzezeniem' if uwaga_pozostale }}" {{ 'open' if uwaga_pozostale }}>
+    <summary>
+      <h2>Pozostałe dane z obiegówki {{ znacznik_uwagi(uwaga_pozostale) }}</h2>
+      <span class="podpowiedz">tylko podgląd</span>
+      {{ m.ikona('strzalka-dol', 'rozwin') }}
+    </summary>
     <dl>
       <dt>Kategoria obiektu</dt><dd>{{ dane.kategoria_obiektu or '—' }}</dd>
       <dt>Data opracowania</dt><dd>{{ dane.data_opracowania or '—' }}</dd>
@@ -100,28 +146,33 @@
     </dl>
   </details>
 
-  <h2>Zapis</h2>
-  <div class="wybor-folderu">
-    <label class="pole">
-      <span>Zapisz dokumenty w folderze</span>
-      <input type="text" name="folder_zapisu" id="folder_zapisu" value="{{ folder_zapisu }}">
-    </label>
-    <button type="button" class="przycisk przycisk-cichy" id="wybierz-folder" onclick="wybierzFolder()">Wybierz…</button>
-  </div>
-  <p class="podpowiedz" id="komunikat-folderu">Program zapamięta wybrany folder na następny raz. Istniejące pliki nie zostaną nadpisane.</p>
+  <section class="sekcja">
+    <h2>Zapis dokumentów</h2>
+    <div class="wybor-folderu">
+      <label class="pole">
+        <span>Folder docelowy</span>
+        <input type="text" name="folder_zapisu" id="folder_zapisu" value="{{ folder_zapisu }}">
+      </label>
+      <button type="button" class="przycisk przycisk-neutralny" id="wybierz-folder" onclick="wybierzFolder()">Wybierz…</button>
+    </div>
+    <p class="podpowiedz" id="komunikat-folderu">Program zapamięta wybrany folder na następny raz. Istniejące pliki nie zostaną nadpisane.</p>
 
-  <div class="akcje">
-    {# Pierwszy przycisk = domyślny po naciśnięciu Enter w polu formularza. #}
-    <button type="submit" name="akcja" value="zapisz" class="przycisk">Zapisz dokumenty w folderze</button>
-    <button type="submit" name="akcja" value="zip" class="przycisk przycisk-cichy">Pobierz jako ZIP</button>
-  </div>
+    <div class="akcje">
+      {# Pierwszy przycisk = domyślny po naciśnięciu Enter w polu formularza. #}
+      <button type="submit" name="akcja" value="zapisz" class="przycisk" id="przycisk-zapisz">
+        <span class="kolko-ladowania" aria-hidden="true"></span>{{ m.ikona('plik') }}
+        <span class="etykieta">Zapisz dokumenty w folderze</span>
+      </button>
+      <button type="submit" name="akcja" value="zip" class="przycisk przycisk-drugorzedny">{{ m.ikona('pobierz') }} Pobierz jako ZIP</button>
+    </div>
+  </section>
 </form>
 
 <template id="wzor-inwestora">{{ inwestor('__N__', {'plec': 'M'}) }}</template>
 
 <script>
   function numeruj() {
-    const bloki = document.querySelectorAll('#inwestorzy .inwestor');
+    const bloki = document.querySelectorAll('#inwestorzy .inwestor:not(.usuwany)');
     bloki.forEach((b, i) => {
       b.querySelector('.numer').textContent = bloki.length > 1 ? (i + 1) : '';
       b.querySelector('.usun').hidden = bloki.length === 1;
@@ -131,13 +182,42 @@
     const n = Date.now();
     const html = document.getElementById('wzor-inwestora').innerHTML.replaceAll('__N__', n);
     document.getElementById('inwestorzy').insertAdjacentHTML('beforeend', html);
+    const nowy = document.querySelector('#inwestorzy .inwestor:last-child');
+    nowy.classList.add('dodany');
     numeruj();
+    nowy.querySelector('input').focus({preventScroll: true});
+    nowy.scrollIntoView({behavior: 'smooth', block: 'nearest'});
   }
   function usunInwestora(przycisk) {
-    przycisk.closest('.inwestor').remove();
+    const blok = przycisk.closest('.inwestor');
+    blok.classList.add('usuwany');
+    blok.querySelectorAll('input, select').forEach(p => p.disabled = true);  // nie wysyłaj w trakcie animacji
     numeruj();
+    const usun = () => blok.remove();
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) usun();
+    else { blok.addEventListener('animationend', usun, {once: true}); setTimeout(usun, 400); }
   }
   numeruj();
+
+  // Długa nazwa inwestycji: pole rośnie razem z tekstem, żeby całość była widoczna.
+  const nazwa = document.querySelector('textarea[name=nazwa_inwestycji]');
+  const dopasuj = () => { nazwa.style.height = 'auto'; nazwa.style.height = (nazwa.scrollHeight + 2) + 'px'; };
+  nazwa.addEventListener('input', dopasuj);
+  dopasuj();
+
+  // Stan „Zapisuję…” tylko przy zapisie do folderu (ZIP to pobranie – strona zostaje bez zmian).
+  const formularz = document.getElementById('formularz');
+  const zapisz = document.getElementById('przycisk-zapisz');
+  formularz.addEventListener('submit', e => {
+    if (e.submitter === zapisz) {
+      zapisz.classList.add('w-toku');
+      zapisz.querySelector('.etykieta').textContent = 'Zapisuję…';
+    }
+  });
+  window.addEventListener('pageshow', () => {
+    zapisz.classList.remove('w-toku');
+    zapisz.querySelector('.etykieta').textContent = 'Zapisz dokumenty w folderze';
+  });
 
   async function wybierzFolder() {
     const przycisk = document.getElementById('wybierz-folder');
