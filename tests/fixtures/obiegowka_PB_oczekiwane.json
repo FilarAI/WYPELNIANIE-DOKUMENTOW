@@ -1,5 +1,5 @@
 {
-  "_opis": "Dane z tabeli 'PROJEKT BUDOWLANY' obiegówki testowej. Wzorcowy wynik parsera. Dane inwestora i ulica są zanonimizowane – ten sam zamiennik musi być w tests/fixtures/obiegowka_przyklad.docx.",
+  "_opis": "Dane z tabeli 'PROJEKT BUDOWLANY' obiegówki testowej. Wzorcowy wynik parsera. Dane inwestora i ulica są zanonimizowane – ten sam zamiennik musi być w tests/fixtures/obiegowka_przyklad.docx. Adres inwestycji na stronach tytułowych (PZT, PB) nie zawiera miejscowości i ulicy podanych w oświadczeniach – parser musi to zgłosić.",
   "jednostka_projektowa": {
     "nazwa": "FILAR-USŁUGI",
     "osoba": "mgr inż. arch. Małgorzata Jachimowska-Filar",
@@ -12,7 +12,8 @@
     "identyfikator_dzialki": "120903_4.0002.1358",
     "miejscowosc": "Myślenice",
     "ulica": "ul. Przykładowa",
-    "nr_domu": "1"
+    "nr_domu": "1",
+    "kod_pocztowy": "32-400"
   },
   "inwestorzy": [
     {
@@ -20,7 +21,8 @@
       "ulica": "ul. Przykładowa",
       "nr_domu": "1",
       "kod_pocztowy": "32-400",
-      "miejscowosc": "Myślenice"
+      "miejscowosc": "Myślenice",
+      "poczta": "Myślenice"
     }
   ],
   "kategoria_obiektu": "I",
@@ -32,25 +34,25 @@
       "specjalnosc": "ARCHITEKTURA",
       "rola": "Projektant",
       "osoba": "mgr inż. arch. Artur Basiński",
-      "uprawnienia": "upr. do projektowania bez ograniczeń w spec. architektonicznej MPOIA/069/2018"
+      "nr_uprawnien": "MPOIA/069/2018"
     },
     {
       "specjalnosc": "ARCHITEKTURA",
       "rola": "Opracowanie",
       "osoba": "mgr inż. Bartłomiej Filar",
-      "uprawnienia": ""
+      "nr_uprawnien": ""
     },
     {
       "specjalnosc": "INSTALACJE ELEKTRYCZNE",
       "rola": "Projektant",
       "osoba": "mgr inż. Józef Cybulski",
-      "uprawnienia": "Nr ewid. MAP/0160/POOE/07; Nr UAN I-8340/A-67/87"
+      "nr_uprawnien": "MAP/0160/POOE/07"
     },
     {
       "specjalnosc": "INSTALACJE SANITARNE",
       "rola": "Projektant",
       "osoba": "mgr inż. Stanisław Bakalarz",
-      "uprawnienia": "UAN-7342/92"
+      "nr_uprawnien": "UAN-7342/92"
     }
   ],
   "teryt": {
@@ -58,7 +60,7 @@
     "powiat": "myślenicki",
     "gmina": "Myślenice"
   },
-  "oczekiwane_ostrzezenia": [
-    "Adres inwestycji na stronach tytułowych (PZT, PB) nie zawiera miejscowości i ulicy, które są podane w oświadczeniach."
+  "oczekiwane_ostrzezenia_dla_pol": [
+    "adres_inwestycji"
   ]
 }

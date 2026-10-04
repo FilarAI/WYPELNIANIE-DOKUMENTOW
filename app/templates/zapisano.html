@@ -1,0 +1,30 @@
+{% extends "baza.html" %}
+{% block tresc %}
+<section class="karta">
+  {% if blad %}
+  <h1>Nie zapisano dokumentów</h1>
+  <div class="komunikat blad">{{ blad }}</div>
+  <div class="akcje akcje-lewo">
+    <button type="button" class="przycisk" onclick="history.back()">← Wróć do formularza</button>
+  </div>
+  {% else %}
+  <h1>3. Gotowe – dokumenty zapisane</h1>
+  <div class="komunikat ok">
+    Zapisano w folderze <b>{{ folder }}</b>:
+    <ul>{% for nazwa in zapisane %}<li>{{ nazwa }}</li>{% endfor %}</ul>
+  </div>
+  <div class="akcje akcje-lewo">
+    <button type="button" class="przycisk" onclick="pokazFolder()">Pokaż w Finderze</button>
+    <button type="button" class="przycisk przycisk-cichy" onclick="history.back()">← Wróć do formularza</button>
+    <a class="przycisk przycisk-cichy" href="{{ url_for('start') }}">Nowa obiegówka</a>
+  </div>
+  <script>
+    function pokazFolder() {
+      const dane = new FormData();
+      dane.append('folder', {{ folder | string | tojson }});
+      fetch('{{ url_for("pokaz_folder") }}', {method: 'POST', body: dane});
+    }
+  </script>
+  {% endif %}
+</section>
+{% endblock %}
