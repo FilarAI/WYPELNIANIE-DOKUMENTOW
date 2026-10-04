@@ -17,12 +17,19 @@ import webbrowser
 
 from flask import Flask, Response, jsonify, render_template, request
 
-from app import teryt, zapis
+from app import WERSJA, teryt, zapis
 from app.generator import generuj_dokumenty, spakuj
 from app.parser_obiegowki import NAZWY_POL, odczytaj_obiegowke
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024
+FOLDER_PROGRAMU = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+@app.context_processor
+def informacje_o_programie():
+    # Widoczne w stopce każdej strony – pozwala sprawdzić, czy ikona uruchamia aktualną wersję.
+    return {"wersja": WERSJA, "folder_programu": FOLDER_PROGRAMU}
 
 POLA_INWESTORA = ["imie_nazwisko", "plec", "ulica", "nr_domu", "nr_lokalu", "kod_pocztowy", "miejscowosc",
                   "poczta", "wojewodztwo", "powiat", "gmina"]
@@ -149,6 +156,8 @@ def main():
     args = argumenty.parse_args()
     port = _wolny_port(args.port)
     adres = f"http://127.0.0.1:{port}"
+    print(f"Dokumenty FILAR, wersja {WERSJA}")
+    print(f"Folder programu: {FOLDER_PROGRAMU}")
     print(f"Program działa pod adresem {adres} – zamknij to okno, aby go wyłączyć.")
     if not args.bez_przegladarki:
         threading.Timer(1.0, lambda: webbrowser.open(adres)).start()

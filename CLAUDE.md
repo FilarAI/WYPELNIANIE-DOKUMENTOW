@@ -90,6 +90,11 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # instalacj
   ujemnym wcięciom akapitu nagłówka (`naglowek_z_grafika()`). Gdy pliku brak, szablon powstaje bez banera.
   Po podmianie grafiki uruchom `narzedzia/zbuduj_szablony.py`. Stopka biura jest tekstem (szara, z linią nad).
 
+## Wersje
+- `app/__init__.py` → `WERSJA`: zmieniaj przy każdej paczce `Dokumenty-FILAR.zip` dla biura. Wersja i folder programu
+  są w stopce każdej strony i w Terminalu, więc od razu widać, czy ikona uruchamia aktualny folder
+  (po rozpakowaniu obok starego macOS tworzy „Dokumenty-FILAR 2”, a ikona dalej wskazuje stary folder).
+
 ## Jak dodać nowy dokument (szablon)
 1. Dodaj funkcję budującą szablon w `narzedzia/zbuduj_szablony.py` (znaczniki `{{ }}` z nazwami pól parsera).
 2. Dodaj w `app/generator.py` funkcję kontekstu i wpis w `generuj_dokumenty()` (jeden plik czy osobny dla każdego inwestora).

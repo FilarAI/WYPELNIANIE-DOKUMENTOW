@@ -25,7 +25,8 @@ if [ "$1" != "--bez-ikony" ]; then
   APLIKACJA="$HOME/Desktop/Dokumenty FILAR.app"
   rm -rf "$APLIKACJA"
   osacompile -o "$APLIKACJA" -e "do shell script \"open \" & quoted form of \"$KATALOG/start.command\""
-  echo "Dodano ikonę „Dokumenty FILAR” na pulpicie."
+  echo "Dodano ikonę „Dokumenty FILAR” na pulpicie – uruchamia program z folderu:"
+  echo "  $KATALOG"
 fi
 
 echo "Gotowe. Uruchom program, klikając ikonę „Dokumenty FILAR” na pulpicie."

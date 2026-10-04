@@ -57,3 +57,11 @@ def test_generuj_zip(klient):
 
 def test_generuj_bez_inwestora(klient):
     assert klient.post("/generuj", data={"inw-0-imie_nazwisko": ""}).status_code == 400
+
+
+def test_stopka_pokazuje_wersje_i_folder(klient):
+    from app import WERSJA
+    from app.main import FOLDER_PROGRAMU
+
+    html = klient.get("/").get_data(as_text=True)
+    assert WERSJA in html and FOLDER_PROGRAMU in html
