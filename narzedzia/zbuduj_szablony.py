@@ -2,13 +2,14 @@
 
 Uruchomienie: .venv/bin/python narzedzia/zbuduj_szablony.py
 Znaczniki {{ ... }} wypełnia app/generator.py (docxtpl).
-Baner pełnomocnictwa: szablony/grafika/naglowek_filar.png (PNG 2480 × 360 px = 210 × 30 mm przy 300 DPI).
+Baner pełnomocnictwa: szablony/grafika/naglowek_filar.png (PNG na całą szerokość kartki, np. 2000 × 360 px).
 Gdy pliku nie ma, pełnomocnictwo powstaje bez banera.
 """
 from pathlib import Path
 
 import docx
 from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.image.image import Image as DocxImage
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
@@ -91,6 +92,11 @@ def stopka(d, rozmiar: float = 8):
         r.bold = pogrubiony or None
         r.font.size = Pt(rozmiar)
         r.font.color.rgb = SZARY
+
+
+def wysokosc_banera_cm(grafika: Path, szerokosc_cm: float = 21.0) -> float:
+    obraz = DocxImage.from_file(str(grafika))
+    return szerokosc_cm * obraz.px_height / obraz.px_width
 
 
 def naglowek_z_grafika(d, grafika: Path, margines_lewy: float, margines_prawy: float):
@@ -193,8 +199,9 @@ def pb5():
 
 def pelnomocnictwo(cel: Path = SZABLONY / "pelnomocnictwo.docx", grafika: Path = GRAFIKA_NAGLOWKA):
     z_banerem = grafika.is_file()
-    # Z banerem (ok. 3 cm wysokości) tekst zaczyna się niżej.
-    d = nowy_dokument("Arial Narrow", 12, (3.6 if z_banerem else 2.5, 1.75, 1.5, 2.5))
+    # Z banerem tekst zaczyna się 0,6 cm pod nim (wysokość banera z proporcji obrazu przy szerokości 21 cm).
+    gora = wysokosc_banera_cm(grafika) + 0.6 if z_banerem else 2.5
+    d = nowy_dokument("Arial Narrow", 12, (gora, 1.75, 1.5, 2.5))
     sekcja = d.sections[0]
     sekcja.footer_distance = Cm(0.8)
     if z_banerem:

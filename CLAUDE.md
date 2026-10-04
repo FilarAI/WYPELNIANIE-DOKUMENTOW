@@ -84,8 +84,9 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # instalacj
   (w testach zmienna `DOKUMENTY_FILAR_USTAWIENIA`). Istniejące pliki nie są nadpisywane (dopisywane jest „ (2)”).
   Pobranie ZIP zostaje jako druga opcja.
 - **Grafika:** baner z logo jest tylko w pełnomocnictwie (PB-5 to urzędowy formularz, bez grafiki).
-  Plik `szablony/grafika/naglowek_filar.png`: PNG **2480 × 360 px** (210 × 30 mm przy 300 DPI), treść min. 80 px
-  od boków i 60 px od góry, bez daty (data jest tekstem pod banerem). Baner idzie na całą szerokość kartki dzięki
+  Plik `szablony/grafika/naglowek_filar.png`: PNG na całą szerokość kartki (obecnie 2000 × 360 px = 21 × 3,8 cm,
+  przycięty z grafiki 2000 × 667 z Canvy), treść min. ~60 px od krawędzi, bez daty (data jest tekstem pod banerem).
+  Górny margines strony liczy się z proporcji obrazu (`wysokosc_banera_cm()` + 0,6 cm). Baner idzie na całą szerokość kartki dzięki
   ujemnym wcięciom akapitu nagłówka (`naglowek_z_grafika()`). Gdy pliku brak, szablon powstaje bez banera.
   Po podmianie grafiki uruchom `narzedzia/zbuduj_szablony.py`. Stopka biura jest tekstem (szara, z linią nad).
 
