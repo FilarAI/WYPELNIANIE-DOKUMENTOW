@@ -14,6 +14,7 @@ Wszystko działa na Twoim komputerze. Pliki nie są nigdzie wysyłane.
    bash /ścieżka/do/projektu/instaluj_mac.sh
    ```
 4. Na pulpicie pojawi się ikona **Dokumenty FILAR**.
+   Gdyby na pulpicie została stara ikona, uruchom w Terminalu `bash /ścieżka/do/projektu/instaluj_mac.sh --tylko-ikona`.
 
 ## Używanie
 1. Kliknij ikonę **Dokumenty FILAR**. Otworzy się okno Terminala (nie zamykaj go) i przeglądarka.

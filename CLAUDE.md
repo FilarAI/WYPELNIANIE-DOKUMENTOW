@@ -97,8 +97,9 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # instalacj
   Font systemowy i ikony SVG w kodzie, bez CDN i Google Fonts (brak internetu). Animacje subtelne,
   wyłączane przez „Ogranicz ruch” (`prefers-reduced-motion`).
 - **Ikona programu** (`ikona/zrodlo.webp`, przezroczyste tło): favicon, logo w nagłówku, ekran wyłączenia
-  (wpisana w stronę jako data URI, bo serwer już się wyłącza) i ikona aplikacji na pulpicie (`instaluj_mac.sh` podmienia
-  `applet.icns`). Tylko w programie, nie w dokumentach. Po podmianie grafiki uruchom `narzedzia/zbuduj_ikone.py` (wymaga Pillow).
+  (wpisana w stronę jako data URI, bo serwer już się wyłącza) i ikona aplikacji na pulpicie. `instaluj_mac.sh` podmienia
+  `applet.icns`, usuwa `Assets.car` i `CFBundleIconName` (nowszy macOS bierze ikonę z nich), podpisuje aplikację na nowo
+  i ustawia ikonę w Finderze (NSWorkspace). Samą ikonę odtwarza `bash instaluj_mac.sh --tylko-ikona`. Tylko w programie, nie w dokumentach. Po podmianie grafiki uruchom `narzedzia/zbuduj_ikone.py` (wymaga Pillow).
   Tryb ciemny: blok `:root[data-motyw="ciemny"]` w `styl.css`, przełącznik w nagłówku (system / jasny / ciemny,
   pamiętany w `localStorage`). Każdy kolor przez zmienną z wartością w obu motywach.
 - **Grafika:** baner z logo jest tylko w pełnomocnictwie (PB-5 to urzędowy formularz, bez grafiki).
