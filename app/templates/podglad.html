@@ -33,6 +33,7 @@
     {{ m.pole('inw-%s-powiat' % n, 'Powiat', i.powiat) }}
     {{ m.pole('inw-%s-gmina' % n, 'Gmina', i.gmina) }}
   </div>
+  <button type="button" class="przycisk-tekstowy przepisz-adres" onclick="adresDoDzialki(this)">{{ m.ikona('strzalka-gora') }} Przepisz ten adres do działki</button>
 </fieldset>
 {%- endmacro %}
 
@@ -106,6 +107,7 @@
       {{ m.pole('nier-powiat', 'Powiat', dane.nieruchomosc.powiat) }}
       {{ m.pole('nier-gmina', 'Gmina', dane.nieruchomosc.gmina) }}
     </div>
+    <p class="podpowiedz" id="komunikat-dzialki">Działka pod adresem inwestora? Kliknij „Przepisz ten adres do działki” w karcie inwestora.</p>
   </section>
 
   <section class="sekcja {{ 'z-ostrzezeniem' if uwaga_inwestorzy }}">
@@ -198,6 +200,22 @@
     else { blok.addEventListener('animationend', usun, {once: true}); setTimeout(usun, 400); }
   }
   numeruj();
+
+  function adresDoDzialki(przycisk) {
+    const blok = przycisk.closest('.inwestor');
+    const z = pole => blok.querySelector(`[name$="-${pole}"]`).value.trim();
+    const ustaw = (nazwa, wartosc) => { document.querySelector(`[name="${nazwa}"]`).value = wartosc; };
+    ['ulica', 'nr_domu', 'kod_pocztowy', 'miejscowosc'].forEach(p => ustaw('adres-' + p, z(p)));
+    // Województwo, powiat i gmina z identyfikatora działki są pewniejsze – nadpisujemy tylko puste pola.
+    ['wojewodztwo', 'powiat', 'gmina'].forEach(p => {
+      const cel = document.querySelector(`[name="nier-${p}"]`);
+      if (!cel.value.trim()) cel.value = z(p);
+    });
+    const komunikat = document.getElementById('komunikat-dzialki');
+    komunikat.textContent = 'Przepisano adres działki z: ' + (z('imie_nazwisko') || 'inwestora') + '. Sprawdź pola powyżej.';
+    komunikat.classList.add('potwierdzenie');
+    komunikat.closest('.sekcja').scrollIntoView({behavior: 'smooth', block: 'center'});
+  }
 
   // Długa nazwa inwestycji: pole rośnie razem z tekstem, żeby całość była widoczna.
   const nazwa = document.querySelector('textarea[name=nazwa_inwestycji]');

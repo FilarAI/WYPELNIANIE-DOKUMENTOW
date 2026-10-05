@@ -81,6 +81,13 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # instalacj
 - PB-5: kraj „Polska”. Województwo, powiat i gmina działki pochodzą z identyfikatora TERYT, a dla inwestora
   z nazwy miejscowości (SIMC; przy niejednoznacznej nazwie wybierana jest ta bliżej działki). Dane osoby upoważnionej
   wpisywane są tylko po zaznaczeniu opcji w formularzu.
+- **Miejscowość działki z TERYT:** gdy obiegówka podaje tylko działkę (bez miejscowości), parser bierze ją z identyfikatora
+  (`teryt.miasto_z_identyfikatora()`): rodzaj 1/4 → nazwa miasta, 8/9 → nazwa powiatu (Warszawa, Kraków), wieś (2/5) → puste.
+  Miejscowość z obiegówki zawsze ma pierwszeństwo.
+- **„↑ Przepisz ten adres do działki”** (przycisk w bloku inwestora, JS w `podglad.html`): kopiuje ulicę, nr domu, kod
+  i miejscowość inwestora do pól działki; województwo/powiat/gminę działki tylko gdy są puste (TERYT jest pewniejszy).
+- **Nr lokalu w PB-5:** „–” (`BRAK_LOKALU`), gdy adres jest podany bez lokalu; kropki tylko gdy brak całego adresu.
+- Port serwera: od 5050 w górę z pominięciem portów blokowanych przez przeglądarki (5060, 5061 – `PORTY_ZABLOKOWANE`).
 - **Zapis:** domyślnie dokumenty (.docx, bez ZIP) trafiają do folderu wybranego w formularzu. Przycisk „Wybierz…”
   otwiera systemowe okno macOS (`osascript … choose folder`). Ostatni folder jest zapamiętywany w `~/.dokumenty_filar.json`
   (w testach zmienna `DOKUMENTY_FILAR_USTAWIENIA`). Istniejące pliki nie są nadpisywane (dopisywane jest „ (2)”).
@@ -88,6 +95,8 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # instalacj
 - **Wygląd:** zgodnie z `docs/projekt-ui/specyfikacja.md`. Wartości zmienia się w zmiennych CSS, nie w regułach.
   Font systemowy i ikony SVG w kodzie, bez CDN i Google Fonts (brak internetu). Animacje subtelne,
   wyłączane przez „Ogranicz ruch” (`prefers-reduced-motion`). Logo w nagłówku jest tymczasowe.
+  Tryb ciemny: blok `:root[data-motyw="ciemny"]` w `styl.css`, przełącznik w nagłówku (system / jasny / ciemny,
+  pamiętany w `localStorage`). Każdy kolor przez zmienną z wartością w obu motywach.
 - **Grafika:** baner z logo jest tylko w pełnomocnictwie (PB-5 to urzędowy formularz, bez grafiki).
   Plik `szablony/grafika/naglowek_filar.png`: PNG na całą szerokość kartki (obecnie 2000 × 360 px = 21 × 3,8 cm,
   przycięty z grafiki 2000 × 667 z Canvy), treść min. ~60 px od krawędzi, bez daty (data jest tekstem pod banerem).

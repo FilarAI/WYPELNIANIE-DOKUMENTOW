@@ -86,3 +86,21 @@ def z_miejscowosci(nazwa: str, preferowany_kod: str = "") -> Jednostka | None:
         return None
     woj, pow, gmi = gminy.pop()
     return jednostka_z_kodu(woj, pow, gmi)
+
+
+def miasto_z_identyfikatora(identyfikator: str) -> str:
+    """Nazwa miasta, w którym leży działka, gdy wynika z kodu TERYT; w przeciwnym razie pusty tekst.
+
+    Rodzaj gminy w kodzie WWPPGG_R: 1 – gmina miejska, 4 – miasto w gminie miejsko-wiejskiej (nazwa miasta = nazwa
+    gminy); 8 – dzielnica Warszawy, 9 – delegatura (nazwa miasta = nazwa powiatu, np. Warszawa, Kraków).
+    Dla wsi (2, 5) kod nie wskazuje miejscowości, więc zwracamy pusty tekst.
+    """
+    m = WZOR_IDENTYFIKATORA.search(identyfikator or "")
+    if not m:
+        return ""
+    woj, pow, gmi, rodzaj = m.group(1), m.group(2), m.group(3), m.group(4)
+    if rodzaj in ("1", "4"):
+        return _terc().get((woj, pow, gmi, rodzaj), "")
+    if rodzaj in ("8", "9"):
+        return jednostka_z_kodu(woj, pow, gmi).powiat
+    return ""

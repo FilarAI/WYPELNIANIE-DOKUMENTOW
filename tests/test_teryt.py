@@ -24,3 +24,11 @@ def test_miejscowosc_niejednoznaczna_bez_podpowiedzi():
 def test_miejscowosc_niejednoznaczna_z_podpowiedzia_z_dzialki():
     j = teryt.z_miejscowosci("Zawada", "120903_4.0002.1358")
     assert (j.wojewodztwo, j.powiat) == ("małopolskie", "myślenicki")
+
+
+def test_miasto_z_identyfikatora():
+    assert teryt.miasto_z_identyfikatora("120903_4.0002.1358") == "Myślenice"   # miasto w gminie miejsko-wiejskiej
+    assert teryt.miasto_z_identyfikatora("121701_1.0005.245/7") == "Zakopane"   # gmina miejska
+    assert teryt.miasto_z_identyfikatora("146510_8.0101.12") == "Warszawa"      # dzielnica Warszawy
+    assert teryt.miasto_z_identyfikatora("120904_2.0010.555/1") == ""           # wieś – kod nie wskazuje miejscowości
+    assert teryt.miasto_z_identyfikatora("brak") == ""

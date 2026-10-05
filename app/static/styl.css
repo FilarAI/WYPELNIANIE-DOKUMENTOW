@@ -14,7 +14,13 @@
   --tekst: #111827;
   --tekst-2: #667085;
   --tekst-3: #98A2B3;
+  --tekst-4: #B4BCC8;
   --tekst-przycisku: #344054;
+  --na-akcencie: #FFFFFF;
+  --ramka-hover: #B9C0CB;
+  --krok-tlo: #EEF0F4;
+  --krok-linia: #DDE1E7;
+  --ikona-upload: #8A94A6;
 
   --niebieski: #3478F6;
   --niebieski-hover: #2868DD;
@@ -22,18 +28,25 @@
   --niebieski-tlo: #EEF5FF;
   --niebieski-ramka: #B9D2FF;
   --niebieski-nieaktywny: #D9E7FF;
+  --niebieski-ramka-hover: #8DB4FB;
+  --niebieski-tlo-subtelne: #FBFCFF;
+  --upuszczanie-tlo: #F5F9FF;
 
   --sukces: #31966A;
   --sukces-tlo: #EDF9F3;
   --sukces-ramka: #B9E5CF;
+  --sukces-tekst: #1F5E43;
   --uwaga: #F59E0B;
   --uwaga-tytul: #513C0B;
   --uwaga-tekst: #735C23;
   --uwaga-tlo: #FFF7DF;
   --uwaga-ramka: #F2DA9E;
+  --uwaga-pole: #FFFDF6;
   --blad: #D84A4A;
   --blad-tlo: #FFF1F0;
   --blad-ramka: #F3B0AC;
+  --blad-tekst: #7A2E2E;
+  --blad-tytul: #5C1F1F;
 
   --nieaktywny-tekst: #A9B1BD;
   --nieaktywny-tlo: #F2F4F7;
@@ -51,6 +64,10 @@
   --cien-przycisk: 0 1px 2px rgba(16, 24, 40, .08);
   --cien-przycisk-hover: 0 4px 12px rgba(52, 120, 246, .18);
   --obwodka-focus: 0 0 0 3px rgba(52, 120, 246, .14);
+  --obwodka-focus-mocna: 0 0 0 3px rgba(52, 120, 246, .35);
+  --obwodka-upuszczanie: 0 0 0 3px rgba(52, 120, 246, .08);
+  --cien-sukces: 0 0 0 10px rgba(49, 150, 106, .08), 0 8px 20px rgba(49, 150, 106, .12);
+  --strzalka-listy: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 
   /* Ruch */
   --krzywa: cubic-bezier(.2, .8, .2, 1);
@@ -58,6 +75,72 @@
 
   /* SF Pro na Macu (systemowy), Inter jeśli zainstalowany, dalej systemowe bezszeryfowe. */
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+}
+
+/* Tryb ciemny: włączany przez data-motyw="ciemny" na <html> (skrypt w baza.html – według systemu
+   albo wyboru w nagłówku). Te same nazwy zmiennych, inne wartości. */
+:root[data-motyw="ciemny"] {
+  color-scheme: dark;
+
+  --tlo: #0E1014;
+  --powierzchnia: #171A1F;
+  --powierzchnia-subtelna: #1E2228;
+  --ramka: #2A2F37;
+  --ramka-mocna: #3A404A;
+  --separator: #252A31;
+  --tekst: #F2F4F7;
+  --tekst-2: #A3ABB8;
+  --tekst-3: #737B88;
+  --tekst-4: #5A616C;
+  --tekst-przycisku: #D0D5DD;
+  --ramka-hover: #4B5260;
+  --krok-tlo: #252A32;
+  --krok-linia: #323843;
+  --ikona-upload: #7C8596;
+
+  --niebieski: #3D84F7;
+  --niebieski-hover: #5A96F8;
+  --niebieski-wcisniety: #2F72E0;
+  --niebieski-tlo: #1A2A45;
+  --niebieski-ramka: #2F4D80;
+  --niebieski-nieaktywny: #233657;
+  --niebieski-ramka-hover: #4570B5;
+  --niebieski-tlo-subtelne: #191E27;
+  --upuszczanie-tlo: #172339;
+
+  --sukces: #3BA678;
+  --sukces-tlo: #12271F;
+  --sukces-ramka: #245140;
+  --sukces-tekst: #A3DEC2;
+  --uwaga: #F5A524;
+  --uwaga-tytul: #F7E1AA;
+  --uwaga-tekst: #D8C08C;
+  --uwaga-tlo: #29220F;
+  --uwaga-ramka: #5A4820;
+  --uwaga-pole: #201C12;
+  --blad: #F06A6A;
+  --blad-tlo: #2D1617;
+  --blad-ramka: #642F2F;
+  --blad-tekst: #F2BAB7;
+  --blad-tytul: #FBD6D4;
+
+  --nieaktywny-tekst: #5F6672;
+  --nieaktywny-tlo: #21252C;
+
+  --cien-panel: 0 18px 50px rgba(0, 0, 0, .45), 0 2px 8px rgba(0, 0, 0, .3);
+  --cien-karta: 0 1px 3px rgba(0, 0, 0, .3);
+  --cien-przycisk: 0 1px 2px rgba(0, 0, 0, .35);
+  --cien-przycisk-hover: 0 4px 14px rgba(61, 132, 247, .3);
+  --obwodka-focus: 0 0 0 3px rgba(61, 132, 247, .3);
+  --obwodka-focus-mocna: 0 0 0 3px rgba(61, 132, 247, .5);
+  --obwodka-upuszczanie: 0 0 0 3px rgba(61, 132, 247, .15);
+  --cien-sukces: 0 0 0 10px rgba(59, 166, 120, .12), 0 8px 20px rgba(0, 0, 0, .35);
+  --strzalka-listy: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A3ABB8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
+/* Płynne przejście kolorów tylko w chwili przełączenia motywu. */
+.zmiana-motywu, .zmiana-motywu *, .zmiana-motywu *::before, .zmiana-motywu *::after {
+  transition: background-color .25s, border-color .25s, color .25s, box-shadow .25s !important;
 }
 
 * { box-sizing: border-box; }
@@ -95,6 +178,21 @@ b, strong { font-weight: 600; }
 .marka strong { display: block; font-size: 16px; line-height: 22px; }
 .marka small { display: block; font-size: 12px; line-height: 16px; color: var(--tekst-2); }
 
+.naglowek-akcje { display: flex; align-items: center; gap: 12px; }
+.motyw {
+  display: inline-flex; padding: 3px; gap: 2px;
+  background: var(--powierzchnia-subtelna); border: 1px solid var(--ramka); border-radius: 999px;
+}
+.motyw button {
+  width: 30px; height: 26px; display: grid; place-items: center;
+  border: 0; border-radius: 999px; background: none; color: var(--tekst-3); cursor: pointer;
+  transition: background-color .15s, color .15s, box-shadow .15s;
+}
+.motyw button .ikona { width: 15px; height: 15px; }
+.motyw button:hover { color: var(--tekst); }
+.motyw button[aria-checked="true"] { background: var(--powierzchnia); color: var(--tekst); box-shadow: var(--cien-przycisk); }
+.motyw button:focus-visible { outline: none; box-shadow: var(--obwodka-focus-mocna); }
+
 .zakoncz {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 8px 10px; border: 0; border-radius: var(--r-maly); background: none; cursor: pointer;
@@ -115,7 +213,7 @@ b, strong { font-weight: 600; }
   padding: 16px 32px 24px; font-size: 12px; line-height: 17px; color: var(--tekst-3); text-align: center;
 }
 .stopka > span { display: inline-flex; align-items: center; gap: 6px; }
-.stopka small { font-size: 11px; line-height: 16px; color: #B4BCC8; overflow-wrap: anywhere; }
+.stopka small { font-size: 11px; line-height: 16px; color: var(--tekst-4); overflow-wrap: anywhere; }
 .stopka .ikona { width: 14px; height: 14px; }
 
 /* ---------- Typografia ---------- */
@@ -142,17 +240,17 @@ h2 {
 }
 .krok { display: flex; align-items: center; gap: 12px; }
 .krok + .krok::before {
-  content: ""; width: 72px; height: 1px; margin: 0 16px; background: #DDE1E7;
+  content: ""; width: 72px; height: 1px; margin: 0 16px; background: var(--krok-linia);
 }
 .krok-kolko {
   width: 36px; height: 36px; border-radius: 999px; flex: none;
   display: grid; place-items: center;
-  font-size: 15px; font-weight: 600; color: var(--tekst-2); background: #EEF0F4;
+  font-size: 15px; font-weight: 600; color: var(--tekst-2); background: var(--krok-tlo);
   transition: background-color .3s, color .3s;
 }
 .krok-kolko .ikona { width: 18px; height: 18px; stroke-width: 2.5; }
 .krok-nazwa { font-size: 14px; line-height: 20px; font-weight: 500; color: var(--tekst-2); white-space: nowrap; }
-.krok.aktywny .krok-kolko, .krok.ukonczony .krok-kolko { background: var(--niebieski); color: #fff; }
+.krok.aktywny .krok-kolko, .krok.ukonczony .krok-kolko { background: var(--niebieski); color: var(--na-akcencie); }
 .krok.aktywny .krok-nazwa { color: var(--tekst); font-weight: 600; }
 .krok.aktywny .krok-kolko { animation: puls 1.2s var(--krzywa) .2s 1 both; }
 .krok.ukonczony .ikona { animation: wskocz .4s var(--sprezyna) both; }
@@ -163,7 +261,7 @@ h2 {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   min-width: 120px; height: 44px; padding: 0 18px;
   border: 1px solid var(--niebieski); border-radius: var(--r-pole);
-  background: var(--niebieski); color: #fff; box-shadow: var(--cien-przycisk);
+  background: var(--niebieski); color: var(--na-akcencie); box-shadow: var(--cien-przycisk);
   font-size: 14px; line-height: 20px; font-weight: 600; text-decoration: none; white-space: nowrap; cursor: pointer;
   transition: background-color .15s, border-color .15s, box-shadow .2s, transform .1s;
 }
@@ -176,9 +274,9 @@ h2 {
 }
 .przycisk-neutralny { color: var(--niebieski); min-width: 96px; }
 .przycisk-drugorzedny:hover, .przycisk-neutralny:hover {
-  background: var(--powierzchnia-subtelna); border-color: #B9C0CB; box-shadow: var(--cien-przycisk);
+  background: var(--powierzchnia-subtelna); border-color: var(--ramka-hover); box-shadow: var(--cien-przycisk);
 }
-.przycisk-drugorzedny:active, .przycisk-neutralny:active { background: var(--nieaktywny-tlo); border-color: #B9C0CB; }
+.przycisk-drugorzedny:active, .przycisk-neutralny:active { background: var(--nieaktywny-tlo); border-color: var(--ramka-hover); }
 .przycisk-drugorzedny:disabled, .przycisk-neutralny:disabled {
   background: var(--nieaktywny-tlo); border-color: var(--ramka); color: var(--nieaktywny-tekst);
 }
@@ -195,7 +293,7 @@ h2 {
 .przycisk-tekstowy:hover .ikona { transform: translateX(-2px); }
 
 :is(.przycisk, .przycisk-tekstowy, .zakoncz, .usun, .dodaj-inwestora):focus-visible {
-  outline: none; box-shadow: 0 0 0 3px rgba(52, 120, 246, .35);
+  outline: none; box-shadow: var(--obwodka-focus-mocna);
 }
 
 /* Kółko ładowania – w polu uploadu i w przycisku „Zapisz” */
@@ -232,11 +330,11 @@ h2 {
 .komunikat.ostrzezenie { background: var(--uwaga-tlo); border-color: var(--uwaga-ramka); color: var(--uwaga-tekst); }
 .komunikat.ostrzezenie b { color: var(--uwaga-tytul); }
 .komunikat.ostrzezenie > .ikona { color: var(--uwaga); }
-.komunikat.sukces { background: var(--sukces-tlo); border-color: var(--sukces-ramka); color: #1F5E43; align-items: center; }
+.komunikat.sukces { background: var(--sukces-tlo); border-color: var(--sukces-ramka); color: var(--sukces-tekst); align-items: center; }
 .komunikat.sukces > .ikona { color: var(--sukces); }
 .komunikat.sukces b { font-weight: 500; }
-.komunikat.blad { background: var(--blad-tlo); border-color: var(--blad-ramka); color: #7A2E2E; }
-.komunikat.blad b { color: #5C1F1F; }
+.komunikat.blad { background: var(--blad-tlo); border-color: var(--blad-ramka); color: var(--blad-tekst); }
+.komunikat.blad b { color: var(--blad-tytul); }
 .komunikat.blad > .ikona { color: var(--blad); }
 
 /* ---------- Krok 1: pole przeciągania ---------- */
@@ -248,11 +346,11 @@ h2 {
   background: var(--powierzchnia); text-align: center; cursor: pointer;
   transition: border-color .2s, background-color .2s, box-shadow .2s, transform .2s var(--krzywa);
 }
-.upuszczanie:hover { border-color: #8DB4FB; background: #FBFCFF; }
+.upuszczanie:hover { border-color: var(--niebieski-ramka-hover); background: var(--niebieski-tlo-subtelne); }
 .upuszczanie:focus-within { box-shadow: var(--obwodka-focus); border-color: var(--niebieski); }
 .upuszczanie input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
 .upuszczanie > span { grid-area: 1 / 1; display: flex; flex-direction: column; align-items: center; }
-.upuszczanie-ikona { color: #8A94A6; margin-bottom: 16px; transition: color .2s, transform .3s var(--sprezyna); }
+.upuszczanie-ikona { color: var(--ikona-upload); margin-bottom: 16px; transition: color .2s, transform .3s var(--sprezyna); }
 .upuszczanie-ikona .ikona { width: 52px; height: 52px; stroke-width: 1.5; }
 .upuszczanie-tytul { font-size: 16px; line-height: 24px; font-weight: 600; }
 .upuszczanie-pomoc { margin-top: 12px; font-size: 13px; line-height: 18px; color: var(--tekst-3); }
@@ -267,15 +365,15 @@ h2 {
 .upuszczanie-spoczynek, .upuszczanie-nad, .upuszczanie-wczytywanie { transition: opacity .2s, visibility .2s; }
 
 .upuszczanie.aktywna {
-  border-style: dashed; border-color: var(--niebieski); background: #F5F9FF;
-  box-shadow: 0 0 0 3px rgba(52, 120, 246, .08); transform: scale(1.01);
+  border-style: dashed; border-color: var(--niebieski); background: var(--upuszczanie-tlo);
+  box-shadow: var(--obwodka-upuszczanie); transform: scale(1.01);
 }
 .upuszczanie.aktywna .upuszczanie-spoczynek,
 .upuszczanie.wczytywanie .upuszczanie-spoczynek { visibility: hidden; opacity: 0; }
 .upuszczanie.aktywna .upuszczanie-nad { visibility: visible; opacity: 1; }
 .upuszczanie.aktywna .upuszczanie-nad .upuszczanie-ikona { color: var(--niebieski); animation: unos 1s ease-in-out infinite alternate; }
 
-.upuszczanie.wczytywanie { cursor: progress; border-style: solid; border-color: var(--niebieski-ramka); background: #FBFCFF; }
+.upuszczanie.wczytywanie { cursor: progress; border-style: solid; border-color: var(--niebieski-ramka); background: var(--niebieski-tlo-subtelne); }
 .upuszczanie.wczytywanie .upuszczanie-wczytywanie { visibility: visible; opacity: 1; }
 .upuszczanie-wczytywanie .kolko-ladowania { width: 40px; height: 40px; border-width: 3px; color: var(--niebieski); margin-bottom: 20px; }
 
@@ -330,14 +428,14 @@ h2 {
 .pole textarea { height: auto; min-height: 64px; padding: 11px 12px; resize: vertical; }
 .pole select {
   appearance: none; -webkit-appearance: none; padding-right: 36px; cursor: pointer;
-  background: var(--powierzchnia) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center / 16px;
+  background: var(--powierzchnia) var(--strzalka-listy) no-repeat right 12px center / 16px;
 }
 .pole input::placeholder, .pole textarea::placeholder { color: var(--tekst-3); }
 .pole input:hover, .pole select:hover, .pole textarea:hover { border-color: var(--ramka-mocna); }
 .pole input:focus, .pole select:focus, .pole textarea:focus {
   outline: none; border-color: var(--niebieski); box-shadow: var(--obwodka-focus);
 }
-.z-ostrzezeniem .pole input, .z-ostrzezeniem .pole textarea { border-color: var(--uwaga-ramka); background: #FFFDF6; }
+.z-ostrzezeniem .pole input, .z-ostrzezeniem .pole textarea { border-color: var(--uwaga-ramka); background: var(--uwaga-pole); }
 .z-ostrzezeniem .pole input:focus, .z-ostrzezeniem .pole textarea:focus { border-color: var(--niebieski); background: var(--powierzchnia); }
 
 /* Karta inwestora */
@@ -365,6 +463,9 @@ h2 {
 .inwestor.dodany { animation: pojaw-z-gory .3s var(--krzywa) both; }
 .inwestor.usuwany { animation: zniknij .25s var(--krzywa) forwards; pointer-events: none; }
 
+.przepisz-adres { margin: 12px 0 0 -10px; }
+.podpowiedz.potwierdzenie { color: var(--sukces-tekst); }
+
 .dodaj-inwestora {
   width: 100%; height: 44px;
   display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -387,7 +488,7 @@ h2 {
   border: 1px solid var(--ramka-mocna); border-radius: 5px; background: var(--powierzchnia);
   transition: background-color .15s, border-color .15s, box-shadow .15s;
 }
-.pole-wyboru .ikona { width: 12px; height: 12px; stroke-width: 3; color: #fff; transform: scale(0); transition: transform .2s var(--sprezyna); }
+.pole-wyboru .ikona { width: 12px; height: 12px; stroke-width: 3; color: var(--na-akcencie); transform: scale(0); transition: transform .2s var(--sprezyna); }
 .zaznacz:hover .pole-wyboru { border-color: var(--niebieski); }
 .zaznacz input:checked + .pole-wyboru { background: var(--niebieski); border-color: var(--niebieski); }
 .zaznacz input:checked + .pole-wyboru .ikona { transform: scale(1); }
@@ -421,16 +522,16 @@ h2 {
 .wynik .podtytul { margin-bottom: 32px; }
 .wynik-ikona {
   width: 56px; height: 56px; margin: 8px 0 24px; border-radius: 999px;
-  display: grid; place-items: center; color: #fff;
+  display: grid; place-items: center; color: var(--na-akcencie);
 }
 .wynik-ikona svg { width: 24px; height: 24px; }
 .wynik-ikona.sukces {
   background: var(--sukces);
-  box-shadow: 0 0 0 10px rgba(49, 150, 106, .08), 0 8px 20px rgba(49, 150, 106, .12);
+  box-shadow: var(--cien-sukces);
   animation: wskocz .5s var(--sprezyna) both;
 }
 .wynik-ikona.sukces .rysuj { stroke-dasharray: 24; stroke-dashoffset: 24; animation: rysuj .4s var(--krzywa) .3s forwards; }
-.wynik-ikona.blad { background: var(--blad-tlo); color: var(--blad); box-shadow: 0 0 0 10px rgba(216, 74, 74, .06); }
+.wynik-ikona.blad { background: var(--blad-tlo); color: var(--blad); box-shadow: 0 0 0 10px var(--blad-tlo); }
 .wynik-ikona.kafel {
   width: 64px; height: 64px; margin: 0 0 28px; border-radius: 16px; color: var(--niebieski);
   background: var(--powierzchnia-subtelna); border: 1px solid var(--ramka); box-shadow: var(--cien-karta);

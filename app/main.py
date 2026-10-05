@@ -149,8 +149,14 @@ def zakoncz():
     return render_template("koniec.html")
 
 
+# Porty, których przeglądarki nie otwierają (ERR_UNSAFE_PORT), np. 5060/5061 – telefonia SIP.
+PORTY_ZABLOKOWANE = {5060, 5061}
+
+
 def _wolny_port(od: int) -> int:
     for port in range(od, od + 50):
+        if port in PORTY_ZABLOKOWANE:
+            continue
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             if s.connect_ex(("127.0.0.1", port)) != 0:
                 return port

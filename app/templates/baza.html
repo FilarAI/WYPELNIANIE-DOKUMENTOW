@@ -8,6 +8,32 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M3 13.5 16 4l13 8v16h-6.5V15.6L16 11.3l-6.5 4.6V28H3Z' fill='%233478F6'/><rect x='12.5' y='17.5' width='7' height='10.5' rx='1.5' fill='%233478F6' opacity='.45'/></svg>">
   {# ?v= zmienia się przy każdej zmianie pliku, więc przeglądarka nie pokaże starego wyglądu z pamięci. #}
   <link rel="stylesheet" href="{{ url_for('static', filename='styl.css', v=wersja_stylu) }}">
+  <script>
+    // Motyw: „auto” (jak w systemie), „jasny” albo „ciemny”. Ustawiany przed narysowaniem strony,
+    // żeby nie mignął jasny ekran. Wybór zapamiętuje przeglądarka (localStorage).
+    (function () {
+      var KLUCZ = 'dokumenty-filar-motyw', html = document.documentElement;
+      var ciemnySystem = matchMedia('(prefers-color-scheme: dark)');
+      var wybor = 'auto';
+      try { wybor = localStorage.getItem(KLUCZ) || 'auto'; } catch (e) {}
+      function zastosuj() {
+        html.dataset.motyw = (wybor === 'ciemny' || (wybor === 'auto' && ciemnySystem.matches)) ? 'ciemny' : 'jasny';
+        document.querySelectorAll('.motyw button').forEach(function (b) {
+          b.setAttribute('aria-checked', b.dataset.wybor === wybor ? 'true' : 'false');
+        });
+      }
+      window.ustawMotyw = function (nowy) {
+        wybor = nowy;
+        try { localStorage.setItem(KLUCZ, nowy); } catch (e) {}
+        html.classList.add('zmiana-motywu');
+        zastosuj();
+        setTimeout(function () { html.classList.remove('zmiana-motywu'); }, 300);
+      };
+      ciemnySystem.addEventListener('change', zastosuj);
+      document.addEventListener('DOMContentLoaded', zastosuj);
+      zastosuj();
+    })();
+  </script>
 </head>
 <body>
   <div class="aplikacja">
@@ -20,9 +46,16 @@
           <small>FILAR-USŁUGI <span aria-hidden="true">·</span> Rabka-Zdrój</small>
         </div>
       </div>
-      <form method="post" action="{{ url_for('zakoncz') }}">
-        <button class="zakoncz" type="submit" title="Wyłącza program">{{ m.ikona('zasilanie') }} Zakończ program</button>
-      </form>
+      <div class="naglowek-akcje">
+        <div class="motyw" role="radiogroup" aria-label="Wygląd">
+          <button type="button" role="radio" data-wybor="auto" title="Jak w systemie" aria-label="Jak w systemie" onclick="ustawMotyw('auto')">{{ m.ikona('monitor') }}</button>
+          <button type="button" role="radio" data-wybor="jasny" title="Jasny" aria-label="Jasny" onclick="ustawMotyw('jasny')">{{ m.ikona('slonce') }}</button>
+          <button type="button" role="radio" data-wybor="ciemny" title="Ciemny" aria-label="Ciemny" onclick="ustawMotyw('ciemny')">{{ m.ikona('ksiezyc') }}</button>
+        </div>
+        <form method="post" action="{{ url_for('zakoncz') }}">
+          <button class="zakoncz" type="submit" title="Wyłącza program">{{ m.ikona('zasilanie') }} Zakończ program</button>
+        </form>
+      </div>
     </header>
     {% endif %}
     <main class="tresc {{ szerokosc or '' }}">

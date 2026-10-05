@@ -10,7 +10,7 @@ na początku `app/static/styl.css`.
   czerwony tylko przy błędzie albo usuwaniu (i dopiero po najechaniu).
 - Brak połączeń z internetem: font systemowy (SF Pro na Macu), ikony jako SVG w kodzie
   (`app/templates/_makra.html`, kształty Lucide), bez CDN i Google Fonts.
-- Tylko jasny motyw.
+- Dwa motywy: jasny (z makiet) i ciemny. Przełącznik w nagłówku: jak w systemie / jasny / ciemny.
 
 ## Kolory
 | Token | Kolor | Token | Kolor |
@@ -22,6 +22,22 @@ na początku `app/static/styl.css`.
 | Tekst 1 / 2 / 3 | `#111827` / `#667085` / `#98A2B3` | Uwaga ikona / tło / ramka | `#F59E0B` / `#FFF7DF` / `#F2DA9E` |
 | Tekst przycisku | `#344054` | Uwaga tytuł / tekst | `#513C0B` / `#735C23` |
 | Nieaktywny tekst / tło | `#A9B1BD` / `#F2F4F7` | Błąd / tło / ramka | `#D84A4A` / `#FFF1F0` / `#F3B0AC` |
+
+## Tryb ciemny
+Te same nazwy zmiennych, inne wartości w bloku `:root[data-motyw="ciemny"]` w `styl.css`.
+Atrybut `data-motyw` ustawia skrypt w `<head>` (`baza.html`) jeszcze przed narysowaniem strony:
+wybór z przełącznika (pamiętany w przeglądarce, `localStorage`) albo ustawienie macOS, gdy wybrano „jak w systemie”.
+
+| Token | Ciemny | Token | Ciemny |
+|---|---|---|---|
+| Tło | `#0E1014` | Niebieski / hover | `#3D84F7` / `#5A96F8` |
+| Powierzchnia | `#171A1F` | Niebieski tło / ramka | `#1A2A45` / `#2F4D80` |
+| Powierzchnia subtelna | `#1E2228` | Sukces / tło | `#3BA678` / `#12271F` |
+| Ramka / mocna | `#2A2F37` / `#3A404A` | Uwaga / tło / ramka | `#F5A524` / `#29220F` / `#5A4820` |
+| Tekst 1 / 2 / 3 | `#F2F4F7` / `#A3ABB8` / `#737B88` | Błąd / tło / ramka | `#F06A6A` / `#2D1617` / `#642F2F` |
+
+Cienie w ciemnym motywie są czarne i mocniejsze (np. panel `0 18px 50px rgba(0,0,0,.45)`).
+Kolory zawsze przez zmienne – nowy kolor dopisz w obu motywach.
 
 ## Typografia (SF Pro → Inter → systemowy)
 | Styl | Rozmiar / interlinia | Grubość |
