@@ -35,6 +35,7 @@ app/templates/           HTML: baza.html (obramowanie, nagłówek, pasek kroków
 app/static/styl.css      wygląd; kolory, odstępy, cienie jako zmienne CSS na początku pliku
 docs/projekt-ui/         specyfikacja interfejsu (źródło prawdy dla wyglądu) i makiety
 narzedzia/zbuduj_szablony.py  buduje szablony/*.docx od zera (źródło prawdy dla szablonów)
+narzedzia/zbuduj_ikone.py     ikona/zrodlo.webp → ikona/ikona.icns (ikona na pulpicie) i app/static/ikona-*.png (logo, favicon)
 narzedzia/zbuduj_obiegowke_testowa.py  obiegówki testowe z fikcyjnymi danymi (tests/fixtures/obiegowka_testowa_*.docx)
 szablony/                gotowe szablony ze znacznikami {{ }}
 tests/                   pytest; fixtures: zanonimizowana obiegówka + oczekiwany wynik (JSON),
@@ -94,7 +95,10 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # instalacj
   Pobranie ZIP zostaje jako druga opcja.
 - **Wygląd:** zgodnie z `docs/projekt-ui/specyfikacja.md`. Wartości zmienia się w zmiennych CSS, nie w regułach.
   Font systemowy i ikony SVG w kodzie, bez CDN i Google Fonts (brak internetu). Animacje subtelne,
-  wyłączane przez „Ogranicz ruch” (`prefers-reduced-motion`). Logo w nagłówku jest tymczasowe.
+  wyłączane przez „Ogranicz ruch” (`prefers-reduced-motion`).
+- **Ikona programu** (`ikona/zrodlo.webp`, przezroczyste tło): favicon, logo w nagłówku, ekran wyłączenia
+  (wpisana w stronę jako data URI, bo serwer już się wyłącza) i ikona aplikacji na pulpicie (`instaluj_mac.sh` podmienia
+  `applet.icns`). Tylko w programie, nie w dokumentach. Po podmianie grafiki uruchom `narzedzia/zbuduj_ikone.py` (wymaga Pillow).
   Tryb ciemny: blok `:root[data-motyw="ciemny"]` w `styl.css`, przełącznik w nagłówku (system / jasny / ciemny,
   pamiętany w `localStorage`). Każdy kolor przez zmienną z wartością w obu motywach.
 - **Grafika:** baner z logo jest tylko w pełnomocnictwie (PB-5 to urzędowy formularz, bez grafiki).

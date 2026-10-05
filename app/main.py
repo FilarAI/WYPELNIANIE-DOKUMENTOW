@@ -6,6 +6,7 @@ Uruchomienie: python -m app.main [--port 5050] [--bez-przegladarki]
 from __future__ import annotations
 
 import argparse
+import base64
 import datetime
 import io
 import os
@@ -146,7 +147,10 @@ def pokaz_folder():
 @app.post("/zakoncz")
 def zakoncz():
     threading.Timer(0.5, lambda: os._exit(0)).start()
-    return render_template("koniec.html")
+    # Ikona wpisana w stronę: serwer znika po pół sekundy, osobny plik mógłby się już nie wczytać.
+    with open(os.path.join(app.static_folder, "ikona-192.png"), "rb") as f:
+        ikona = "data:image/png;base64," + base64.b64encode(f.read()).decode("ascii")
+    return render_template("koniec.html", ikona_programu=ikona)
 
 
 # Porty, których przeglądarki nie otwierają (ERR_UNSAFE_PORT), np. 5060/5061 – telefonia SIP.

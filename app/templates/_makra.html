@@ -27,14 +27,6 @@
      stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{{ SCIEZKI_IKON[nazwa] | safe }}</svg>
 {%- endmacro %}
 
-{# Znak biura – tymczasowy, do czasu właściwego logo. #}
-{% macro logo() -%}
-<svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
-  <path d="M3 13.5 16 4l13 8v16h-6.5V15.6L16 11.3l-6.5 4.6V28H3Z" fill="#3478F6"/>
-  <rect x="12.5" y="17.5" width="7" height="10.5" rx="1.5" fill="#3478F6" opacity=".45"/>
-</svg>
-{%- endmacro %}
-
 {% macro pole(nazwa, etykieta, wartosc, klasa="") -%}
 <label class="pole {{ klasa }}">
   <span>{{ etykieta }}</span>

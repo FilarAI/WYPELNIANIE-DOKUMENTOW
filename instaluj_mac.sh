@@ -25,6 +25,11 @@ if [ "$1" != "--bez-ikony" ]; then
   APLIKACJA="$HOME/Desktop/Dokumenty FILAR.app"
   rm -rf "$APLIKACJA"
   osacompile -o "$APLIKACJA" -e "do shell script \"open \" & quoted form of \"$KATALOG/start.command\""
+  # Własna ikona programu zamiast domyślnej ikony skryptu (touch odświeża ikonę w Finderze).
+  if [ -f "$KATALOG/ikona/ikona.icns" ]; then
+    cp "$KATALOG/ikona/ikona.icns" "$APLIKACJA/Contents/Resources/applet.icns"
+    touch "$APLIKACJA"
+  fi
   echo "Dodano ikonę „Dokumenty FILAR” na pulpicie – uruchamia program z folderu:"
   echo "  $KATALOG"
 fi

@@ -5,7 +5,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dokumenty FILAR</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M3 13.5 16 4l13 8v16h-6.5V15.6L16 11.3l-6.5 4.6V28H3Z' fill='%233478F6'/><rect x='12.5' y='17.5' width='7' height='10.5' rx='1.5' fill='%233478F6' opacity='.45'/></svg>">
+  <link rel="icon" type="image/png" sizes="64x64" href="{{ url_for('static', filename='ikona-64.png', v=wersja) }}">
+  <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='ikona-192.png', v=wersja) }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='ikona-192.png', v=wersja) }}">
   {# ?v= zmienia się przy każdej zmianie pliku, więc przeglądarka nie pokaże starego wyglądu z pamięci. #}
   <link rel="stylesheet" href="{{ url_for('static', filename='styl.css', v=wersja_stylu) }}">
   <script>
@@ -40,7 +42,7 @@
     {% if not bez_naglowka %}
     <header class="naglowek">
       <div class="marka">
-        {{ m.logo() }}
+        <img class="logo" src="{{ url_for('static', filename='ikona-64.png', v=wersja) }}" alt="" width="32" height="32">
         <div>
           <strong>Dokumenty FILAR</strong>
           <small>FILAR-USŁUGI <span aria-hidden="true">·</span> Rabka-Zdrój</small>

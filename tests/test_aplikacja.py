@@ -100,3 +100,10 @@ def test_przelacznik_motywu(klient):
     assert 'role="radiogroup"' in html and "ustawMotyw('ciemny')" in html
     css = (Path(__file__).parent.parent / "app" / "static" / "styl.css").read_text(encoding="utf-8")
     assert ':root[data-motyw="ciemny"]' in css
+
+
+def test_ikona_programu(klient):
+    html = klient.get("/").get_data(as_text=True)
+    assert 'rel="icon"' in html and "ikona-64.png" in html
+    assert klient.get("/static/ikona-64.png").status_code == 200
+    assert (Path(__file__).parent.parent / "ikona" / "ikona.icns").stat().st_size > 0

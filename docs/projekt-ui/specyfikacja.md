@@ -76,7 +76,7 @@ ekran „Gotowe” 640 → ekran wyłączenia 520. Nagłówek 72 px, pasek krok�
 2. Bez checkboxów wyboru dokumentów: program zawsze tworzy pełnomocnictwo i PB-5.
    Sekcja „Dokumenty” ma datę pełnomocnictwa i opcję osoby upoważnionej w PB-5.
 3. Po wybraniu pliku program od razu go wczytuje (stan „Wczytuję obiegówkę…”), bez stanu „Zmień plik”.
-4. Logo z makiety (niebieski dom) jest tymczasowe, do czasu właściwego logo biura.
+4. Logo: ikona programu (niebieski kafelek z dokumentem, `ikona/zrodlo.webp`) – w nagłówku 36 px, na ekranie wyłączenia 72 px, jako favicon i ikona aplikacji.
 5. Ekran wyłączenia nie ma przycisku „Uruchom ponownie” (serwer już nie działa), tylko wskazówkę
    o ikonie na pulpicie.
 6. Formularz pokazuje wszystkie prawdziwe pola (adres w częściach, jednostka administracyjna)

@@ -174,7 +174,7 @@ b, strong { font-weight: 600; }
   border-bottom: 1px solid var(--ramka);
 }
 .marka { display: flex; align-items: center; gap: 12px; }
-.marka .logo { width: 32px; height: 32px; }
+.marka .logo { width: 36px; height: 36px; display: block; }
 .marka strong { display: block; font-size: 16px; line-height: 22px; }
 .marka small { display: block; font-size: 12px; line-height: 16px; color: var(--tekst-2); }
 
@@ -532,11 +532,7 @@ h2 {
 }
 .wynik-ikona.sukces .rysuj { stroke-dasharray: 24; stroke-dashoffset: 24; animation: rysuj .4s var(--krzywa) .3s forwards; }
 .wynik-ikona.blad { background: var(--blad-tlo); color: var(--blad); box-shadow: 0 0 0 10px var(--blad-tlo); }
-.wynik-ikona.kafel {
-  width: 64px; height: 64px; margin: 0 0 28px; border-radius: 16px; color: var(--niebieski);
-  background: var(--powierzchnia-subtelna); border: 1px solid var(--ramka); box-shadow: var(--cien-karta);
-}
-.wynik-ikona.kafel .ikona { width: 30px; height: 30px; stroke-width: 1.75; }
+.ikona-programu { width: 72px; height: 72px; margin: 0 0 24px; animation: wskocz .5s var(--sprezyna) both; }
 .wynik .komunikat { width: 100%; }
 
 .lista-plikow {
