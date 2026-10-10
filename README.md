@@ -15,6 +15,12 @@ Wszystko działa na Twoim komputerze. Pliki nie są nigdzie wysyłane.
    bash /ścieżka/do/projektu/instaluj_mac.sh
    ```
 4. Na pulpicie pojawi się ikona **Dokumenty FILAR**.
+   Gdyby na pulpicie została stara ikona, uruchom w Terminalu `bash /ścieżka/do/projektu/instaluj_mac.sh --tylko-ikona`.
+
+Jeśli chcesz zachować poprzednią ikonę i dodać osobny skrót do tej kopii projektu,
+uruchom `bash /ścieżka/do/projektu/narzedzia/utworz_skrot_nowej_wersji.sh`.
+Na pulpicie powstanie **Dokumenty uzupełnianie NOWE.app**. Skrót wskazuje folder,
+w którym uruchomiono skrypt; po przeniesieniu projektu trzeba go utworzyć ponownie.
 
 ## Używanie
 1. Kliknij ikonę **Dokumenty FILAR**. Otworzy się okno Terminala (nie zamykaj go) i przeglądarka.

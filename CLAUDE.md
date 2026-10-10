@@ -35,8 +35,11 @@ app/generator.py         wypełnianie starych szablonów (docxtpl), wybór dokum
 app/zakonczenie_dokumenty.py  wypełnianie dostarczonych wzorów zakończenia budowy (python-docx)
 app/konfiguracja.py      dane pełnomocnika biura (osoba upoważniona w PB-5)
 app/zapis.py             zapis do wybranego folderu (okno macOS przez osascript), pamięć ostatniego folderu
-app/templates/, static/  HTML i CSS formularza
+app/templates/           HTML: baza.html (obramowanie, nagłówek, pasek kroków), _makra.html (ikony SVG, pola, odmiana)
+app/static/styl.css      wygląd; kolory, odstępy, cienie jako zmienne CSS na początku pliku
+docs/projekt-ui/         specyfikacja interfejsu (źródło prawdy dla wyglądu) i makiety
 narzedzia/zbuduj_szablony.py  buduje szablony/*.docx od zera (źródło prawdy dla szablonów)
+narzedzia/zbuduj_ikone.py     ikona/zrodlo.webp → ikona/ikona.icns (ikona na pulpicie) i app/static/ikona-*.png (logo, favicon)
 narzedzia/zbuduj_obiegowke_testowa.py  obiegówki testowe z fikcyjnymi danymi (tests/fixtures/obiegowka_testowa_*.docx)
 szablony/                gotowe szablony ze znacznikami {{ }}
 tests/                   pytest; fixtures: zanonimizowana obiegówka + oczekiwany wynik (JSON),
@@ -96,6 +99,15 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # instalacj
   otwiera systemowe okno macOS (`osascript … choose folder`). Ostatni folder jest zapamiętywany w `~/.dokumenty_filar.json`
   (w testach zmienna `DOKUMENTY_FILAR_USTAWIENIA`). Istniejące pliki nie są nadpisywane (dopisywane jest „ (2)”).
   Pobranie ZIP zostaje jako druga opcja.
+- **Wygląd:** zgodnie z `docs/projekt-ui/specyfikacja.md`. Wartości zmienia się w zmiennych CSS, nie w regułach.
+  Font systemowy i ikony SVG w kodzie, bez CDN i Google Fonts (brak internetu). Animacje subtelne,
+  wyłączane przez „Ogranicz ruch” (`prefers-reduced-motion`).
+- **Ikona programu** (`ikona/zrodlo.webp`, przezroczyste tło): favicon, logo w nagłówku, ekran wyłączenia
+  (wpisana w stronę jako data URI, bo serwer już się wyłącza) i ikona aplikacji na pulpicie. `instaluj_mac.sh` podmienia
+  `applet.icns`, usuwa `Assets.car` i `CFBundleIconName` (nowszy macOS bierze ikonę z nich), podpisuje aplikację na nowo
+  i ustawia ikonę w Finderze (NSWorkspace). Samą ikonę odtwarza `bash instaluj_mac.sh --tylko-ikona`. Tylko w programie, nie w dokumentach. Po podmianie grafiki uruchom `narzedzia/zbuduj_ikone.py` (wymaga Pillow).
+  Tryb ciemny: blok `:root[data-motyw="ciemny"]` w `styl.css`, przełącznik w nagłówku (system / jasny / ciemny,
+  pamiętany w `localStorage`). Każdy kolor przez zmienną z wartością w obu motywach.
 - **Grafika:** baner z logo jest tylko w pełnomocnictwie (PB-5 to urzędowy formularz, bez grafiki).
   Plik `szablony/grafika/naglowek_filar.png`: PNG na całą szerokość kartki (obecnie 2000 × 360 px = 21 × 3,8 cm,
   przycięty z grafiki 2000 × 667 z Canvy), treść min. ~60 px od krawędzi, bez daty (data jest tekstem pod banerem).
@@ -107,6 +119,8 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # instalacj
 - `app/__init__.py` → `WERSJA`: zmieniaj przy każdej paczce `Dokumenty-FILAR.zip` dla biura. Wersja i folder programu
   są w stopce każdej strony i w Terminalu, więc od razu widać, czy ikona uruchamia aktualny folder
   (po rozpakowaniu obok starego macOS tworzy „Dokumenty-FILAR 2”, a ikona dalej wskazuje stary folder).
+- Arkusz stylów jest wczytywany z `?v=<czas zmiany pliku>` (`wersja_stylu` w `app/main.py`),
+  więc przeglądarka nie pokazuje starego wyglądu z pamięci podręcznej.
 
 ## Jak dodać nowy dokument (szablon)
 1. Dodaj funkcję budującą szablon w `narzedzia/zbuduj_szablony.py` (znaczniki `{{ }}` z nazwami pól parsera).

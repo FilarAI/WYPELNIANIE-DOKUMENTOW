@@ -68,6 +68,11 @@ def test_stopka_pokazuje_wersje_i_folder(klient):
     assert WERSJA in html and FOLDER_PROGRAMU in html
 
 
+def test_arkusz_stylow_z_wersja(klient):
+    # Adres arkusza zmienia się razem z plikiem – przeglądarka nie pokaże starego wyglądu z pamięci.
+    assert "styl.css?v=" in klient.get("/").get_data(as_text=True)
+
+
 def test_wolny_port_omija_porty_blokowane_przez_przegladarki(monkeypatch):
     import socket
 
@@ -88,3 +93,17 @@ def test_wolny_port_omija_porty_blokowane_przez_przegladarki(monkeypatch):
 
     monkeypatch.setattr(socket, "socket", Zajete5058i5059)
     assert main._wolny_port(5058) == 5062
+
+
+def test_przelacznik_motywu(klient):
+    html = klient.get("/").get_data(as_text=True)
+    assert 'role="radiogroup"' in html and "ustawMotyw('ciemny')" in html
+    css = (Path(__file__).parent.parent / "app" / "static" / "styl.css").read_text(encoding="utf-8")
+    assert ':root[data-motyw="ciemny"]' in css
+
+
+def test_ikona_programu(klient):
+    html = klient.get("/").get_data(as_text=True)
+    assert 'rel="icon"' in html and "ikona-64.png" in html
+    assert klient.get("/static/ikona-64.png").status_code == 200
+    assert (Path(__file__).parent.parent / "ikona" / "ikona.icns").stat().st_size > 0

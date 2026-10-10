@@ -34,6 +34,22 @@ def test_podglad_pokazuje_pola_i_nie_zaznacza_oswiadczen():
     assert 'name="zak-rodzaje_obiektu" value="nowy" checked' not in html
 
 
+def test_podglad_jednego_zawiadomienia_pokazuje_tylko_potrzebne_pola():
+    app.config["TESTING"] = True
+    with app.test_client() as klient, open(FIXTURES / "obiegowka_przyklad.docx", "rb") as plik:
+        wybor = klient.post("/wybierz-dokumenty", data={"obiegowka": (plik, "obiegowka.docx")},
+                            content_type="multipart/form-data")
+        token = re.search(r'name="token" value="([^"]+)"', wybor.get_data(as_text=True)).group(1)
+        odpowiedz = klient.post("/podglad", data={"token": token, "dokumenty": "zawiadomienie"})
+    html = odpowiedz.get_data(as_text=True)
+    assert odpowiedz.status_code == 200
+    assert 'name="zak-kubatura_mieszkalna"' in html
+    assert 'name="zak-zgodnosc"' not in html
+    assert 'name="adres-identyfikator_dzialki"' not in html
+    assert 'name="inw-0-wojewodztwo"' not in html
+    assert 'name="data_pelnomocnictwa"' not in html
+
+
 def test_dane_z_formularza_zachowuja_wybrane_wartosci():
     formularz = MultiDict([
         ("inw-0-imie_nazwisko", "Jan Kowalski"),

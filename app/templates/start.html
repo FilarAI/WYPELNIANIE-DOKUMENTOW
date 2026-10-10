@@ -1,17 +1,38 @@
 {% extends "baza.html" %}
+{% import "_makra.html" as m %}
+{% set krok = 1 %}
 {% block tresc %}
-<section class="karta">
-  <h1>1. Wgraj obiegówkę</h1>
-  <p class="opis">Program odczyta z niej inwestora, nazwę i adres inwestycji oraz działkę. W następnym kroku
-    wybierzesz potrzebne dokumenty, sprawdzisz dane i wygenerujesz wybrane pliki.</p>
+<section class="wejscie">
+  <h1>Wgraj obiegówkę</h1>
+  <p class="podtytul">Dodaj plik Word, na podstawie którego przygotujemy dokumenty.</p>
 
-  {% if blad %}<div class="komunikat blad">{{ blad }}</div>{% endif %}
+  {% if blad %}
+  <div class="komunikat blad" role="alert">
+    {{ m.ikona('blad') }}
+    <div><b>Nie udało się wczytać obiegówki</b><p>{{ blad }}</p></div>
+  </div>
+  {% endif %}
 
   <form id="formularz-pliku" method="post" action="{{ url_for('wybierz_dokumenty') }}" enctype="multipart/form-data">
     <label class="upuszczanie" id="upuszczanie">
       <input type="file" name="obiegowka" id="plik" accept=".docx" required>
-      <span class="ikona">⬆</span>
-      <span><b>Przeciągnij tutaj plik obiegówki</b><br>albo kliknij, aby wybrać (.docx)</span>
+      <span class="upuszczanie-spoczynek">
+        <span class="upuszczanie-ikona">{{ m.ikona('plik') }}</span>
+        <b class="upuszczanie-tytul">Przeciągnij tutaj obiegówkę</b>
+        <span class="lub">lub</span>
+        <span class="przycisk">Wybierz plik</span>
+        <span class="upuszczanie-pomoc">Plik .docx</span>
+      </span>
+      <span class="upuszczanie-nad">
+        <span class="upuszczanie-ikona">{{ m.ikona('plik') }}</span>
+        <b class="upuszczanie-tytul">Upuść plik tutaj</b>
+        <span class="upuszczanie-pomoc">Plik .docx</span>
+      </span>
+      <span class="upuszczanie-wczytywanie">
+        <span class="kolko-ladowania" aria-hidden="true"></span>
+        <b class="upuszczanie-tytul">Wczytuję obiegówkę…</b>
+        <span class="upuszczanie-pomoc" id="nazwa-pliku"></span>
+      </span>
     </label>
   </form>
 </section>
@@ -20,11 +41,26 @@
   const strefa = document.getElementById('upuszczanie');
   const plik = document.getElementById('plik');
   const formularz = document.getElementById('formularz-pliku');
-  plik.addEventListener('change', () => plik.files.length && formularz.submit());
-  ['dragenter', 'dragover'].forEach(z => strefa.addEventListener(z, e => { e.preventDefault(); strefa.classList.add('aktywna'); }));
-  ['dragleave', 'drop'].forEach(z => strefa.addEventListener(z, e => { e.preventDefault(); strefa.classList.remove('aktywna'); }));
+  function wyslij() {
+    document.getElementById('nazwa-pliku').textContent = plik.files[0].name;
+    strefa.classList.remove('aktywna');
+    strefa.classList.add('wczytywanie');
+    formularz.submit();
+  }
+  plik.addEventListener('change', () => plik.files.length && wyslij());
+  let glebokosc = 0;  // dragenter/dragleave przychodzą też z elementów wewnątrz strefy
+  strefa.addEventListener('dragenter', e => { e.preventDefault(); glebokosc++; strefa.classList.add('aktywna'); });
+  strefa.addEventListener('dragover', e => e.preventDefault());
+  strefa.addEventListener('dragleave', () => { if (--glebokosc <= 0) { glebokosc = 0; strefa.classList.remove('aktywna'); } });
   strefa.addEventListener('drop', e => {
-    if (e.dataTransfer.files.length) { plik.files = e.dataTransfer.files; formularz.submit(); }
+    e.preventDefault();
+    glebokosc = 0;
+    strefa.classList.remove('aktywna');
+    if (e.dataTransfer.files.length) { plik.files = e.dataTransfer.files; wyslij(); }
   });
+  // Plik upuszczony obok strefy nie może otworzyć się w przeglądarce zamiast programu.
+  ['dragover', 'drop'].forEach(z => window.addEventListener(z, e => e.preventDefault()));
+  // Powrót przyciskiem „wstecz” pokazuje stronę z pamięci – zdejmij stan wczytywania.
+  window.addEventListener('pageshow', () => { strefa.classList.remove('wczytywanie'); formularz.reset(); });
 </script>
 {% endblock %}

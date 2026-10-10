@@ -6,6 +6,7 @@ Uruchomienie: python -m app.main [--port 5050] [--bez-przegladarki]
 from __future__ import annotations
 
 import argparse
+import base64
 import datetime
 import io
 import os
@@ -34,7 +35,15 @@ _blokada_wgranych = threading.Lock()
 @app.context_processor
 def informacje_o_programie():
     # Widoczne w stopce każdej strony – pozwala sprawdzić, czy ikona uruchamia aktualną wersję.
-    return {"wersja": WERSJA, "folder_programu": FOLDER_PROGRAMU}
+    return {"wersja": WERSJA, "folder_programu": FOLDER_PROGRAMU, "wersja_stylu": _wersja_stylu()}
+
+
+def _wersja_stylu() -> int:
+    # Czas zmiany styl.css w adresie arkusza: po aktualizacji programu przeglądarka pobiera nowy wygląd.
+    try:
+        return int(os.path.getmtime(os.path.join(app.static_folder, "styl.css")))
+    except OSError:
+        return 0
 
 POLA_INWESTORA = ["imie_nazwisko", "plec", "ulica", "nr_domu", "nr_lokalu", "kod_pocztowy", "miejscowosc",
                   "poczta", "wojewodztwo", "powiat", "gmina"]
@@ -199,7 +208,10 @@ def pokaz_folder():
 @app.post("/zakoncz")
 def zakoncz():
     threading.Timer(0.5, lambda: os._exit(0)).start()
-    return render_template("koniec.html")
+    # Ikona wpisana w stronę: serwer znika po pół sekundy, osobny plik mógłby się już nie wczytać.
+    with open(os.path.join(app.static_folder, "ikona-192.png"), "rb") as f:
+        ikona = "data:image/png;base64," + base64.b64encode(f.read()).decode("ascii")
+    return render_template("koniec.html", ikona_programu=ikona)
 
 
 # Porty, których przeglądarki nie otwierają (ERR_UNSAFE_PORT), np. 5060/5061 – telefonia SIP.
