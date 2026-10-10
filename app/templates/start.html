@@ -3,11 +3,11 @@
 <section class="karta">
   <h1>1. Wgraj obiegówkę</h1>
   <p class="opis">Program odczyta z niej inwestora, nazwę i adres inwestycji oraz działkę. W następnym kroku
-    sprawdzisz dane i wygenerujesz <b>Pełnomocnictwo</b> oraz <b>PB-5</b>.</p>
+    wybierzesz potrzebne dokumenty, sprawdzisz dane i wygenerujesz wybrane pliki.</p>
 
   {% if blad %}<div class="komunikat blad">{{ blad }}</div>{% endif %}
 
-  <form id="formularz-pliku" method="post" action="{{ url_for('podglad') }}" enctype="multipart/form-data">
+  <form id="formularz-pliku" method="post" action="{{ url_for('wybierz_dokumenty') }}" enctype="multipart/form-data">
     <label class="upuszczanie" id="upuszczanie">
       <input type="file" name="obiegowka" id="plik" accept=".docx" required>
       <span class="ikona">⬆</span>

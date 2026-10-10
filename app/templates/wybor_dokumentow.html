@@ -1,0 +1,16 @@
+{% extends "baza.html" %}
+{% block tresc %}
+<section class="karta">
+  <h1>2. Wybierz dokumenty</h1>
+  <p class="opis">Obiegówka: <b>{{ nazwa_pliku }}</b>. Zaznacz dokumenty, których potrzebujesz. W następnym kroku zobaczysz tylko dotyczące ich pola.</p>
+  <form method="post" action="{{ url_for('podglad') }}" onsubmit="if (!this.querySelector('input[name=dokumenty]:checked')) { alert('Wybierz co najmniej jeden dokument.'); return false; }">
+    <input type="hidden" name="token" value="{{ token }}">
+    <div class="lista-dokumentow">
+      {% for kod, nazwa in dokumenty.items() %}
+      <label><input type="checkbox" name="dokumenty" value="{{ kod }}" {{ 'checked' if kod in domyslne }}> <span>{{ nazwa }}</span></label>
+      {% endfor %}
+    </div>
+    <div class="akcje"><button type="submit" class="przycisk">Dalej: sprawdź dane</button></div>
+  </form>
+</section>
+{% endblock %}

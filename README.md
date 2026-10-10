@@ -1,7 +1,8 @@
 # Wypełnianie dokumentów – FILAR-USŁUGI
 
 Lokalny program: wgrywasz obiegówkę (.docx), sprawdzasz odczytane dane i pobierasz gotowe
-**Pełnomocnictwo** oraz **PB-5** (oświadczenie o prawie do dysponowania nieruchomością).
+wybrane dokumenty: **Pełnomocnictwo**, **PB-5**, **Oświadczenie kierownika budowy**
+oraz **Zawiadomienie o zakończeniu budowy**.
 Wszystko działa na Twoim komputerze. Pliki nie są nigdzie wysyłane.
 
 ## Instalacja na Macu (jednorazowo)
@@ -18,9 +19,15 @@ Wszystko działa na Twoim komputerze. Pliki nie są nigdzie wysyłane.
 ## Używanie
 1. Kliknij ikonę **Dokumenty FILAR**. Otworzy się okno Terminala (nie zamykaj go) i przeglądarka.
 2. Przeciągnij obiegówkę na stronę.
-3. Sprawdź dane. Żółte ramki oznaczają niespójności w obiegówce. Popraw, co trzeba.
-4. Wybierz folder (przycisk **Wybierz…**) i kliknij **Zapisz dokumenty w folderze**. Program zapamięta folder.
+3. Wybierz dokumenty, które chcesz przygotować.
+4. Sprawdź dane. Żółte ramki oznaczają niespójności w obiegówce. Popraw, co trzeba.
+   Dane kierownika budowy są ustawione na Bartłomieja Filara. Pozostałe nieznane dane
+   i oświadczenia uzupełnij po sprawdzeniu; program nie zaznacza ich sam.
+5. Wybierz folder (przycisk **Wybierz…**) i kliknij **Zapisz dokumenty w folderze**. Program zapamięta folder.
    Możesz też kliknąć **Pobierz jako ZIP**.
-5. Aby wyłączyć program, kliknij **Zakończ program** albo zamknij okno Terminala.
+6. Aby wyłączyć program, kliknij **Zakończ program** albo zamknij okno Terminala.
+
+Nowe wzory pochodzą z dokumentów dostarczonych przez użytkownika. Przed złożeniem
+sprawdź daty i podstawy prawne wydrukowanych wzorów oraz podpisz dokumenty.
 
 Szczegóły techniczne: [CLAUDE.md](CLAUDE.md).

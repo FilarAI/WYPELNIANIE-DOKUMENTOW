@@ -17,6 +17,7 @@ from pathlib import Path
 from docxtpl import DocxTemplate
 
 from app.konfiguracja import BRAK_LOKALU, PELNOMOCNIK, PUSTE_POLE
+from app import dokumenty, zakonczenie_dokumenty
 
 SZABLONY = Path(__file__).resolve().parent.parent / "szablony"
 SZABLON_PELNOMOCNICTWA = SZABLONY / "pelnomocnictwo.docx"
@@ -147,18 +148,27 @@ def _nazwisko(imie_nazwisko: str) -> str:
 
 
 def generuj_dokumenty(dane: dict) -> dict[str, bytes]:
-    """Zwraca {nazwa pliku: zawartość .docx}: jedno pełnomocnictwo + PB-5 dla każdego inwestora."""
+    """Zwraca tylko wybrane dokumenty; PB-5 osobno dla każdego inwestora."""
     inwestorzy = dane["inwestorzy"]
+    wybrane = dane.get("dokumenty", dokumenty.DOMYSLNE)
     nazwiska = list(dict.fromkeys(_nazwisko(i["imie_nazwisko"]) for i in inwestorzy if i["imie_nazwisko"]))
-    pliki = {f"Pelnomocnictwo_{_do_nazwy_pliku('_'.join(nazwiska) or 'inwestor')}.docx":
-             _wypelnij(SZABLON_PELNOMOCNICTWA, kontekst_pelnomocnictwa(dane))}
-    for nr, inwestor in enumerate(inwestorzy, start=1):
-        czesci = inwestor["imie_nazwisko"].split()
-        nazwa = "_".join(czesci[-1:] + czesci[:-1]) or f"inwestor_{nr}"
-        plik = f"PB-5_{_do_nazwy_pliku(nazwa)}.docx"
-        if plik in pliki:
-            plik = plik.replace(".docx", f"_{nr}.docx")
-        pliki[plik] = _wypelnij(SZABLON_PB5, kontekst_pb5(dane, inwestor))
+    sufiks = _do_nazwy_pliku("_".join(nazwiska) or "inwestor")
+    pliki = {}
+    if "pelnomocnictwo" in wybrane:
+        pliki[f"Pelnomocnictwo_{sufiks}.docx"] = _wypelnij(SZABLON_PELNOMOCNICTWA,
+                                                             kontekst_pelnomocnictwa(dane))
+    if "pb5" in wybrane:
+        for nr, inwestor in enumerate(inwestorzy, start=1):
+            czesci = inwestor["imie_nazwisko"].split()
+            nazwa = "_".join(czesci[-1:] + czesci[:-1]) or f"inwestor_{nr}"
+            plik = f"PB-5_{_do_nazwy_pliku(nazwa)}.docx"
+            if plik in pliki:
+                plik = plik.replace(".docx", f"_{nr}.docx")
+            pliki[plik] = _wypelnij(SZABLON_PB5, kontekst_pb5(dane, inwestor))
+    if "oswiadczenie" in wybrane:
+        pliki[f"Oswiadczenie_kierownika_{sufiks}.docx"] = zakonczenie_dokumenty.oswiadczenie(dane)
+    if "zawiadomienie" in wybrane:
+        pliki[f"Zawiadomienie_o_zakonczeniu_{sufiks}.docx"] = zakonczenie_dokumenty.zawiadomienie(dane)
     return pliki
 
 

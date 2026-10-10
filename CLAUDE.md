@@ -6,9 +6,12 @@ Użytkownik wgrywa **obiegówkę** projektu (.docx). Program odczytuje z niej da
 i adres inwestycji, działka) i pokazuje je w formularzu do poprawy. Następnie generuje dokumenty z szablonów biura:
 1. **Pełnomocnictwo** (`szablony/pelnomocnictwo.docx`): jedno, wspólne dla wszystkich inwestorów,
 2. **PB-5**, czyli oświadczenie o posiadanym prawie do dysponowania nieruchomością na cele budowlane
-   (`szablony/pb5_oswiadczenie.docx`): **osobny plik dla każdego inwestora**.
+   (`szablony/pb5_oswiadczenie.docx`): **osobny plik dla każdego inwestora**,
+3. **Oświadczenie kierownika budowy** (`szablony/oswiadczenie_kierownika.docx`),
+4. **Zawiadomienie o zakończeniu budowy** (`szablony/zawiadomienie_o_zakonczeniu.docx`).
 
-Zakres na start: tylko obiegówka i te dwa szablony. Kolejne dokumenty mogą dojść później.
+Po wgraniu obiegówki użytkownik wybiera dokumenty, a formularz pokazuje pola tylko dla wybranych typów.
+Kierownik budowy w oświadczeniu jest zawsze Bartłomiej Filar z `app/konfiguracja.py`.
 
 ## Środowisko docelowe
 - macOS. Program uruchamia się ikoną „Dokumenty FILAR” na pulpicie: `start.command` uruchamia serwer Flask
@@ -24,11 +27,12 @@ Zakres na start: tylko obiegówka i te dwa szablony. Kolejne dokumenty mogą doj
 
 ## Struktura
 ```
-app/main.py              Flask: / (upload) → /podglad (formularz) → /generuj (zapis do folderu lub ZIP),
+app/main.py              Flask: / (upload) → /wybierz-dokumenty → /podglad (formularz) → /generuj (zapis do folderu lub ZIP),
                          /wybierz-folder, /pokaz-folder, /zakoncz
 app/parser_obiegowki.py  obiegówka → słownik danych + lista ostrzeżeń (opis pól w docstringu)
 app/teryt.py             identyfikator działki / nazwa miejscowości → województwo, powiat, gmina
-app/generator.py         wypełnianie szablonów (docxtpl), formy gramatyczne pełnomocnictwa
+app/generator.py         wypełnianie starych szablonów (docxtpl), wybór dokumentów
+app/zakonczenie_dokumenty.py  wypełnianie dostarczonych wzorów zakończenia budowy (python-docx)
 app/konfiguracja.py      dane pełnomocnika biura (osoba upoważniona w PB-5)
 app/zapis.py             zapis do wybranego folderu (okno macOS przez osascript), pamięć ostatniego folderu
 app/templates/, static/  HTML i CSS formularza
@@ -70,7 +74,9 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # instalacj
   i `tests/fixtures/`. W fixture'ach są tylko dane zanonimizowane (inwestor: Jan Kowalski, ul. Przykładowa 1).
 - **Spójność danych:** parser porównuje te same pola ze wszystkich stron obiegówki i **zawsze zwraca
   ostrzeżenia** o różnicach. Nigdy nie wybiera po cichu jednej wersji. Ostrzeżenia są pokazywane w formularzu.
-- **Szablony** zmienia się w `narzedzia/zbuduj_szablony.py`, a potem buduje od nowa (nie ręcznie w Wordzie).
+- **Szablony Pełnomocnictwa i PB-5** zmienia się w `narzedzia/zbuduj_szablony.py`, a potem buduje od nowa.
+  Dwa wzory zakończenia budowy są dostarczonymi przez użytkownika drukami i zachowują ich układ;
+  wypełnia je `app/zakonczenie_dokumenty.py`.
   Znacznik `{{ pole }}` musi być w jednym runie, a `"\n"` w wartości daje złamanie linii.
   Puste pola generator zastępuje kropkami (`PUSTE_POLE`), żeby można je było uzupełnić długopisem.
 - Pełnomocnictwo: formy gramatyczne zależą od liczby i płci inwestorów

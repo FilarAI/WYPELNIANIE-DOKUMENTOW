@@ -37,12 +37,14 @@
 
 {% block tresc %}
 <form method="post" action="{{ url_for('generuj') }}" class="karta">
+  <input type="hidden" name="wybor_potwierdzony" value="tak">
   <div class="tytul-kroku">
-    <h1>2. Sprawdź dane</h1>
+    <h1>3. Sprawdź dane</h1>
     <a class="przycisk przycisk-cichy" href="{{ url_for('start') }}">← Inna obiegówka</a>
   </div>
   <p class="opis">Odczytano z pliku <b>{{ nazwa_pliku }}</b> (strony: {{ dane.zrodla | join(' · ') }}).
     Popraw, co trzeba – zmiany trafią tylko do generowanych dokumentów, obiegówka zostaje bez zmian.</p>
+  <p class="podpowiedz">Wybrane: {% for kod in wybrane %}{{ nazwy_dokumentow[kod] }}{{ ', ' if not loop.last }}<input type="hidden" name="dokumenty" value="{{ kod }}">{% endfor %}</p>
 
   {% if dane.ostrzezenia %}
   <div class="komunikat ostrzezenie">
@@ -75,20 +77,25 @@
   </div>
   <p class="podpowiedz" id="komunikat-dzialki">Działka pod adresem inwestora? Kliknij „↑ Przepisz ten adres do działki” w bloku inwestora.</p>
 
-  <h2>Inwestorzy <small>– każdy dostaje osobne PB-5, pełnomocnictwo jest wspólne</small></h2>
+  <h2>Inwestorzy <small>– PB-5 powstanie osobno dla każdego inwestora, jeśli je wybrano</small></h2>
   <div id="inwestorzy" class="{{ 'z-ostrzezeniem' if 'inwestor' in pola_z_ostrzezeniem }}">
     {% for i in dane.inwestorzy %}{{ inwestor(loop.index0, i) }}{% endfor %}
   </div>
   <button type="button" class="przycisk przycisk-cichy" onclick="dodajInwestora()">+ Dodaj inwestora</button>
 
-  <h2>Dokumenty</h2>
+  {% if 'pelnomocnictwo' in wybrane or 'pb5' in wybrane %}<h2>Dokumenty</h2>
   <div class="siatka">
-    {{ pole('data_pelnomocnictwa', 'Data pełnomocnictwa', dzisiaj, 'waskie') }}
+    {% if 'pelnomocnictwo' in wybrane %}{{ pole('data_pelnomocnictwa', 'Data pełnomocnictwa', dzisiaj, 'waskie') }}{% endif %}
+    {% if 'pb5' in wybrane %}
     <label class="pole szeroko zaznacz">
       <input type="checkbox" name="upowazniony_w_pb5" value="tak">
       <span>Wpisz w PB-5 osobę upoważnioną (Bartłomiej Filar) – gdy oświadczenie składa pełnomocnik</span>
     </label>
+    {% endif %}
   </div>
+  {% endif %}
+
+  {% if 'oswiadczenie' in wybrane or 'zawiadomienie' in wybrane %}{% include '_zakonczenie.html' %}{% endif %}
 
   <details class="dodatkowe">
     <summary>Pozostałe dane z obiegówki (tylko podgląd)</summary>

@@ -1,0 +1,127 @@
+{% macro tekst(nazwa, etykieta, klasa='') -%}
+<label class="pole {{ klasa }}">
+  <span>{{ etykieta }}</span>
+  <input type="text" name="zak-{{ nazwa }}" value="{{ zak.get(nazwa, '') }}" maxlength="{{ limity_zak[nazwa] }}">
+</label>
+{%- endmacro %}
+
+{% macro wybor(nazwa, etykieta, klasa='') -%}
+<label class="pole {{ klasa }}">
+  <span>{{ etykieta }}</span>
+  <select name="zak-{{ nazwa }}">
+    <option value="">— wybierz —</option>
+    {% for kod, opis in wybory_zak[nazwa] %}
+    <option value="{{ kod }}" {{ 'selected' if zak.get(nazwa) == kod }}>{{ opis }}</option>
+    {% endfor %}
+  </select>
+</label>
+{%- endmacro %}
+
+<h2>Zakończenie budowy</h2>
+<p class="podpowiedz zak-wstep">Inwestorzy, inwestycja i działka są wpisani z obiegówki. Miejscowość i bieżącą datę możesz poprawić. Pozostałe fakty i oświadczenia uzupełnij tylko po sprawdzeniu; puste pola w dokumencie pozostaną do ręcznego wpisania.</p>
+
+<div class="siatka">
+  {{ tekst('miejscowosc_sporzadzenia', 'Miejscowość sporządzenia') }}
+  {{ tekst('data_sporzadzenia', 'Data sporządzenia', 'waskie') }}
+  {{ tekst('pozwolenie_znak', 'Znak / numer pozwolenia na budowę') }}
+  {{ tekst('pozwolenie_data', 'Data pozwolenia', 'waskie') }}
+  {{ tekst('pozwolenie_organ', 'Organ wydający pozwolenie (forma po „przez”)') }}
+</div>
+
+{% if 'oswiadczenie' in wybrane %}<details class="zak-blok" open>
+  <summary>Oświadczenie kierownika budowy</summary>
+  <div class="zak-tresc">
+    <div class="siatka">
+      <p class="zak-stale">Kierownik budowy: <b>{{ kierownik.imie_nazwisko }}</b>, {{ kierownik_adres }}. Podpis pozostaje do złożenia na dokumencie.</p>
+      {{ wybor('zgodnosc', 'Wykonanie zgodne z projektem') }}
+      {{ wybor('teren_doprowadzony', 'Teren doprowadzony do należytego stanu') }}
+      {{ wybor('tereny_przylegle', 'Tereny przyległe właściwie zagospodarowane') }}
+      {{ wybor('pomiary_powierzchni', 'Dokonano pomiarów powierzchni') }}
+      {{ wybor('obiekt_nadaje_sie', 'Obiekt nadaje się do użytkowania') }}
+      <label class="pole cala">
+        <span>Nieistotne odstępstwa uzgodnione z projektantem – opis, jeśli występują</span>
+        <textarea name="zak-odstepstwa" rows="3" maxlength="{{ limity_zak.odstepstwa }}">{{ zak.get('odstepstwa', '') }}</textarea>
+      </label>
+    </div>
+    <h3>Parametry energetyczne z pomiarów</h3>
+    <div class="siatka">
+      {{ tekst('ep', 'Wskaźnik EP [kWh/(m² × rok)]') }}
+      {{ tekst('u_sciany', 'U – ściany zewnętrzne [W/(m² × K)]') }}
+      {{ tekst('u_dach', 'U – dach / strop [W/(m² × K)]') }}
+      {{ tekst('u_podloga', 'U – podłoga na gruncie [W/(m² × K)]') }}
+      {{ tekst('u_okna', 'U – okna i drzwi balkonowe [W/(m² × K)]') }}
+      {{ tekst('u_drzwi', 'U – drzwi zewnętrzne [W/(m² × K)]') }}
+    </div>
+  </div>
+</details>
+{% endif %}
+
+{% if 'zawiadomienie' in wybrane %}<details class="zak-blok" open>
+  <summary>Zawiadomienie o zakończeniu budowy</summary>
+  <div class="zak-tresc">
+    <div class="siatka">
+      {{ tekst('telefon_inwestora', 'Telefon inwestora') }}
+      {{ tekst('liczba_budynkow', 'Liczba budynków mieszkalnych na posesji', 'waskie') }}
+      {{ tekst('nr_budynku_sasiada', 'Nr budynku sąsiada', 'waskie') }}
+      {{ wybor('odbior_czesciowy', 'Czy był odbiór częściowy?') }}
+      {{ tekst('pozwolenie_uzytkowanie_data', 'Data wcześniejszego pozwolenia na użytkowanie') }}
+      {{ tekst('pozwolenie_uzytkowanie_znak', 'Znak wcześniejszego pozwolenia') }}
+      {{ tekst('data_zgloszenia_rozpoczecia', 'Data zgłoszenia rozpoczęcia robót') }}
+    </div>
+
+    <h3>Rodzaj oddawanego obiektu</h3>
+    <div class="zak-opcje">
+      {% for kod, opis in rodzaje_obiektu %}
+      <label><input type="checkbox" name="zak-rodzaje_obiektu" value="{{ kod }}"> {{ opis }}</label>
+      {% endfor %}
+    </div>
+
+    <h3>Część mieszkalna lub usługowa</h3>
+    <div class="siatka">
+      {{ tekst('kubatura_mieszkalna', 'Kubatura [m³]') }}
+      {{ tekst('pow_zabudowy_mieszkalna', 'Powierzchnia zabudowy [m²]') }}
+      {{ tekst('pow_uzytkowa_mieszkalna', 'Powierzchnia użytkowa [m²]') }}
+      {{ tekst('pow_mieszkania', 'Powierzchnia mieszkania [m²]') }}
+      {{ tekst('pow_uslugowa', 'Powierzchnia usługowa [m²]') }}
+      {{ tekst('pow_garazu', 'Powierzchnia garażu [m²]') }}
+      {{ tekst('pow_calkowita', 'Powierzchnia całkowita [m²]') }}
+      {{ tekst('liczba_izb', 'Liczba izb') }}
+      {{ tekst('liczba_mieszkan', 'Liczba mieszkań') }}
+      {{ tekst('kondygnacje_nadziemne', 'Kondygnacje nadziemne') }}
+      {{ tekst('kondygnacje_podziemne', 'Kondygnacje podziemne') }}
+    </div>
+
+    <h3>Inny budynek – gospodarczy lub garaż</h3>
+    <div class="siatka">
+      {{ tekst('kubatura_innego', 'Kubatura [m³]') }}
+      {{ tekst('pow_zabudowy_innego', 'Powierzchnia zabudowy [m²]') }}
+      {{ tekst('pow_uzytkowa_innego', 'Powierzchnia użytkowa [m²]') }}
+      {{ tekst('kondygnacje_nadziemne_innego', 'Kondygnacje nadziemne') }}
+      {{ tekst('kondygnacje_podziemne_innego', 'Kondygnacje podziemne') }}
+    </div>
+
+    <h3>Charakterystyka i instalacje</h3>
+    <div class="siatka">
+      {{ wybor('forma_budownictwa', 'Forma budownictwa') }}
+      {{ wybor('technologia', 'Technologia wznoszenia') }}
+      {{ wybor('rodzaj_scian', 'Rodzaj ścian') }}
+      {{ wybor('kanalizacja', 'Odprowadzenie ścieków') }}
+      {{ tekst('zbiornik_pojemnosc', 'Pojemność zbiornika [m³]') }}
+      {{ wybor('pobor_wody', 'Pobór wody') }}
+      {{ wybor('ogrzewanie', 'Ogrzewanie') }}
+      {{ tekst('inne_ogrzewanie', 'Inne ogrzewanie – jakie?') }}
+      {{ wybor('gaz_sieciowy', 'Gaz sieciowy') }}
+    </div>
+
+    <h3>Załączniki – zaznacz tylko faktycznie dołączane</h3>
+    <div class="zak-opcje">
+      {% for kod, opis in zalaczniki %}
+      <label><input type="checkbox" name="zak-zalaczniki" value="{{ kod }}"> {{ opis }}</label>
+      {% endfor %}
+    </div>
+    <div class="siatka zak-inne">
+      {{ tekst('inne_zalaczniki', 'Inne załączniki', 'cala') }}
+    </div>
+  </div>
+</details>
+{% endif %}

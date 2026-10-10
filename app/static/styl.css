@@ -110,11 +110,28 @@ h2 small { font-weight: 400; color: var(--cichy); }
 .dodatkowe dt { font-weight: 600; }
 .dodatkowe dd { margin: 0; color: var(--tekst); }
 
+.zak-wstep { margin: 0 0 14px; }
+.zak-blok { border: 1px solid var(--ramka); border-radius: 10px; margin-top: 14px; }
+.zak-blok summary { cursor: pointer; font-weight: 600; padding: 12px 14px; }
+.zak-blok[open] summary { border-bottom: 1px solid var(--ramka); }
+.zak-tresc { padding: 14px; }
+.zak-tresc h3 { font-size: 14px; margin: 20px 0 10px; }
+.zak-tresc h3:first-child { margin-top: 0; }
+.zak-opcje { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; }
+.zak-opcje label { display: flex; align-items: flex-start; gap: 7px; font-size: 13px; }
+.zak-opcje input { margin: 2px 0 0; }
+.zak-inne { margin-top: 14px; }
+.zak-stale { grid-column: 1 / -1; margin: 0; font-size: 14px; }
+.lista-dokumentow { display: grid; gap: 10px; margin: 22px 0; }
+.lista-dokumentow label { display: flex; gap: 12px; align-items: center; padding: 13px 15px; border: 1px solid var(--ramka); border-radius: 10px; cursor: pointer; }
+.lista-dokumentow input { width: 18px; height: 18px; }
+
 @media (max-width: 700px) {
   .siatka { grid-template-columns: repeat(2, 1fr); }
   .pole, .pole.szeroko { grid-column: 1 / -1; }
   .pole.waskie { grid-column: span 1; }
   .dodatkowe dl { grid-template-columns: 1fr; }
+  .zak-opcje { grid-template-columns: 1fr; }
 }
 
 .wybor-folderu { display: flex; align-items: flex-end; gap: 10px; }

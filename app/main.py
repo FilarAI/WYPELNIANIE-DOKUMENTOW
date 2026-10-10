@@ -10,20 +10,25 @@ import datetime
 import io
 import os
 import re
+import secrets
 import socket
 import threading
+import time
 import traceback
 import webbrowser
 
 from flask import Flask, Response, jsonify, render_template, request
 
-from app import WERSJA, teryt, zapis
+from app import WERSJA, dokumenty, teryt, zapis, zakonczenie
 from app.generator import generuj_dokumenty, spakuj
 from app.parser_obiegowki import NAZWY_POL, odczytaj_obiegowke
+from app.konfiguracja import PELNOMOCNIK
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024
 FOLDER_PROGRAMU = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_wgrane: dict[str, tuple[float, dict, str]] = {}
+_blokada_wgranych = threading.Lock()
 
 
 @app.context_processor
@@ -42,28 +47,77 @@ def start():
     return render_template("start.html")
 
 
-@app.post("/podglad")
-def podglad():
+def _odczytaj_plik():
     plik = request.files.get("obiegowka")
     if not plik or not plik.filename:
-        return render_template("start.html", blad="Nie wybrano pliku.")
+        raise ValueError("Nie wybrano pliku.")
     if not plik.filename.lower().endswith(".docx"):
-        return render_template("start.html", blad="Obsługiwane są tylko pliki Word .docx. "
-                                                  "Plik .doc otwórz w Wordzie i zapisz jako .docx.")
+        raise ValueError("Obsługiwane są tylko pliki Word .docx. Plik .doc otwórz w Wordzie i zapisz jako .docx.")
     try:
-        # Wczytanie do pamięci: strumień uploadu na Pythonie 3.9 nie obsługuje seekable(), a docx to ZIP.
         dane = odczytaj_obiegowke(io.BytesIO(plik.read()))
-    except ValueError as e:
-        return render_template("start.html", blad=str(e))
+    except ValueError:
+        raise
     except Exception:
         traceback.print_exc()
-        return render_template("start.html", blad="Nie udało się odczytać pliku. Czy to na pewno dokument Word (.docx)?")
+        raise ValueError("Nie udało się odczytać pliku. Czy to na pewno dokument Word (.docx)?")
     if not dane["inwestorzy"]:
         dane["inwestorzy"] = [{k: "" for k in POLA_INWESTORA} | {"plec": "M"}]
+    return dane, plik.filename
+
+
+@app.post("/wybierz-dokumenty")
+def wybierz_dokumenty():
+    try:
+        dane, nazwa = _odczytaj_plik()
+    except ValueError as e:
+        return render_template("start.html", blad=str(e)), 400
+    token = secrets.token_urlsafe(24)
+    with _blokada_wgranych:
+        teraz = time.monotonic()
+        for stary, (czas, _, _) in list(_wgrane.items()):
+            if teraz - czas > 3600:
+                del _wgrane[stary]
+        if len(_wgrane) >= 100:
+            najstarszy = min(_wgrane, key=lambda x: _wgrane[x][0])
+            del _wgrane[najstarszy]
+        _wgrane[token] = (teraz, dane, nazwa)
+    return render_template("wybor_dokumentow.html", token=token, nazwa_pliku=nazwa,
+                           dokumenty=dokumenty.DOKUMENTY, domyslne=dokumenty.DOMYSLNE)
+
+
+@app.post("/podglad")
+def podglad():
+    token = request.form.get("token")
+    if token:
+        with _blokada_wgranych:
+            wgrane = _wgrane.get(token)
+        if not wgrane or time.monotonic() - wgrane[0] > 3600:
+            return render_template("start.html", blad="Wygasła wgrana obiegówka. Wgraj ją ponownie."), 400
+        _, dane, nazwa = wgrane
+        try:
+            wybrane = dokumenty.odczytaj_wybor(request.form)
+        except ValueError as e:
+            return Response(str(e), status=400, mimetype="text/plain; charset=utf-8")
+    else:
+        # Zgodność ze starszymi formularzami i testami wysyłającymi plik wprost do /podglad.
+        try:
+            dane, nazwa = _odczytaj_plik()
+        except ValueError as e:
+            return render_template("start.html", blad=str(e)), 400
+        wybrane = dokumenty.DOMYSLNE
     pola_z_ostrzezeniem = {o["pole"] for o in dane["ostrzezenia"]}
-    return render_template("podglad.html", dane=dane, nazwa_pliku=plik.filename,
+    return render_template("podglad.html", dane=dane, nazwa_pliku=nazwa,
+                           wybrane=wybrane, nazwy_dokumentow=dokumenty.DOKUMENTY,
                            pola_z_ostrzezeniem=pola_z_ostrzezeniem, nazwy_pol=NAZWY_POL,
                            dzisiaj=datetime.date.today().strftime("%d.%m.%Y"),
+                           zak={"miejscowosc_sporzadzenia": dane["adres_inwestycji"].get("miejscowosc", ""),
+                                "data_sporzadzenia": datetime.date.today().strftime("%d.%m.%Y")},
+                           limity_zak=zakonczenie.POLA_TEKSTOWE,
+                           wybory_zak=zakonczenie.WYBORY,
+                           rodzaje_obiektu=zakonczenie.RODZAJE_OBIEKTU,
+                           zalaczniki=zakonczenie.ZALACZNIKI,
+                           kierownik=PELNOMOCNIK,
+                           kierownik_adres=zakonczenie.adres_kierownika(),
                            folder_zapisu=zapis.ostatni_folder())
 
 
@@ -90,12 +144,17 @@ def _dane_z_formularza(f) -> dict:
         "inwestorzy": inwestorzy,
         "data_pelnomocnictwa": f.get("data_pelnomocnictwa", "").strip(),
         "upowazniony_w_pb5": f.get("upowazniony_w_pb5") == "tak",
+        "dokumenty": dokumenty.odczytaj_wybor(f, domyslne=f.get("wybor_potwierdzony") != "tak"),
+        "zakonczenie": zakonczenie.odczytaj_z_formularza(f),
     }
 
 
 @app.post("/generuj")
 def generuj():
-    dane = _dane_z_formularza(request.form)
+    try:
+        dane = _dane_z_formularza(request.form)
+    except ValueError as e:
+        return Response(str(e), status=400, mimetype="text/plain; charset=utf-8")
     if not dane["inwestorzy"]:
         return Response("Podaj co najmniej jednego inwestora (imię i nazwisko). Wróć do formularza.", status=400,
                         mimetype="text/plain; charset=utf-8")
@@ -112,7 +171,9 @@ def generuj():
         zapis.zapamietaj_folder(str(folder))
         return render_template("zapisano.html", folder=folder, zapisane=[p.name for p in zapisane])
 
-    nazwa_zip = next(iter(pliki)).replace("Pelnomocnictwo_", "Dokumenty_").replace(".docx", ".zip")
+    pierwszy = next(iter(pliki)).rsplit(".", 1)[0]
+    nazwa_zip = (("Dokumenty_" + pierwszy[len("Pelnomocnictwo_"):]) if pierwszy.startswith("Pelnomocnictwo_")
+                 else "Dokumenty_" + pierwszy) + ".zip"
     return Response(spakuj(pliki), mimetype="application/zip",
                     headers={"Content-Disposition": f'attachment; filename="{nazwa_zip}"'})
 
