@@ -20,7 +20,7 @@
 <section class="sekcja"><h2>Zakończenie budowy</h2>
 <p class="podpowiedz zak-wstep">Inwestorzy, inwestycja i działka są wpisani z obiegówki. Miejscowość i bieżącą datę możesz poprawić. Pozostałe fakty i oświadczenia uzupełnij tylko po sprawdzeniu; puste pola w dokumencie pozostaną do ręcznego wpisania.</p>
 
-<div class="siatka">
+<div class="siatka zak-wyrownaj">
   {{ tekst('miejscowosc_sporzadzenia', 'Miejscowość sporządzenia') }}
   {{ tekst('data_sporzadzenia', 'Data sporządzenia', 'waskie') }}
   {{ tekst('pozwolenie_znak', 'Znak / numer pozwolenia na budowę') }}
@@ -31,7 +31,7 @@
 {% if 'oswiadczenie' in wybrane %}<details class="zak-blok" open>
   <summary>Oświadczenie kierownika budowy</summary>
   <div class="zak-tresc">
-    <div class="siatka">
+    <div class="siatka zak-wyrownaj">
       <p class="zak-stale">Kierownik budowy: <b>{{ kierownik.imie_nazwisko }}</b>, {{ kierownik_adres }}. Podpis pozostaje do złożenia na dokumencie.</p>
       {{ wybor('zgodnosc', 'Wykonanie zgodne z projektem') }}
       {{ wybor('teren_doprowadzony', 'Teren doprowadzony do należytego stanu') }}
@@ -59,7 +59,7 @@
 {% if 'zawiadomienie' in wybrane %}<details class="zak-blok" open>
   <summary>Zawiadomienie o zakończeniu budowy</summary>
   <div class="zak-tresc">
-    <div class="siatka">
+    <div class="siatka zak-wyrownaj">
       {{ tekst('telefon_inwestora', 'Telefon inwestora') }}
       {{ tekst('liczba_budynkow', 'Liczba budynków mieszkalnych na posesji', 'waskie') }}
       {{ tekst('nr_budynku_sasiada', 'Nr budynku sąsiada', 'waskie') }}

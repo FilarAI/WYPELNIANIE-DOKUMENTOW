@@ -29,6 +29,8 @@ w którym uruchomiono skrypt; po przeniesieniu projektu trzeba go utworzyć pono
 4. Sprawdź dane. Żółte ramki oznaczają niespójności w obiegówce. Popraw, co trzeba.
    Dane kierownika budowy są ustawione na Bartłomieja Filara. Pozostałe nieznane dane
    i oświadczenia uzupełnij po sprawdzeniu; program nie zaznacza ich sam.
+   Nad zapisem zobaczysz podsumowanie pustych pól i niewybranych odpowiedzi; kliknij pozycję,
+   aby przejść do pola. Podsumowanie nie blokuje generowania.
 5. Wybierz folder (przycisk **Wybierz…**) i kliknij **Zapisz dokumenty w folderze**. Program zapamięta folder.
    Możesz też kliknąć **Pobierz jako ZIP**.
 6. Aby wyłączyć program, kliknij **Zakończ program** albo zamknij okno Terminala.

@@ -153,6 +153,16 @@
     </dl>
   </details>
 
+  <section class="sekcja podsumowanie-brakow" aria-labelledby="podsumowanie-tytul">
+    <h2 id="podsumowanie-tytul">Przed zapisaniem</h2>
+    <p class="opis-sekcji">Sprawdź puste pola i niewybrane odpowiedzi w wybranych dokumentach. Możesz je pozostawić puste i uzupełnić wydruk ręcznie.</p>
+    <p class="podsumowanie-status" id="podsumowanie-status" role="status" aria-live="polite"></p>
+    <details class="podsumowanie-lista" id="podsumowanie-lista" hidden>
+      <summary id="podsumowanie-rozwin">Pokaż pola do sprawdzenia</summary>
+      <ul id="podsumowanie-pozycje"></ul>
+    </details>
+  </section>
+
   <section class="sekcja">
     <h2>Zapis dokumentów</h2>
     <div class="wybor-folderu">
@@ -194,12 +204,14 @@
     numeruj();
     nowy.querySelector('input').focus({preventScroll: true});
     nowy.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+    aktualizujPodsumowanie();
   }
   function usunInwestora(przycisk) {
     const blok = przycisk.closest('.inwestor');
     blok.classList.add('usuwany');
     blok.querySelectorAll('input, select').forEach(p => p.disabled = true);  // nie wysyłaj w trakcie animacji
     numeruj();
+    aktualizujPodsumowanie();
     const usun = () => blok.remove();
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) usun();
     else { blok.addEventListener('animationend', usun, {once: true}); setTimeout(usun, 400); }
@@ -223,6 +235,7 @@
     komunikat.textContent = 'Przepisano adres działki z: ' + (z('imie_nazwisko') || 'inwestora') + '. Sprawdź pola powyżej.';
     komunikat.classList.add('potwierdzenie');
     komunikat.closest('.sekcja').scrollIntoView({behavior: 'smooth', block: 'center'});
+    aktualizujPodsumowanie();
   }
 
   // Długa nazwa inwestycji: pole rośnie razem z tekstem, żeby całość była widoczna.
@@ -234,6 +247,66 @@
   // Stan „Zapisuję…” tylko przy zapisie do folderu (ZIP to pobranie – strona zostaje bez zmian).
   const formularz = document.getElementById('formularz');
   const zapisz = document.getElementById('przycisk-zapisz');
+  function aktualizujPodsumowanie() {
+    const pozycje = [];
+    let puste = 0, bezOdpowiedzi = 0;
+    const dodaj = (pole, etykieta, typ) => {
+      const blok = pole.closest('.zak-blok');
+      const inwestor = pole.closest('.inwestor');
+      const grupa = blok?.querySelector('summary')?.textContent.trim()
+        || (inwestor ? 'Inwestor ' + (inwestor.querySelector('.numer')?.textContent.trim() || '1') : '')
+        || pole.closest('.sekcja')?.querySelector('h2')?.textContent.trim()
+        || 'Dane wspólne';
+      pozycje.push({pole, opis: `${grupa}: ${etykieta} (${typ})`});
+    };
+    formularz.querySelectorAll('.pole input[type="text"], .pole select, .pole textarea').forEach(pole => {
+      if (!pole.name || pole.name === 'folder_zapisu' || pole.disabled || pole.value.trim()) return;
+      const etykieta = pole.closest('label')?.querySelector('span')?.textContent.trim() || pole.name;
+      if (pole.tagName === 'SELECT') {
+        bezOdpowiedzi++;
+        dodaj(pole, etykieta, 'bez odpowiedzi');
+      } else {
+        puste++;
+        dodaj(pole, etykieta, 'puste pole');
+      }
+    });
+    for (const [nazwa, etykieta] of [
+      ['zak-rodzaje_obiektu', 'Rodzaj oddawanego obiektu'],
+      ['zak-zalaczniki', 'Załączniki']
+    ]) {
+      const pola = [...formularz.querySelectorAll(`input[name="${nazwa}"]`)];
+      if (pola.length && !pola.some(pole => pole.checked)) {
+        bezOdpowiedzi++;
+        dodaj(pola[0], etykieta, 'nic nie zaznaczono');
+      }
+    }
+    const status = document.getElementById('podsumowanie-status');
+    const szczegoly = document.getElementById('podsumowanie-lista');
+    const lista = document.getElementById('podsumowanie-pozycje');
+    status.textContent = pozycje.length
+      ? `Puste pola: ${puste} · niewybrane odpowiedzi: ${bezOdpowiedzi}.`
+      : 'Wszystkie widoczne pola i odpowiedzi są uzupełnione.';
+    szczegoly.hidden = pozycje.length === 0;
+    document.getElementById('podsumowanie-rozwin').textContent = `Pokaż ${pozycje.length} ${pozycje.length === 1 ? 'pozycję' : 'pozycji'} do sprawdzenia`;
+    lista.replaceChildren();
+    pozycje.forEach(({pole, opis}) => {
+      const wiersz = document.createElement('li');
+      const przycisk = document.createElement('button');
+      przycisk.type = 'button';
+      przycisk.textContent = opis;
+      przycisk.addEventListener('click', () => {
+        const blok = pole.closest('details');
+        if (blok) blok.open = true;
+        pole.scrollIntoView({behavior: 'smooth', block: 'center'});
+        pole.focus({preventScroll: true});
+      });
+      wiersz.append(przycisk);
+      lista.append(wiersz);
+    });
+  }
+  formularz.addEventListener('input', aktualizujPodsumowanie);
+  formularz.addEventListener('change', aktualizujPodsumowanie);
+  aktualizujPodsumowanie();
   formularz.addEventListener('submit', e => {
     if (e.submitter === zapisz) {
       zapisz.classList.add('w-toku');
