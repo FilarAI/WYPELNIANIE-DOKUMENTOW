@@ -18,15 +18,16 @@
 {%- endmacro %}
 
 <section class="sekcja"><h2>Zakończenie budowy</h2>
-<p class="podpowiedz zak-wstep">Inwestorzy, inwestycja i działka są wpisani z obiegówki. Miejscowość i bieżącą datę możesz poprawić. Pozostałe fakty i oświadczenia uzupełnij tylko po sprawdzeniu; puste pola w dokumencie pozostaną do ręcznego wpisania.</p>
+<p class="podpowiedz zak-wstep">Dane z wgranych plików sprawdź przed użyciem. Oświadczenia o stanie budowy i załączniki uzupełnij samodzielnie; puste pola w dokumencie pozostaną do ręcznego wpisania.</p>
 
 <div class="siatka zak-wyrownaj">
   {{ tekst('miejscowosc_sporzadzenia', 'Miejscowość sporządzenia') }}
   {{ tekst('data_sporzadzenia', 'Data sporządzenia', 'waskie') }}
-  {{ tekst('pozwolenie_znak', 'Znak / numer pozwolenia na budowę') }}
+  {{ tekst('pozwolenie_znak', 'Znak pozwolenia na budowę') }}
   {{ tekst('pozwolenie_data', 'Data pozwolenia', 'waskie') }}
   {{ tekst('pozwolenie_organ', 'Organ wydający pozwolenie (forma po „przez”)') }}
 </div>
+{% if zak.get('pozwolenie_numer') %}<p class="podpowiedz">Numer decyzji: {{ zak.pozwolenie_numer }}. W pole powyżej wpisywany jest znak sprawy.</p>{% endif %}
 
 {% if 'oswiadczenie' in wybrane %}<details class="zak-blok" open>
   <summary>Oświadczenie kierownika budowy</summary>

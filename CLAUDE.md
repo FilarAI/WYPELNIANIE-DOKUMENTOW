@@ -10,7 +10,10 @@ i adres inwestycji, działka) i pokazuje je w formularzu do poprawy. Następnie 
 3. **Oświadczenie kierownika budowy** (`szablony/oswiadczenie_kierownika.docx`),
 4. **Zawiadomienie o zakończeniu budowy** (`szablony/zawiadomienie_o_zakonczeniu.docx`).
 
-Po wgraniu obiegówki użytkownik wybiera dokumenty, a formularz pokazuje pola tylko dla wybranych typów.
+Po wgraniu 1–3 plików DOCX/PDF (typ wskazywany przez użytkownika: obiegówka, decyzja, teczka)
+użytkownik wybiera dokumenty, a formularz pokazuje pola tylko dla wybranych typów.
+Wartości z plików mają wskazane źródło; różne inwestycje blokują generowanie, a rozbieżności pól
+pozostają puste do wyboru lub ręcznej poprawy.
 Kierownik budowy w oświadczeniu jest zawsze Bartłomiej Filar z `app/konfiguracja.py`.
 
 ## Środowisko docelowe
@@ -19,6 +22,9 @@ Kierownik budowy w oświadczeniu jest zawsze Bartłomiej Filar z `app/konfigurac
 - **Python 3.9+**, bo systemowy python3 na Macu to często 3.9. Każdy moduł ma `from __future__ import annotations`.
   Nie używaj składni wymagającej 3.10+ (`match`, `X | Y` poza adnotacjami).
 - Interfejs, komunikaty, nazwy plików wynikowych i dokumentacja są **po polsku**.
+- PDF tekstowy odczytuje PyMuPDF. Skanowany PDF przechodzi przez systemowy Vision OCR
+  za pomocą `narzedzia/ocr_vision.swift`; wymaga `/usr/bin/swift`. Obrazy stron trafiają
+  do procesu przez stdin, nie są zapisywane na dysku.
 
 ## Stack
 - Flask (UI), `python-docx` (odczyt obiegówki, budowa szablonów), `docxtpl` (wypełnianie szablonów).
@@ -30,6 +36,9 @@ Kierownik budowy w oświadczeniu jest zawsze Bartłomiej Filar z `app/konfigurac
 app/main.py              Flask: / (upload) → /wybierz-dokumenty → /podglad (formularz) → /generuj (zapis do folderu lub ZIP),
                          /wybierz-folder, /pokaz-folder, /zakoncz
 app/parser_obiegowki.py  obiegówka → słownik danych + lista ostrzeżeń (opis pól w docstringu)
+app/odczyt_plikow.py     tekst z DOCX/PDF, OCR skanów, limity plików
+app/parser_zrodel.py     decyzja, teczka i tekstowa obiegówka PDF → kandydaci pól z dowodem
+app/scalanie_zrodel.py   łączenie źródeł, konflikty, rozpoznanie obcych inwestycji
 app/teryt.py             identyfikator działki / nazwa miejscowości → województwo, powiat, gmina
 app/generator.py         wypełnianie starych szablonów (docxtpl), wybór dokumentów
 app/zakonczenie_dokumenty.py  wypełnianie dostarczonych wzorów zakończenia budowy (python-docx)
@@ -72,11 +81,13 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # instalacj
 
 ## Zasady
 - **Prywatność:** serwer nasłuchuje tylko na `127.0.0.1`. W trakcie działania brak połączeń z internetem.
-  Wgrane pliki są przetwarzane w pamięci (`io.BytesIO`) i nie są zapisywane na dysku.
+  Wgrane pliki są przetwarzane w pamięci i nie są zapisywane na dysku. Cache Swift w `.venv`
+  zawiera tylko skompilowane moduły OCR, nie dane klientów.
 - **Nie commitować dokumentów klientów.** `.gitignore` blokuje `*.docx`/`*.pdf` poza `szablony/`
   i `tests/fixtures/`. W fixture'ach są tylko dane zanonimizowane (inwestor: Jan Kowalski, ul. Przykładowa 1).
 - **Spójność danych:** parser porównuje te same pola ze wszystkich stron obiegówki i **zawsze zwraca
-  ostrzeżenia** o różnicach. Nigdy nie wybiera po cichu jednej wersji. Ostrzeżenia są pokazywane w formularzu.
+  ostrzeżenia** o różnicach. Scalanie wielu plików blokuje obce inwestycje, a różne wartości pól
+  pokazuje do ręcznego wyboru. Nie wybiera po cichu jednej wersji.
 - **Szablony Pełnomocnictwa i PB-5** zmienia się w `narzedzia/zbuduj_szablony.py`, a potem buduje od nowa.
   Dwa wzory zakończenia budowy są dostarczonymi przez użytkownika drukami i zachowują ich układ;
   wypełnia je `app/zakonczenie_dokumenty.py`.

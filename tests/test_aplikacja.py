@@ -36,7 +36,8 @@ def test_podglad_pokazuje_dane_i_ostrzezenia(klient):
 def test_zly_plik(klient):
     odp = klient.post("/podglad", data={"obiegowka": (io.BytesIO(b"abc"), "plik.pdf")},
                       content_type="multipart/form-data")
-    assert "tylko pliki Word .docx" in odp.get_data(as_text=True)
+    assert odp.status_code == 400
+    assert "PDF ma niepoprawną zawartość" in odp.get_data(as_text=True)
 
 
 def test_generuj_zip(klient):

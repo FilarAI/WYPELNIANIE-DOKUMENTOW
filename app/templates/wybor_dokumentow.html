@@ -8,7 +8,7 @@
 </div>
 <form class="formularz" method="post" action="{{ url_for('podglad') }}" onsubmit="if (!this.querySelector('input[name=dokumenty]:checked')) { alert('Wybierz co najmniej jeden dokument.'); return false; }">
   <section class="sekcja">
-    <div class="plik-zrodlowy">{{ m.ikona('plik') }}<div><b>{{ nazwa_pliku }}</b><small>Odczytana obiegówka</small></div></div>
+    {% for plik in pliki_zrodlowe %}<div class="plik-zrodlowy">{{ m.ikona('plik') }}<div><b>{{ plik.nazwa }}</b><small>{{ plik.typ }}</small></div></div>{% endfor %}
     <input type="hidden" name="token" value="{{ token }}">
     <div class="lista-dokumentow">
       {% for kod, nazwa in dokumenty.items() %}

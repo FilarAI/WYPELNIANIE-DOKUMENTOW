@@ -15,6 +15,8 @@ import zipfile
 from pathlib import Path
 
 from docxtpl import DocxTemplate
+from docx import Document
+from docx.shared import Pt
 
 from app.konfiguracja import BRAK_LOKALU, PELNOMOCNIK, PUSTE_POLE
 from app import dokumenty, zakonczenie_dokumenty
@@ -123,7 +125,7 @@ def kontekst_pb5(dane: dict, inwestor: dict) -> dict:
             "nr_domu": adres.get("nr_domu"),
             "miejscowosc": adres.get("miejscowosc"),
             "kod_pocztowy": adres.get("kod_pocztowy"),
-            "identyfikator_dzialki": adres.get("identyfikator_dzialki"),
+            "identyfikator_dzialki": (adres.get("identyfikator_dzialki") or "").split(",")[0].strip(),
         }),
     }
 
@@ -131,6 +133,47 @@ def kontekst_pb5(dane: dict, inwestor: dict) -> dict:
 def _wypelnij(szablon: Path, kontekst: dict) -> bytes:
     dokument = DocxTemplate(szablon)
     dokument.render(kontekst, autoescape=True)
+    bufor = io.BytesIO()
+    dokument.save(bufor)
+    return bufor.getvalue()
+
+
+def _strony_kolejnych_dzialek(wypelniony: bytes, dane: dict, inwestor: dict) -> bytes:
+    """Dodatkowe nieruchomości PB-5 na osobnych stronach, zgodnie z objaśnieniem wzoru."""
+    wszystkie = [x.strip() for x in (dane["adres_inwestycji"].get("identyfikator_dzialki") or "").split(",") if x.strip()]
+    if len(wszystkie) < 2:
+        return wypelniony
+    dokument = Document(io.BytesIO(wypelniony))
+    for akapit in dokument.paragraphs:
+        if "Liczba stron zawierających dane o kolejnych nieruchomościach" in akapit.text:
+            for run in akapit.runs:
+                if "……" in run.text:
+                    run.text = re.sub(r"…+", str(len(wszystkie) - 1), run.text)
+                    break
+    adres = dane["adres_inwestycji"]
+    jednostka = dane.get("nieruchomosc", {})
+    for numer, identyfikator in enumerate(wszystkie[1:], start=1):
+        dokument.add_page_break()
+        tytul = dokument.add_paragraph()
+        tytul.add_run("PB-5 — dane kolejnej nieruchomości").bold = True
+        tytul.runs[0].font.size = Pt(12)
+        dokument.add_paragraph(f"Załącznik {numer} z {len(wszystkie) - 1} do oświadczenia inwestora: "
+                               f"{inwestor.get('imie_nazwisko', '')}")
+        tabela = dokument.add_table(rows=0, cols=2)
+        for etykieta, wartosc in (
+            ("Województwo", jednostka.get("wojewodztwo", "")),
+            ("Powiat", jednostka.get("powiat", "")),
+            ("Gmina", jednostka.get("gmina", "")),
+            ("Miejscowość", adres.get("miejscowosc", "")),
+            ("Ulica", adres.get("ulica", "")),
+            ("Nr domu", adres.get("nr_domu", "")),
+            ("Kod pocztowy", adres.get("kod_pocztowy", "")),
+            ("Identyfikator działki ewidencyjnej", identyfikator),
+        ):
+            komorki = tabela.add_row().cells
+            komorki[0].text = etykieta
+            komorki[1].text = wartosc or PUSTE_POLE
+        dokument.add_paragraph("Data i podpis inwestora albo osoby upoważnionej: ................................................")
     bufor = io.BytesIO()
     dokument.save(bufor)
     return bufor.getvalue()
@@ -164,7 +207,8 @@ def generuj_dokumenty(dane: dict) -> dict[str, bytes]:
             plik = f"PB-5_{_do_nazwy_pliku(nazwa)}.docx"
             if plik in pliki:
                 plik = plik.replace(".docx", f"_{nr}.docx")
-            pliki[plik] = _wypelnij(SZABLON_PB5, kontekst_pb5(dane, inwestor))
+            pliki[plik] = _strony_kolejnych_dzialek(_wypelnij(SZABLON_PB5, kontekst_pb5(dane, inwestor)),
+                                                     dane, inwestor)
     if "oswiadczenie" in wybrane:
         pliki[f"Oswiadczenie_kierownika_{sufiks}.docx"] = zakonczenie_dokumenty.oswiadczenie(dane)
     if "zawiadomienie" in wybrane:

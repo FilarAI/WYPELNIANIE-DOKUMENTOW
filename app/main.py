@@ -1,4 +1,4 @@
-"""Lokalny serwer (tylko 127.0.0.1): wgranie obiegówki → formularz z danymi → dokumenty
+"""Lokalny serwer (tylko 127.0.0.1): wgranie źródeł → formularz z danymi → dokumenty
 (zapis do wybranego folderu albo pobranie ZIP).
 
 Uruchomienie: python -m app.main [--port 5050] [--bez-przegladarki]
@@ -8,28 +8,38 @@ from __future__ import annotations
 import argparse
 import base64
 import datetime
-import io
 import os
 import re
 import secrets
 import socket
 import threading
 import time
-import traceback
 import webbrowser
 
 from flask import Flask, Response, jsonify, render_template, request
 
 from app import WERSJA, dokumenty, teryt, zapis, zakonczenie
 from app.generator import generuj_dokumenty, spakuj
-from app.parser_obiegowki import NAZWY_POL, odczytaj_obiegowke
+from app.parser_obiegowki import NAZWY_POL
+from app.parser_zrodel import RODZAJE_ZRODEL
+from app.scalanie_zrodel import odczytaj_zestaw
 from app.konfiguracja import PELNOMOCNIK
 
 app = Flask(__name__)
-app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024
+app.config["MAX_CONTENT_LENGTH"] = 150 * 1024 * 1024
 FOLDER_PROGRAMU = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _wgrane: dict[str, tuple[float, dict, str]] = {}
 _blokada_wgranych = threading.Lock()
+
+
+@app.after_request
+def naglowki_prywatnosci(odpowiedz):
+    odpowiedz.headers["X-Content-Type-Options"] = "nosniff"
+    odpowiedz.headers["X-Frame-Options"] = "DENY"
+    odpowiedz.headers["Referrer-Policy"] = "no-referrer"
+    if not request.path.startswith("/static/"):
+        odpowiedz.headers["Cache-Control"] = "no-store"
+    return odpowiedz
 
 
 @app.context_processor
@@ -53,25 +63,28 @@ POLA_JEDNOSTKI = ["wojewodztwo", "powiat", "gmina"]
 
 @app.get("/")
 def start():
-    return render_template("start.html")
+    return render_template("start.html", rodzaje_zrodel=RODZAJE_ZRODEL)
 
 
 def _odczytaj_plik():
-    plik = request.files.get("obiegowka")
-    if not plik or not plik.filename:
+    pliki = []
+    for nr, klucz in enumerate(("obiegowka", "plik_1", "plik_2")):
+        plik = request.files.get(klucz)
+        if plik and plik.filename:
+            nazwa = os.path.basename(plik.filename)[:180]
+            typ = request.form.get(f"typ_{nr}", "obiegowka" if nr == 0 else "")
+            pliki.append((typ, nazwa, plik.read()))
+    if not pliki:
         raise ValueError("Nie wybrano pliku.")
-    if not plik.filename.lower().endswith(".docx"):
-        raise ValueError("Obsługiwane są tylko pliki Word .docx. Plik .doc otwórz w Wordzie i zapisz jako .docx.")
     try:
-        dane = odczytaj_obiegowke(io.BytesIO(plik.read()))
+        dane = odczytaj_zestaw(pliki)
     except ValueError:
         raise
     except Exception:
-        traceback.print_exc()
-        raise ValueError("Nie udało się odczytać pliku. Czy to na pewno dokument Word (.docx)?")
+        raise ValueError("Nie udało się odczytać pliku. Sprawdź jego format i wybrany typ.")
     if not dane["inwestorzy"]:
         dane["inwestorzy"] = [{k: "" for k in POLA_INWESTORA} | {"plec": "M"}]
-    return dane, plik.filename
+    return dane, ", ".join(nazwa for _, nazwa, _ in pliki)
 
 
 @app.post("/wybierz-dokumenty")
@@ -79,7 +92,7 @@ def wybierz_dokumenty():
     try:
         dane, nazwa = _odczytaj_plik()
     except ValueError as e:
-        return render_template("start.html", blad=str(e)), 400
+        return render_template("start.html", blad=str(e), rodzaje_zrodel=RODZAJE_ZRODEL), 400
     token = secrets.token_urlsafe(24)
     with _blokada_wgranych:
         teraz = time.monotonic()
@@ -91,7 +104,8 @@ def wybierz_dokumenty():
             del _wgrane[najstarszy]
         _wgrane[token] = (teraz, dane, nazwa)
     return render_template("wybor_dokumentow.html", token=token, nazwa_pliku=nazwa,
-                           dokumenty=dokumenty.DOKUMENTY, domyslne=dokumenty.DOMYSLNE)
+                           dokumenty=dokumenty.DOKUMENTY, domyslne=dokumenty.DOMYSLNE,
+                           pliki_zrodlowe=dane["pliki_zrodlowe"])
 
 
 @app.post("/podglad")
@@ -101,7 +115,8 @@ def podglad():
         with _blokada_wgranych:
             wgrane = _wgrane.get(token)
         if not wgrane or time.monotonic() - wgrane[0] > 3600:
-            return render_template("start.html", blad="Wygasła wgrana obiegówka. Wgraj ją ponownie."), 400
+            return render_template("start.html", blad="Wygasły wgrane pliki. Wgraj je ponownie.",
+                                   rodzaje_zrodel=RODZAJE_ZRODEL), 400
         _, dane, nazwa = wgrane
         try:
             wybrane = dokumenty.odczytaj_wybor(request.form)
@@ -112,7 +127,7 @@ def podglad():
         try:
             dane, nazwa = _odczytaj_plik()
         except ValueError as e:
-            return render_template("start.html", blad=str(e)), 400
+            return render_template("start.html", blad=str(e), rodzaje_zrodel=RODZAJE_ZRODEL), 400
         wybrane = dokumenty.DOMYSLNE
     pola_z_ostrzezeniem = {o["pole"] for o in dane["ostrzezenia"]}
     return render_template("podglad.html", dane=dane, nazwa_pliku=nazwa,
@@ -120,7 +135,13 @@ def podglad():
                            pola_z_ostrzezeniem=pola_z_ostrzezeniem, nazwy_pol=NAZWY_POL,
                            dzisiaj=datetime.date.today().strftime("%d.%m.%Y"),
                            zak={"miejscowosc_sporzadzenia": dane["adres_inwestycji"].get("miejscowosc", ""),
-                                "data_sporzadzenia": datetime.date.today().strftime("%d.%m.%Y")},
+                                "data_sporzadzenia": datetime.date.today().strftime("%d.%m.%Y"),
+                                **dane.get("zakonczenie", {})},
+                           token_wgrania=token or "", pliki_zrodlowe=dane.get("pliki_zrodlowe", []),
+                           pochodzenie=dane.get("pochodzenie", []), konflikty=dane.get("konflikty", []),
+                           potwierdzenia=dane.get("potwierdzenia", []),
+                           blokada_zestawu=dane.get("blokada_zestawu", False),
+                           dzialki_do_wyboru=dane.get("dzialki_do_wyboru", []),
                            limity_zak=zakonczenie.POLA_TEKSTOWE,
                            wybory_zak=zakonczenie.WYBORY,
                            rodzaje_obiektu=zakonczenie.RODZAJE_OBIEKTU,
@@ -160,6 +181,14 @@ def _dane_z_formularza(f) -> dict:
 
 @app.post("/generuj")
 def generuj():
+    token = request.form.get("token_wgrania")
+    if token:
+        with _blokada_wgranych:
+            wgrane = _wgrane.get(token)
+        if not wgrane or time.monotonic() - wgrane[0] > 3600:
+            return Response("Wygasły wgrane pliki. Wgraj je ponownie.", status=400)
+        if wgrane[1].get("blokada_zestawu"):
+            return Response("Wgrane pliki dotyczą różnych inwestycji. Usuń obcy plik.", status=400)
     try:
         dane = _dane_z_formularza(request.form)
     except ValueError as e:

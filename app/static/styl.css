@@ -339,6 +339,15 @@ h2 {
 
 /* ---------- Krok 1: pole przeciągania ---------- */
 
+.lista-zrodel { display: grid; gap: 12px; margin: 18px 0; }
+.wiersz-zrodla { padding: 20px; border: 1px solid var(--ramka); border-radius: var(--r-sekcja); background: var(--powierzchnia); }
+.wiersz-zrodla[hidden] { display: none; }
+.wiersz-zrodla-naglowek { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.wiersz-zrodla .pole { grid-column: span 3; }
+.wiersz-zrodla input[type=file] { min-height: 44px; padding: 9px; border: 1px solid var(--ramka); border-radius: var(--r-pole); background: var(--powierzchnia); font-size: 13px; }
+.wiersz-zrodla input[type=file]:focus { outline: none; border-color: var(--niebieski); box-shadow: var(--obwodka-focus); }
+.wiersz-zrodla + .przycisk-tekstowy { margin-top: 8px; }
+
 .upuszczanie {
   position: relative; display: grid; place-items: center;
   max-width: 760px; min-height: 280px; margin: 0 auto; padding: 32px;
@@ -404,6 +413,19 @@ h2 {
 .podgrupa small { font-weight: 500; letter-spacing: 0; text-transform: none; }
 
 .sekcja.z-ostrzezeniem { border-color: var(--uwaga-ramka); box-shadow: inset 3px 0 0 var(--uwaga), var(--cien-karta); }
+.konflikt-zrodla { padding: 16px 0; border-top: 1px solid var(--ramka); }
+.konflikt-zrodla h3 { margin: 0 0 10px; font-size: 15px; }
+.wariant-zrodla { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; }
+.wariant-zrodla b { display: block; overflow-wrap: anywhere; }
+.wariant-zrodla small { display: block; color: var(--tekst-2); margin-top: 3px; }
+.zrodla-danych dl { display: grid; grid-template-columns: minmax(140px, 1fr) 3fr; gap: 12px; margin-top: 18px; }
+.zrodla-danych dt { color: var(--tekst-2); }
+.zrodla-danych dd { margin: 0; overflow-wrap: anywhere; }
+.zrodla-danych small { color: var(--tekst-2); }
+.wybor-dzialek { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.wybor-dzialek .opis-sekcji { width: 100%; margin-bottom: 2px; }
+.wybor-dzialek .zaznacz { min-width: 160px; margin: 0; padding: 10px; border: 1px solid var(--ramka); border-radius: var(--r-karta); }
+.wybor-dzialek small { display: block; color: var(--tekst-2); }
 .znacznik-uwagi {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 2px 8px; border-radius: 999px; background: var(--uwaga-tlo);
@@ -614,6 +636,7 @@ h2 {
   .sekcja { padding: 16px; }
   .siatka { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .pole, .pole.polowa, .pole.szeroko { grid-column: 1 / -1; }
+  .wiersz-zrodla .pole { grid-column: 1 / -1; }
   .pole.waskie { grid-column: span 1; }
   .inwestor { padding: 16px; }
   .wybor-folderu { flex-direction: column; align-items: stretch; }

@@ -49,37 +49,55 @@
 
 <div class="wejscie">
   <h1>Sprawdź dane</h1>
-  <p class="podtytul">Dane zostały odczytane z obiegówki. Sprawdź je przed zapisaniem dokumentów.</p>
+  <p class="podtytul">Sprawdź dane odczytane z plików przed zapisaniem dokumentów.</p>
 </div>
 
 <form method="post" action="{{ url_for('generuj') }}" class="formularz" id="formularz">
+  {% if token_wgrania %}<input type="hidden" name="token_wgrania" value="{{ token_wgrania }}">{% endif %}
   <input type="hidden" name="wybor_potwierdzony" value="tak">
   {% for kod in wybrane %}<input type="hidden" name="dokumenty" value="{{ kod }}">{% endfor %}
-  <div class="plik-zrodlowy">
-    {{ m.ikona('plik') }}
-    <div>
-      <b>{{ nazwa_pliku }}</b>
-      {% set ile = dane.zrodla | length %}
-      <small title="{{ dane.zrodla | join(' · ') }}">Odczytano {{ ile }} {{ m.odmiana(ile, 'stronę', 'strony', 'stron') }} obiegówki. Obiegówka zostaje bez zmian.</small>
-    </div>
-    <a class="przycisk-tekstowy" href="{{ url_for('start') }}">Inna obiegówka</a>
-  </div>
+  {% for plik in pliki_zrodlowe %}<div class="plik-zrodlowy">{{ m.ikona('plik') }}<div><b>{{ plik.nazwa }}</b><small>{{ plik.typ }}</small></div>{% if loop.first %}<a class="przycisk-tekstowy" href="{{ url_for('start') }}">Zmień pliki</a>{% endif %}</div>{% endfor %}
   <p class="wybrane-podsumowanie"><b>Przygotujesz:</b> {% for kod in wybrane %}{{ nazwy_dokumentow[kod] }}{{ ', ' if not loop.last }}{% endfor %}</p>
 
   {% if dane.ostrzezenia %}
   <div class="komunikat ostrzezenie" role="alert">
     {{ m.ikona('ostrzezenie') }}
     <div>
-      <b>Dane w obiegówce wymagają sprawdzenia</b>
+      <b>Dane wymagają sprawdzenia</b>
       <ul>{% for o in dane.ostrzezenia %}<li>{{ o.komunikat }}</li>{% endfor %}</ul>
     </div>
   </div>
   {% else %}
   <div class="komunikat sukces">
     {{ m.ikona('ok') }}
-    <div><b>Dane są spójne na wszystkich stronach obiegówki.</b></div>
+    <div><b>Nie znaleziono sprzeczności w odczytanych danych.</b></div>
   </div>
   {% endif %}
+
+  {% if blokada_zestawu %}<div class="komunikat blad" role="alert">{{ m.ikona('blad') }}<div><b>Nie można połączyć tych plików</b><p>Wyglądają na różne inwestycje. Wróć i wgraj pliki dotyczące jednej sprawy.</p></div></div>{% endif %}
+
+  {% if konflikty %}<section class="sekcja konflikty-zrodel">
+    <h2>Rozbieżności między plikami</h2>
+    <p class="opis-sekcji">Wybierz wartość lub wpisz własną w formularzu. Dopóki nie wybierzesz, pole pozostaje puste.</p>
+    {% for konflikt in konflikty %}<div class="konflikt-zrodla">
+      <h3>{{ konflikt.etykieta }}</h3>
+      {% for wariant in konflikt.warianty %}<div class="wariant-zrodla">
+        <div><b>{{ wariant.wartosc }}</b><small>{{ wariant.plik }} · {{ wariant.miejsce }}{% if wariant.uwaga %} · {{ wariant.uwaga }}{% endif %}</small></div>
+        {% if konflikt.cel %}<button type="button" class="przycisk-tekstowy wybierz-wariant" data-cel="{{ konflikt.cel }}" data-wartosc="{{ wariant.wartosc }}">Użyj</button>{% endif %}
+      </div>{% endfor %}
+    </div>{% endfor %}
+  </section>{% endif %}
+
+  {% if potwierdzenia %}<section class="sekcja">
+    <h2>Propozycje do potwierdzenia</h2>
+    <p class="opis-sekcji">Te informacje pochodzą z protokołów. Wpisz je dopiero po sprawdzeniu stanu wykonanej budowy.</p>
+    {% for p in potwierdzenia %}<div class="wariant-zrodla"><div><b>{{ p.etykieta }}: {{ p.wartosc }}</b><small>{{ p.plik }} · {{ p.miejsce }}{% if p.uwaga %} · {{ p.uwaga }}{% endif %}</small></div>
+      <button type="button" class="przycisk-tekstowy wybierz-wariant" data-cel="{{ p.cel }}" data-wartosc="{{ p.wartosc }}">Wpisz po sprawdzeniu</button></div>{% endfor %}
+  </section>{% endif %}
+
+  {% if pochodzenie %}<details class="sekcja zrodla-danych"><summary><h2>Skąd pochodzą wpisane dane</h2>{{ m.ikona('strzalka-dol', 'rozwin') }}</summary>
+    <dl>{% for p in pochodzenie %}<dt>{{ p.etykieta }}</dt><dd><b>{{ p.wartosc }}</b><br><small>{{ p.plik }} · {{ p.miejsce }}{% if p.uwaga %} · {{ p.uwaga }}{% endif %}<br>{{ p.fragment }}</small></dd>{% endfor %}</dl>
+  </details>{% endif %}
 
   <section class="sekcja {{ 'z-ostrzezeniem' if uwaga_inwestycja }}">
     <h2>Inwestycja {{ znacznik_uwagi(uwaga_inwestycja) }}</h2>
@@ -93,6 +111,13 @@
 
   <section class="sekcja {{ 'z-ostrzezeniem' if uwaga_dzialka }}">
     <h2>Nieruchomość / działka {{ znacznik_uwagi(uwaga_dzialka) }}</h2>
+    {% if dzialki_do_wyboru %}<div class="wybor-dzialek">
+      <p class="opis-sekcji">Zaznacz działki dotyczące przygotowywanych dokumentów. Żadnej nie wybieramy za Ciebie.</p>
+      {% for dzialka in dzialki_do_wyboru %}<label class="zaznacz">
+        <input type="checkbox" class="dzialka-zrodlo" data-numer="{{ dzialka.numer }}" data-identyfikator="{{ dzialka.identyfikator }}">
+        <span class="pole-wyboru">{{ m.ikona('ptaszek') }}</span><span>dz. {{ dzialka.numer }}{% if dzialka.droga %} · możliwa działka drogi{% endif %}<small>{{ dzialka.identyfikator }}</small></span>
+      </label>{% endfor %}
+    </div>{% endif %}
     <div class="siatka">
       {% if 'pb5' in wybrane %}{{ m.pole('adres-identyfikator_dzialki', 'Identyfikator działki (TERYT)', dane.adres_inwestycji.identyfikator_dzialki, 'szeroko') }}{% endif %}
       {{ m.pole('adres-nr_dzialki', 'Nr działki', dane.adres_inwestycji.nr_dzialki) }}
@@ -174,14 +199,14 @@
     </div>
     <p class="podpowiedz" id="komunikat-folderu">Program zapamięta wybrany folder na następny raz. Istniejące pliki nie zostaną nadpisane.</p>
 
-    <div class="akcje">
+    {% if not blokada_zestawu %}<div class="akcje">
       {# Pierwszy przycisk = domyślny po naciśnięciu Enter w polu formularza. #}
       <button type="submit" name="akcja" value="zapisz" class="przycisk" id="przycisk-zapisz">
         <span class="kolko-ladowania" aria-hidden="true"></span>{{ m.ikona('plik') }}
         <span class="etykieta">Zapisz dokumenty w folderze</span>
       </button>
       <button type="submit" name="akcja" value="zip" class="przycisk przycisk-drugorzedny">{{ m.ikona('pobierz') }} Pobierz jako ZIP</button>
-    </div>
+    </div>{% endif %}
   </section>
 </form>
 
@@ -218,6 +243,15 @@
   }
   numeruj();
 
+  {% if dzialki_do_wyboru %}document.querySelectorAll('.dzialka-zrodlo').forEach(pole => pole.addEventListener('change', () => {
+    const wybrane = [...document.querySelectorAll('.dzialka-zrodlo:checked')];
+    const numery = document.querySelector('[name="adres-nr_dzialki"]');
+    const identyfikatory = document.querySelector('[name="adres-identyfikator_dzialki"]');
+    if (numery) numery.value = wybrane.map(x => x.dataset.numer).join(', ');
+    if (identyfikatory) identyfikatory.value = wybrane.map(x => x.dataset.identyfikator).join(', ');
+    aktualizujPodsumowanie();
+  }));{% endif %}
+
   function adresDoDzialki(przycisk) {
     const blok = przycisk.closest('.inwestor');
     const z = pole => blok.querySelector(`[name$="-${pole}"]`)?.value.trim() || '';
@@ -247,6 +281,14 @@
   // Stan „Zapisuję…” tylko przy zapisie do folderu (ZIP to pobranie – strona zostaje bez zmian).
   const formularz = document.getElementById('formularz');
   const zapisz = document.getElementById('przycisk-zapisz');
+  document.querySelectorAll('.wybierz-wariant').forEach(przycisk => przycisk.addEventListener('click', () => {
+    const cel = formularz.querySelector(`[name="${przycisk.dataset.cel}"]`);
+    if (!cel) return;
+    cel.value = przycisk.dataset.wartosc;
+    cel.dispatchEvent(new Event('input', {bubbles: true}));
+    cel.scrollIntoView({behavior: 'smooth', block: 'center'});
+    cel.focus({preventScroll: true});
+  }));
   function aktualizujPodsumowanie() {
     const pozycje = [];
     let puste = 0, bezOdpowiedzi = 0;
@@ -308,14 +350,16 @@
   formularz.addEventListener('change', aktualizujPodsumowanie);
   aktualizujPodsumowanie();
   formularz.addEventListener('submit', e => {
-    if (e.submitter === zapisz) {
+    if (zapisz && e.submitter === zapisz) {
       zapisz.classList.add('w-toku');
       zapisz.querySelector('.etykieta').textContent = 'Zapisuję…';
     }
   });
   window.addEventListener('pageshow', () => {
-    zapisz.classList.remove('w-toku');
-    zapisz.querySelector('.etykieta').textContent = 'Zapisz dokumenty w folderze';
+    if (zapisz) {
+      zapisz.classList.remove('w-toku');
+      zapisz.querySelector('.etykieta').textContent = 'Zapisz dokumenty w folderze';
+    }
   });
 
   async function wybierzFolder() {

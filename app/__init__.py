@@ -1,4 +1,4 @@
 """Dokumenty FILAR – wypełnianie wybranych dokumentów z obiegówki."""
 
 # Zmieniaj przy każdej paczce wysyłanej do biura – wersja jest widoczna w stopce programu i w Terminalu.
-WERSJA = "2026-10-10c (podsumowanie i wyrównane pola)"
+WERSJA = "2026-10-13a (wiele źródeł, PDF i OCR)"
