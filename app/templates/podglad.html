@@ -1,0 +1,385 @@
+{% extends "baza.html" %}
+{% import "_makra.html" as m %}
+{% set krok = 3 %}
+
+{% macro inwestor(n, i) -%}
+<fieldset class="inwestor" data-nr="{{ n }}">
+  <legend class="inwestor-naglowek">
+    <span>Inwestor <span class="numer"></span></span>
+    <button type="button" class="usun" title="Usuń inwestora" onclick="usunInwestora(this)">{{ m.ikona('kosz') }} Usuń</button>
+  </legend>
+  <div class="siatka">
+    {{ m.pole('inw-%s-imie_nazwisko' % n, 'Imię i nazwisko / nazwa', i.imie_nazwisko, 'szeroko') }}
+    {% if 'pelnomocnictwo' in wybrane %}<label class="pole">
+      <span>Płeć (forma w pełnomocnictwie)</span>
+      <select name="inw-{{ n }}-plec">
+        <option value="M" {{ 'selected' if i.plec != 'K' }}>Mężczyzna – „zamieszkały”</option>
+        <option value="K" {{ 'selected' if i.plec == 'K' }}>Kobieta – „zamieszkała”</option>
+      </select>
+    </label>{% endif %}
+  </div>
+  <p class="podgrupa">Adres zamieszkania</p>
+  <div class="siatka">
+    {{ m.pole('inw-%s-ulica' % n, 'Ulica', i.ulica, 'polowa') }}
+    {{ m.pole('inw-%s-nr_domu' % n, 'Nr domu', i.nr_domu, 'waskie') }}
+    {{ m.pole('inw-%s-nr_lokalu' % n, 'Nr lokalu', i.nr_lokalu, 'waskie') }}
+    {{ m.pole('inw-%s-kod_pocztowy' % n, 'Kod pocztowy', i.kod_pocztowy, 'waskie') }}
+    {{ m.pole('inw-%s-miejscowosc' % n, 'Miejscowość', i.miejscowosc, 'polowa') }}
+    {{ m.pole('inw-%s-poczta' % n, 'Poczta', i.poczta, 'polowa') }}
+  </div>
+  {% if 'pb5' in wybrane %}<p class="podgrupa">Jednostka administracyjna <small>(do PB-5)</small></p>
+  <div class="siatka">
+    {{ m.pole('inw-%s-wojewodztwo' % n, 'Województwo', i.wojewodztwo) }}
+    {{ m.pole('inw-%s-powiat' % n, 'Powiat', i.powiat) }}
+    {{ m.pole('inw-%s-gmina' % n, 'Gmina', i.gmina) }}
+  </div>{% endif %}
+  <button type="button" class="przycisk-tekstowy przepisz-adres" onclick="adresDoDzialki(this)">{{ m.ikona('strzalka-gora') }} Przepisz ten adres do działki</button>
+</fieldset>
+{%- endmacro %}
+
+{% macro znacznik_uwagi(widoczny) -%}
+{% if widoczny %}<span class="znacznik-uwagi">{{ m.ikona('ostrzezenie') }} Do sprawdzenia</span>{% endif %}
+{%- endmacro %}
+
+{% block tresc %}
+{% set uwaga_inwestycja = 'nazwa_inwestycji' in pola_z_ostrzezeniem %}
+{% set uwaga_dzialka = 'adres_inwestycji' in pola_z_ostrzezeniem or 'nieruchomosc' in pola_z_ostrzezeniem %}
+{% set uwaga_inwestorzy = 'inwestor' in pola_z_ostrzezeniem %}
+{% set uwaga_pozostale = pola_z_ostrzezeniem | select('in', ['kategoria_obiektu', 'data_opracowania', 'projektant_glowny', 'jednostka_projektowa']) | list | length > 0 %}
+
+<div class="wejscie">
+  <h1>Sprawdź dane</h1>
+  <p class="podtytul">Sprawdź dane odczytane z plików przed zapisaniem dokumentów.</p>
+</div>
+
+<form method="post" action="{{ url_for('generuj') }}" class="formularz" id="formularz">
+  {% if token_wgrania %}<input type="hidden" name="token_wgrania" value="{{ token_wgrania }}">{% endif %}
+  <input type="hidden" name="wybor_potwierdzony" value="tak">
+  {% for kod in wybrane %}<input type="hidden" name="dokumenty" value="{{ kod }}">{% endfor %}
+  {% for plik in pliki_zrodlowe %}<div class="plik-zrodlowy">{{ m.ikona('plik') }}<div><b>{{ plik.nazwa }}</b><small>{{ plik.typ }}</small></div>{% if loop.first %}<a class="przycisk-tekstowy" href="{{ url_for('start') }}">Zmień pliki</a>{% endif %}</div>{% endfor %}
+  <p class="wybrane-podsumowanie"><b>Przygotujesz:</b> {% for kod in wybrane %}{{ nazwy_dokumentow[kod] }}{{ ', ' if not loop.last }}{% endfor %}</p>
+
+  {% if dane.ostrzezenia %}
+  <div class="komunikat ostrzezenie" role="alert">
+    {{ m.ikona('ostrzezenie') }}
+    <div>
+      <b>Dane wymagają sprawdzenia</b>
+      <ul>{% for o in dane.ostrzezenia %}<li>{{ o.komunikat }}</li>{% endfor %}</ul>
+    </div>
+  </div>
+  {% else %}
+  <div class="komunikat sukces">
+    {{ m.ikona('ok') }}
+    <div><b>Nie znaleziono sprzeczności w odczytanych danych.</b></div>
+  </div>
+  {% endif %}
+
+  {% if blokada_zestawu %}<div class="komunikat blad" role="alert">{{ m.ikona('blad') }}<div><b>Nie można połączyć tych plików</b><p>Wyglądają na różne inwestycje. Wróć i wgraj pliki dotyczące jednej sprawy.</p></div></div>{% endif %}
+
+  {% if konflikty %}<section class="sekcja konflikty-zrodel">
+    <h2>Rozbieżności między plikami</h2>
+    <p class="opis-sekcji">Wybierz wartość lub wpisz własną w formularzu. Dopóki nie wybierzesz, pole pozostaje puste.</p>
+    {% for konflikt in konflikty %}<div class="konflikt-zrodla">
+      <h3>{{ konflikt.etykieta }}</h3>
+      {% for wariant in konflikt.warianty %}<div class="wariant-zrodla">
+        <div><b>{{ wariant.wartosc }}</b><small>{{ wariant.plik }} · {{ wariant.miejsce }}{% if wariant.uwaga %} · {{ wariant.uwaga }}{% endif %}</small></div>
+        {% if konflikt.cel %}<button type="button" class="przycisk-tekstowy wybierz-wariant" data-cel="{{ konflikt.cel }}" data-wartosc="{{ wariant.wartosc }}">Użyj</button>{% endif %}
+      </div>{% endfor %}
+    </div>{% endfor %}
+  </section>{% endif %}
+
+  {% if potwierdzenia %}<section class="sekcja">
+    <h2>Propozycje do potwierdzenia</h2>
+    <p class="opis-sekcji">Te informacje pochodzą z protokołów. Wpisz je dopiero po sprawdzeniu stanu wykonanej budowy.</p>
+    {% for p in potwierdzenia %}<div class="wariant-zrodla"><div><b>{{ p.etykieta }}: {{ p.wartosc }}</b><small>{{ p.plik }} · {{ p.miejsce }}{% if p.uwaga %} · {{ p.uwaga }}{% endif %}</small></div>
+      <button type="button" class="przycisk-tekstowy wybierz-wariant" data-cel="{{ p.cel }}" data-wartosc="{{ p.wartosc }}">Wpisz po sprawdzeniu</button></div>{% endfor %}
+  </section>{% endif %}
+
+  {% if pochodzenie %}<details class="sekcja zrodla-danych"><summary><h2>Skąd pochodzą wpisane dane</h2>{{ m.ikona('strzalka-dol', 'rozwin') }}</summary>
+    <dl>{% for p in pochodzenie %}<dt>{{ p.etykieta }}</dt><dd><b>{{ p.wartosc }}</b><br><small>{{ p.plik }} · {{ p.miejsce }}{% if p.uwaga %} · {{ p.uwaga }}{% endif %}<br>{{ p.fragment }}</small></dd>{% endfor %}</dl>
+  </details>{% endif %}
+
+  <section class="sekcja {{ 'z-ostrzezeniem' if uwaga_inwestycja }}">
+    <h2>Inwestycja {{ znacznik_uwagi(uwaga_inwestycja) }}</h2>
+    <div class="siatka">
+      <label class="pole cala">
+        <span>Nazwa inwestycji</span>
+        <textarea name="nazwa_inwestycji" rows="2">{{ dane.nazwa_inwestycji }}</textarea>
+      </label>
+    </div>
+  </section>
+
+  <section class="sekcja {{ 'z-ostrzezeniem' if uwaga_dzialka }}">
+    <h2>Nieruchomość / działka {{ znacznik_uwagi(uwaga_dzialka) }}</h2>
+    {% if dzialki_do_wyboru %}<div class="wybor-dzialek">
+      <p class="opis-sekcji">Zaznacz działki dotyczące przygotowywanych dokumentów. Żadnej nie wybieramy za Ciebie.</p>
+      {% for dzialka in dzialki_do_wyboru %}<label class="zaznacz">
+        <input type="checkbox" class="dzialka-zrodlo" data-numer="{{ dzialka.numer }}" data-identyfikator="{{ dzialka.identyfikator }}">
+        <span class="pole-wyboru">{{ m.ikona('ptaszek') }}</span><span>dz. {{ dzialka.numer }}{% if dzialka.droga %} · możliwa działka drogi{% endif %}<small>{{ dzialka.identyfikator }}</small></span>
+      </label>{% endfor %}
+    </div>{% endif %}
+    <div class="siatka">
+      {% if 'pb5' in wybrane %}{{ m.pole('adres-identyfikator_dzialki', 'Identyfikator działki (TERYT)', dane.adres_inwestycji.identyfikator_dzialki, 'szeroko') }}{% endif %}
+      {{ m.pole('adres-nr_dzialki', 'Nr działki', dane.adres_inwestycji.nr_dzialki) }}
+    </div>
+    <p class="podgrupa">Adres inwestycji</p>
+    <div class="siatka">
+      {{ m.pole('adres-miejscowosc', 'Miejscowość', dane.adres_inwestycji.miejscowosc) }}
+      {{ m.pole('adres-ulica', 'Ulica', dane.adres_inwestycji.ulica) }}
+      {{ m.pole('adres-nr_domu', 'Nr domu', dane.adres_inwestycji.nr_domu, 'waskie') }}
+      {{ m.pole('adres-kod_pocztowy', 'Kod pocztowy', dane.adres_inwestycji.kod_pocztowy, 'waskie') }}
+    </div>
+    {% if 'pb5' in wybrane %}<p class="podgrupa">Jednostka administracyjna <small>(z identyfikatora działki)</small></p>
+    <div class="siatka">
+      {{ m.pole('nier-wojewodztwo', 'Województwo', dane.nieruchomosc.wojewodztwo) }}
+      {{ m.pole('nier-powiat', 'Powiat', dane.nieruchomosc.powiat) }}
+      {{ m.pole('nier-gmina', 'Gmina', dane.nieruchomosc.gmina) }}
+    </div>{% endif %}
+    <p class="podpowiedz" id="komunikat-dzialki">Działka pod adresem inwestora? Kliknij „Przepisz ten adres do działki” w karcie inwestora.</p>
+  </section>
+
+  <section class="sekcja {{ 'z-ostrzezeniem' if uwaga_inwestorzy }}">
+    <h2>Inwestorzy {{ znacznik_uwagi(uwaga_inwestorzy) }}</h2>
+    {% if 'pb5' in wybrane %}<p class="opis-sekcji">Każdy inwestor dostaje osobne PB-5.</p>{% endif %}
+    <div id="inwestorzy">
+      {% for i in dane.inwestorzy %}{{ inwestor(loop.index0, i) }}{% endfor %}
+    </div>
+    <button type="button" class="dodaj-inwestora" onclick="dodajInwestora()">{{ m.ikona('plus') }} Dodaj inwestora</button>
+  </section>
+
+  {% if 'pelnomocnictwo' in wybrane or 'pb5' in wybrane %}<section class="sekcja">
+    <h2>Dokumenty</h2>
+    <p class="opis-sekcji">Dodatkowe dane do wybranych dokumentów.</p>
+    <div class="siatka">
+      {% if 'pelnomocnictwo' in wybrane %}{{ m.pole('data_pelnomocnictwa', 'Data pełnomocnictwa', dzisiaj) }}{% endif %}
+    </div>
+    {% if 'pb5' in wybrane %}<label class="zaznacz">
+      <input type="checkbox" name="upowazniony_w_pb5" value="tak">
+      <span class="pole-wyboru">{{ m.ikona('ptaszek') }}</span>
+      <span>Wpisz w PB-5 osobę upoważnioną (Bartłomiej Filar) – gdy oświadczenie składa pełnomocnik</span>
+    </label>{% endif %}
+  </section>{% endif %}
+
+  {% if 'oswiadczenie' in wybrane or 'zawiadomienie' in wybrane %}{% include '_zakonczenie.html' %}{% endif %}
+
+  <details class="sekcja dodatkowe {{ 'z-ostrzezeniem' if uwaga_pozostale }}" {{ 'open' if uwaga_pozostale }}>
+    <summary>
+      <h2>Pozostałe dane z obiegówki {{ znacznik_uwagi(uwaga_pozostale) }}</h2>
+      <span class="podpowiedz">tylko podgląd</span>
+      {{ m.ikona('strzalka-dol', 'rozwin') }}
+    </summary>
+    <dl>
+      <dt>Kategoria obiektu</dt><dd>{{ dane.kategoria_obiektu or '—' }}</dd>
+      <dt>Data opracowania</dt><dd>{{ dane.data_opracowania or '—' }}</dd>
+      <dt>Projektant główny</dt><dd>{{ dane.projektant_glowny or '—' }}</dd>
+      {% for z in dane.zespol_projektowy %}
+      <dt>{{ z.specjalnosc | capitalize }} – {{ z.rola | lower }}</dt><dd>{{ z.osoba }}{% if z.uprawnienia %} <small>({{ z.uprawnienia }})</small>{% endif %}</dd>
+      {% endfor %}
+    </dl>
+  </details>
+
+  <section class="sekcja podsumowanie-brakow" aria-labelledby="podsumowanie-tytul">
+    <h2 id="podsumowanie-tytul">Przed zapisaniem</h2>
+    <p class="opis-sekcji">Sprawdź puste pola i niewybrane odpowiedzi w wybranych dokumentach. Możesz je pozostawić puste i uzupełnić wydruk ręcznie.</p>
+    <p class="podsumowanie-status" id="podsumowanie-status" role="status" aria-live="polite"></p>
+    <details class="podsumowanie-lista" id="podsumowanie-lista" hidden>
+      <summary id="podsumowanie-rozwin">Pokaż pola do sprawdzenia</summary>
+      <ul id="podsumowanie-pozycje"></ul>
+    </details>
+  </section>
+
+  <section class="sekcja">
+    <h2>Zapis dokumentów</h2>
+    <div class="wybor-folderu">
+      <label class="pole">
+        <span>Folder docelowy</span>
+        <input type="text" name="folder_zapisu" id="folder_zapisu" value="{{ folder_zapisu }}">
+      </label>
+      <button type="button" class="przycisk przycisk-neutralny" id="wybierz-folder" onclick="wybierzFolder()">Wybierz…</button>
+    </div>
+    <p class="podpowiedz" id="komunikat-folderu">Program zapamięta wybrany folder na następny raz. Istniejące pliki nie zostaną nadpisane.</p>
+
+    {% if not blokada_zestawu %}<div class="akcje">
+      {# Pierwszy przycisk = domyślny po naciśnięciu Enter w polu formularza. #}
+      <button type="submit" name="akcja" value="zapisz" class="przycisk" id="przycisk-zapisz">
+        <span class="kolko-ladowania" aria-hidden="true"></span>{{ m.ikona('plik') }}
+        <span class="etykieta">Zapisz dokumenty w folderze</span>
+      </button>
+      <button type="submit" name="akcja" value="zip" class="przycisk przycisk-drugorzedny">{{ m.ikona('pobierz') }} Pobierz jako ZIP</button>
+    </div>{% endif %}
+  </section>
+</form>
+
+<template id="wzor-inwestora">{{ inwestor('__N__', {'plec': 'M'}) }}</template>
+
+<script>
+  function numeruj() {
+    const bloki = document.querySelectorAll('#inwestorzy .inwestor:not(.usuwany)');
+    bloki.forEach((b, i) => {
+      b.querySelector('.numer').textContent = bloki.length > 1 ? (i + 1) : '';
+      b.querySelector('.usun').hidden = bloki.length === 1;
+    });
+  }
+  function dodajInwestora() {
+    const n = Date.now();
+    const html = document.getElementById('wzor-inwestora').innerHTML.replaceAll('__N__', n);
+    document.getElementById('inwestorzy').insertAdjacentHTML('beforeend', html);
+    const nowy = document.querySelector('#inwestorzy .inwestor:last-child');
+    nowy.classList.add('dodany');
+    numeruj();
+    nowy.querySelector('input').focus({preventScroll: true});
+    nowy.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+    aktualizujPodsumowanie();
+  }
+  function usunInwestora(przycisk) {
+    const blok = przycisk.closest('.inwestor');
+    blok.classList.add('usuwany');
+    blok.querySelectorAll('input, select').forEach(p => p.disabled = true);  // nie wysyłaj w trakcie animacji
+    numeruj();
+    aktualizujPodsumowanie();
+    const usun = () => blok.remove();
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) usun();
+    else { blok.addEventListener('animationend', usun, {once: true}); setTimeout(usun, 400); }
+  }
+  numeruj();
+
+  {% if dzialki_do_wyboru %}document.querySelectorAll('.dzialka-zrodlo').forEach(pole => pole.addEventListener('change', () => {
+    const wybrane = [...document.querySelectorAll('.dzialka-zrodlo:checked')];
+    const numery = document.querySelector('[name="adres-nr_dzialki"]');
+    const identyfikatory = document.querySelector('[name="adres-identyfikator_dzialki"]');
+    if (numery) numery.value = wybrane.map(x => x.dataset.numer).join(', ');
+    if (identyfikatory) identyfikatory.value = wybrane.map(x => x.dataset.identyfikator).join(', ');
+    aktualizujPodsumowanie();
+  }));{% endif %}
+
+  function adresDoDzialki(przycisk) {
+    const blok = przycisk.closest('.inwestor');
+    const z = pole => blok.querySelector(`[name$="-${pole}"]`)?.value.trim() || '';
+    const ustaw = (nazwa, wartosc) => {
+      const cel = document.querySelector(`[name="${nazwa}"]`);
+      if (cel) cel.value = wartosc;
+    };
+    ['ulica', 'nr_domu', 'kod_pocztowy', 'miejscowosc'].forEach(p => ustaw('adres-' + p, z(p)));
+    // Województwo, powiat i gmina z identyfikatora działki są pewniejsze – nadpisujemy tylko puste pola.
+    ['wojewodztwo', 'powiat', 'gmina'].forEach(p => {
+      const cel = document.querySelector(`[name="nier-${p}"]`);
+      if (cel && !cel.value.trim()) cel.value = z(p);
+    });
+    const komunikat = document.getElementById('komunikat-dzialki');
+    komunikat.textContent = 'Przepisano adres działki z: ' + (z('imie_nazwisko') || 'inwestora') + '. Sprawdź pola powyżej.';
+    komunikat.classList.add('potwierdzenie');
+    komunikat.closest('.sekcja').scrollIntoView({behavior: 'smooth', block: 'center'});
+    aktualizujPodsumowanie();
+  }
+
+  // Długa nazwa inwestycji: pole rośnie razem z tekstem, żeby całość była widoczna.
+  const nazwa = document.querySelector('textarea[name=nazwa_inwestycji]');
+  const dopasuj = () => { nazwa.style.height = 'auto'; nazwa.style.height = (nazwa.scrollHeight + 2) + 'px'; };
+  nazwa.addEventListener('input', dopasuj);
+  dopasuj();
+
+  // Stan „Zapisuję…” tylko przy zapisie do folderu (ZIP to pobranie – strona zostaje bez zmian).
+  const formularz = document.getElementById('formularz');
+  const zapisz = document.getElementById('przycisk-zapisz');
+  document.querySelectorAll('.wybierz-wariant').forEach(przycisk => przycisk.addEventListener('click', () => {
+    const cel = formularz.querySelector(`[name="${przycisk.dataset.cel}"]`);
+    if (!cel) return;
+    cel.value = przycisk.dataset.wartosc;
+    cel.dispatchEvent(new Event('input', {bubbles: true}));
+    cel.scrollIntoView({behavior: 'smooth', block: 'center'});
+    cel.focus({preventScroll: true});
+  }));
+  function aktualizujPodsumowanie() {
+    const pozycje = [];
+    let puste = 0, bezOdpowiedzi = 0;
+    const dodaj = (pole, etykieta, typ) => {
+      const blok = pole.closest('.zak-blok');
+      const inwestor = pole.closest('.inwestor');
+      const grupa = blok?.querySelector('summary')?.textContent.trim()
+        || (inwestor ? 'Inwestor ' + (inwestor.querySelector('.numer')?.textContent.trim() || '1') : '')
+        || pole.closest('.sekcja')?.querySelector('h2')?.textContent.trim()
+        || 'Dane wspólne';
+      pozycje.push({pole, opis: `${grupa}: ${etykieta} (${typ})`});
+    };
+    formularz.querySelectorAll('.pole input[type="text"], .pole select, .pole textarea').forEach(pole => {
+      if (!pole.name || pole.name === 'folder_zapisu' || pole.disabled || pole.value.trim()) return;
+      const etykieta = pole.closest('label')?.querySelector('span')?.textContent.trim() || pole.name;
+      if (pole.tagName === 'SELECT') {
+        bezOdpowiedzi++;
+        dodaj(pole, etykieta, 'bez odpowiedzi');
+      } else {
+        puste++;
+        dodaj(pole, etykieta, 'puste pole');
+      }
+    });
+    for (const [nazwa, etykieta] of [
+      ['zak-rodzaje_obiektu', 'Rodzaj oddawanego obiektu'],
+      ['zak-zalaczniki', 'Załączniki']
+    ]) {
+      const pola = [...formularz.querySelectorAll(`input[name="${nazwa}"]`)];
+      if (pola.length && !pola.some(pole => pole.checked)) {
+        bezOdpowiedzi++;
+        dodaj(pola[0], etykieta, 'nic nie zaznaczono');
+      }
+    }
+    const status = document.getElementById('podsumowanie-status');
+    const szczegoly = document.getElementById('podsumowanie-lista');
+    const lista = document.getElementById('podsumowanie-pozycje');
+    status.textContent = pozycje.length
+      ? `Puste pola: ${puste} · niewybrane odpowiedzi: ${bezOdpowiedzi}.`
+      : 'Wszystkie widoczne pola i odpowiedzi są uzupełnione.';
+    szczegoly.hidden = pozycje.length === 0;
+    document.getElementById('podsumowanie-rozwin').textContent = `Pokaż ${pozycje.length} ${pozycje.length === 1 ? 'pozycję' : 'pozycji'} do sprawdzenia`;
+    lista.replaceChildren();
+    pozycje.forEach(({pole, opis}) => {
+      const wiersz = document.createElement('li');
+      const przycisk = document.createElement('button');
+      przycisk.type = 'button';
+      przycisk.textContent = opis;
+      przycisk.addEventListener('click', () => {
+        const blok = pole.closest('details');
+        if (blok) blok.open = true;
+        pole.scrollIntoView({behavior: 'smooth', block: 'center'});
+        pole.focus({preventScroll: true});
+      });
+      wiersz.append(przycisk);
+      lista.append(wiersz);
+    });
+  }
+  formularz.addEventListener('input', aktualizujPodsumowanie);
+  formularz.addEventListener('change', aktualizujPodsumowanie);
+  aktualizujPodsumowanie();
+  formularz.addEventListener('submit', e => {
+    if (zapisz && e.submitter === zapisz) {
+      zapisz.classList.add('w-toku');
+      zapisz.querySelector('.etykieta').textContent = 'Zapisuję…';
+    }
+  });
+  window.addEventListener('pageshow', () => {
+    if (zapisz) {
+      zapisz.classList.remove('w-toku');
+      zapisz.querySelector('.etykieta').textContent = 'Zapisz dokumenty w folderze';
+    }
+  });
+
+  async function wybierzFolder() {
+    const przycisk = document.getElementById('wybierz-folder');
+    const pole = document.getElementById('folder_zapisu');
+    const komunikat = document.getElementById('komunikat-folderu');
+    przycisk.disabled = true;
+    komunikat.textContent = 'Wybierz folder w oknie, które się otworzyło (może być za oknem przeglądarki).';
+    try {
+      const dane = new FormData();
+      dane.append('obecny', pole.value);
+      const odp = await (await fetch('{{ url_for("wybierz_folder") }}', {method: 'POST', body: dane})).json();
+      if (odp.folder) { pole.value = odp.folder; komunikat.textContent = 'Wybrano folder.'; }
+      else if (odp.blad) { komunikat.textContent = odp.blad; }
+      else { komunikat.textContent = 'Anulowano – folder bez zmian.'; }
+    } catch (e) {
+      komunikat.textContent = 'Nie udało się otworzyć okna wyboru folderu. Wpisz ścieżkę ręcznie.';
+    } finally {
+      przycisk.disabled = false;
+    }
+  }
+</script>
+{% endblock %}

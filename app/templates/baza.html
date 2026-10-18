@@ -1,0 +1,75 @@
+{% import "_makra.html" as m %}
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dokumenty FILAR</title>
+  <link rel="icon" type="image/png" sizes="64x64" href="{{ url_for('static', filename='ikona-64.png', v=wersja) }}">
+  <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='ikona-192.png', v=wersja) }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='ikona-192.png', v=wersja) }}">
+  {# ?v= zmienia się przy każdej zmianie pliku, więc przeglądarka nie pokaże starego wyglądu z pamięci. #}
+  <link rel="stylesheet" href="{{ url_for('static', filename='styl.css', v=wersja_stylu) }}">
+  <script>
+    // Motyw: „auto” (jak w systemie), „jasny” albo „ciemny”. Ustawiany przed narysowaniem strony,
+    // żeby nie mignął jasny ekran. Wybór zapamiętuje przeglądarka (localStorage).
+    (function () {
+      var KLUCZ = 'dokumenty-filar-motyw', html = document.documentElement;
+      var ciemnySystem = matchMedia('(prefers-color-scheme: dark)');
+      var wybor = 'auto';
+      try { wybor = localStorage.getItem(KLUCZ) || 'auto'; } catch (e) {}
+      function zastosuj() {
+        html.dataset.motyw = (wybor === 'ciemny' || (wybor === 'auto' && ciemnySystem.matches)) ? 'ciemny' : 'jasny';
+        document.querySelectorAll('.motyw button').forEach(function (b) {
+          b.setAttribute('aria-checked', b.dataset.wybor === wybor ? 'true' : 'false');
+        });
+      }
+      window.ustawMotyw = function (nowy) {
+        wybor = nowy;
+        try { localStorage.setItem(KLUCZ, nowy); } catch (e) {}
+        html.classList.add('zmiana-motywu');
+        zastosuj();
+        setTimeout(function () { html.classList.remove('zmiana-motywu'); }, 300);
+      };
+      ciemnySystem.addEventListener('change', zastosuj);
+      document.addEventListener('DOMContentLoaded', zastosuj);
+      zastosuj();
+    })();
+  </script>
+</head>
+<body>
+  <div class="aplikacja">
+    {% if not bez_naglowka %}
+    <header class="naglowek">
+      <div class="marka">
+        <img class="logo" src="{{ url_for('static', filename='ikona-64.png', v=wersja) }}" alt="" width="32" height="32">
+        <div>
+          <strong>Dokumenty FILAR</strong>
+          <small>FILAR-USŁUGI <span aria-hidden="true">·</span> Rabka-Zdrój</small>
+        </div>
+      </div>
+      <div class="naglowek-akcje">
+        <div class="motyw" role="radiogroup" aria-label="Wygląd">
+          <button type="button" role="radio" data-wybor="auto" title="Jak w systemie" aria-label="Jak w systemie" onclick="ustawMotyw('auto')">{{ m.ikona('monitor') }}</button>
+          <button type="button" role="radio" data-wybor="jasny" title="Jasny" aria-label="Jasny" onclick="ustawMotyw('jasny')">{{ m.ikona('slonce') }}</button>
+          <button type="button" role="radio" data-wybor="ciemny" title="Ciemny" aria-label="Ciemny" onclick="ustawMotyw('ciemny')">{{ m.ikona('ksiezyc') }}</button>
+        </div>
+        <form method="post" action="{{ url_for('zakoncz') }}">
+          <button class="zakoncz" type="submit" title="Wyłącza program">{{ m.ikona('zasilanie') }} Zakończ program</button>
+        </form>
+      </div>
+    </header>
+    {% endif %}
+    <main class="tresc {{ szerokosc or '' }}">
+      {% if krok %}{{ m.kroki(krok) }}{% endif %}
+      {% block tresc %}{% endblock %}
+    </main>
+    {% if not bez_naglowka %}
+    <footer class="stopka">
+      <span>{{ m.ikona('klodka') }} Program działa tylko na tym komputerze – pliki nie są nigdzie wysyłane.</span>
+      <small>Wersja {{ wersja }} · folder programu: {{ folder_programu }}</small>
+    </footer>
+    {% endif %}
+  </div>
+</body>
+</html>

@@ -1,0 +1,110 @@
+import io
+import zipfile
+from pathlib import Path
+
+import pytest
+
+from app.main import app
+
+FIXTURES = Path(__file__).parent / "fixtures"
+
+
+@pytest.fixture
+def klient():
+    app.config["TESTING"] = True
+    return app.test_client()
+
+
+def test_strona_startowa(klient):
+    odp = klient.get("/")
+    assert odp.status_code == 200
+    assert "Wgraj obiegówkę" in odp.get_data(as_text=True)
+
+
+def test_podglad_pokazuje_dane_i_ostrzezenia(klient):
+    with open(FIXTURES / "obiegowka_przyklad.docx", "rb") as f:
+        odp = klient.post("/podglad", data={"obiegowka": (f, "obiegowka.docx")}, content_type="multipart/form-data")
+    html = odp.get_data(as_text=True)
+    assert odp.status_code == 200
+    assert 'value="Jan Kowalski"' in html
+    assert 'value="120903_4.0002.1358"' in html
+    assert 'value="myślenicki"' in html
+    assert "różni się między stronami" in html
+    assert "Przepisz ten adres do działki" in html
+
+
+def test_zly_plik(klient):
+    odp = klient.post("/podglad", data={"obiegowka": (io.BytesIO(b"abc"), "plik.pdf")},
+                      content_type="multipart/form-data")
+    assert odp.status_code == 400
+    assert "PDF ma niepoprawną zawartość" in odp.get_data(as_text=True)
+
+
+def test_generuj_zip(klient):
+    formularz = {
+        "nazwa_inwestycji": "BUDOWA DOMU",
+        "adres-identyfikator_dzialki": "120903_4.0002.1358", "adres-nr_dzialki": "1358",
+        "adres-miejscowosc": "Myślenice", "adres-ulica": "ul. Przykładowa", "adres-nr_domu": "1",
+        "inw-0-imie_nazwisko": "Jan Kowalski", "inw-0-plec": "M", "inw-0-miejscowosc": "Myślenice",
+        "inw-1712-imie_nazwisko": "Anna Kowalska", "inw-1712-plec": "K", "inw-1712-miejscowosc": "Myślenice",
+        "inw-99-imie_nazwisko": "",  # pusty blok inwestora jest pomijany
+        "data_pelnomocnictwa": "04.10.2026",
+    }
+    odp = klient.post("/generuj", data=formularz)
+    assert odp.status_code == 200 and odp.mimetype == "application/zip"
+    assert "Dokumenty_Kowalski_Kowalska.zip" in odp.headers["Content-Disposition"]
+    nazwy = zipfile.ZipFile(io.BytesIO(odp.data)).namelist()
+    assert nazwy == ["Pelnomocnictwo_Kowalski_Kowalska.docx", "PB-5_Kowalski_Jan.docx", "PB-5_Kowalska_Anna.docx"]
+
+
+def test_generuj_bez_inwestora(klient):
+    assert klient.post("/generuj", data={"inw-0-imie_nazwisko": ""}).status_code == 400
+
+
+def test_stopka_pokazuje_wersje_i_folder(klient):
+    from app import WERSJA
+    from app.main import FOLDER_PROGRAMU
+
+    html = klient.get("/").get_data(as_text=True)
+    assert WERSJA in html and FOLDER_PROGRAMU in html
+
+
+def test_arkusz_stylow_z_wersja(klient):
+    # Adres arkusza zmienia się razem z plikiem – przeglądarka nie pokaże starego wyglądu z pamięci.
+    assert "styl.css?v=" in klient.get("/").get_data(as_text=True)
+
+
+def test_wolny_port_omija_porty_blokowane_przez_przegladarki(monkeypatch):
+    import socket
+
+    from app import main
+
+    class Zajete5058i5059:
+        def __init__(self, *_):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return False
+
+        def connect_ex(self, adres):
+            return 0 if adres[1] in (5058, 5059) else 1  # 0 = zajęty; 5060/5061 wolne, ale blokowane przez przeglądarki
+
+    monkeypatch.setattr(socket, "socket", Zajete5058i5059)
+    assert main._wolny_port(5058) == 5062
+
+
+def test_przelacznik_motywu(klient):
+    html = klient.get("/").get_data(as_text=True)
+    assert 'role="radiogroup"' in html and "ustawMotyw('ciemny')" in html
+    css = (Path(__file__).parent.parent / "app" / "static" / "styl.css").read_text(encoding="utf-8")
+    assert ':root[data-motyw="ciemny"]' in css
+
+
+def test_ikona_programu(klient):
+    html = klient.get("/").get_data(as_text=True)
+    assert 'rel="icon"' in html and "ikona-64.png" in html
+    assert klient.get("/static/ikona-64.png").status_code == 200
+    assert (Path(__file__).parent.parent / "ikona" / "ikona.icns").stat().st_size > 0

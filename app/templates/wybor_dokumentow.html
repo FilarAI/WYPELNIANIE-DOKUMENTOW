@@ -1,0 +1,21 @@
+{% extends "baza.html" %}
+{% import "_makra.html" as m %}
+{% set krok = 2 %}
+{% block tresc %}
+<div class="wejscie">
+  <h1>Wybierz dokumenty</h1>
+  <p class="podtytul">Zaznacz pliki, których potrzebujesz. W następnym kroku pokażemy dotyczące ich pola.</p>
+</div>
+<form class="formularz" method="post" action="{{ url_for('podglad') }}" onsubmit="if (!this.querySelector('input[name=dokumenty]:checked')) { alert('Wybierz co najmniej jeden dokument.'); return false; }">
+  <section class="sekcja">
+    {% for plik in pliki_zrodlowe %}<div class="plik-zrodlowy">{{ m.ikona('plik') }}<div><b>{{ plik.nazwa }}</b><small>{{ plik.typ }}</small></div></div>{% endfor %}
+    <input type="hidden" name="token" value="{{ token }}">
+    <div class="lista-dokumentow">
+      {% for kod, nazwa in dokumenty.items() %}
+      <label class="zaznacz"><input type="checkbox" name="dokumenty" value="{{ kod }}" {{ 'checked' if kod in domyslne }}><span class="pole-wyboru">{{ m.ikona('ptaszek') }}</span><span>{{ nazwa }}</span></label>
+      {% endfor %}
+    </div>
+    <div class="akcje"><button type="submit" class="przycisk">Dalej: sprawdź dane</button></div>
+  </section>
+</form>
+{% endblock %}

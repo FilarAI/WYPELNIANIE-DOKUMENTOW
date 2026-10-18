@@ -1,0 +1,46 @@
+{% extends "baza.html" %}
+{% import "_makra.html" as m %}
+{% set krok = 1 %}
+{% block tresc %}
+<section class="wejscie">
+  <h1>Wgraj dokumenty źródłowe</h1>
+  <p class="podtytul">Dodaj obiegówkę, decyzję lub teczkę dokumentacji. Przy każdym pliku wskaż jego rodzaj.</p>
+  {% if blad %}<div class="komunikat blad" role="alert">{{ m.ikona('blad') }}<div><b>Nie udało się wczytać plików</b><p>{{ blad }}</p></div></div>{% endif %}
+  <form id="formularz-pliku" class="formularz" method="post" action="{{ url_for('wybierz_dokumenty') }}" enctype="multipart/form-data">
+    <div class="lista-zrodel">
+      {% for nr, nazwa_pola in [(0, 'obiegowka'), (1, 'plik_1'), (2, 'plik_2')] %}
+      <div class="wiersz-zrodla" data-nr="{{ nr }}" {% if nr > 0 %}hidden{% endif %}>
+        <div class="wiersz-zrodla-naglowek"><b>Plik {{ nr + 1 }}</b>{% if nr > 0 %}<button type="button" class="przycisk-tekstowy usun-zrodlo">Usuń</button>{% endif %}</div>
+        <div class="siatka">
+          <label class="pole"><span>Rodzaj pliku</span><select name="typ_{{ nr }}" {% if nr == 0 %}required{% endif %}>
+            <option value="">— wybierz typ —</option>
+            {% for kod, opis in rodzaje_zrodel.items() %}<option value="{{ kod }}">{{ opis }}</option>{% endfor %}
+          </select></label>
+          <label class="pole"><span>Dokument Word lub PDF</span><input type="file" name="{{ nazwa_pola }}" accept=".docx,.pdf" {% if nr == 0 %}required{% endif %}></label>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <button type="button" id="dodaj-zrodlo" class="przycisk-tekstowy">{{ m.ikona('plus') }} Dodaj kolejny plik</button>
+    <p class="podpowiedz">Możesz użyć 1–3 plików, także bez obiegówki. Jeden plik do 50 MB. Skanowany PDF może wczytywać się dłużej.</p>
+    <div class="akcje"><button type="submit" class="przycisk" id="wczytaj-pliki"><span class="kolko-ladowania" aria-hidden="true"></span> Wczytaj i wybierz dokumenty</button></div>
+  </form>
+</section>
+<script>
+  const wiersze = [...document.querySelectorAll('.wiersz-zrodla')];
+  const dodaj = document.getElementById('dodaj-zrodlo');
+  function aktualizuj() { dodaj.hidden = wiersze.every(w => !w.hidden); }
+  dodaj.addEventListener('click', () => { const w = wiersze.find(x => x.hidden); if (w) { w.hidden = false; aktualizuj(); } });
+  document.querySelectorAll('.usun-zrodlo').forEach(b => b.addEventListener('click', () => {
+    const w = b.closest('.wiersz-zrodla'); w.querySelector('input[type=file]').value = '';
+    w.querySelector('select').required = false; w.hidden = true; aktualizuj();
+  }));
+  wiersze.forEach(w => w.querySelector('input[type=file]').addEventListener('change', e => {
+    w.querySelector('select').required = w.dataset.nr === '0' || e.target.files.length > 0;
+  }));
+  document.getElementById('formularz-pliku').addEventListener('submit', () => {
+    document.getElementById('wczytaj-pliki').classList.add('wczytywanie');
+  });
+  window.addEventListener('pageshow', () => document.getElementById('wczytaj-pliki').classList.remove('wczytywanie'));
+</script>
+{% endblock %}
