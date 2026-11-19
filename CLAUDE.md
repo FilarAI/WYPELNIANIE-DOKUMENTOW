@@ -5,10 +5,16 @@ Lokalny program biura **FILAR-USŁUGI** (Rabka-Zdrój) do automatycznego wypełn
 Użytkownik wgrywa **obiegówkę** projektu (.docx). Program odczytuje z niej dane (inwestor, nazwa
 i adres inwestycji, działka) i pokazuje je w formularzu do poprawy. Następnie generuje dokumenty z szablonów biura:
 1. **Pełnomocnictwo** (`szablony/pelnomocnictwo.docx`): jedno, wspólne dla wszystkich inwestorów,
-2. **PB-5**, czyli oświadczenie o posiadanym prawie do dysponowania nieruchomością na cele budowlane
-   (`szablony/pb5_oswiadczenie.docx`): **osobny plik dla każdego inwestora**,
-3. **Oświadczenie kierownika budowy** (`szablony/oswiadczenie_kierownika.docx`),
-4. **Zawiadomienie o zakończeniu budowy** (`szablony/zawiadomienie_o_zakonczeniu.docx`).
+2. **PB-5**, czyli oświadczenie o posiadanym prawie do dysponowania nieruchomością na cele budowlane (`szablony/pb5_oswiadczenie.docx`): osobny plik dla każdego inwestora,
+3. **PB-2**, czyli zgłoszenie budowy lub wykonywania innych robót budowlanych; formularz jest dwustronicowy i powstaje osobno dla każdego inwestora.
+4. **PB-2a**, czyli zgłoszenie budowy lub przebudowy budynku mieszkalnego jednorodzinnego; formularz jest dwustronicowy, pozwala wybrać kilka rodzajów zamierzenia i powstaje osobno dla każdego inwestora.
+5. **PB-7**, czyli wniosek o zmianę pozwolenia na budowę; formularz jest dwustronicowy i powstaje osobno dla każdego inwestora.
+6. **PB-9**, czyli wniosek o przeniesienie decyzji o pozwoleniu na budowę; formularz jest dwustronicowy i powstaje osobno dla każdego nowego inwestora.
+7. **PB-1**, czyli wniosek o pozwolenie na budowę; formularz jest dwustronicowy i powstaje osobno dla każdego inwestora.
+8. **OŚ-6165**, czyli wniosek o wydanie zaświadczenia, czy grunty są objęte uproszczonym planem urządzenia lasu; druk jest dwustronicowy, a dane wnioskodawcy i działki domyślnie pochodzą z obiegówki.
+9. **EGiB — wypis/wyrys**, czyli wniosek o wydanie wypisu lub wyrysu z operatu ewidencyjnego; jest odrębny od zgłoszenia zmian EGiB. Dane strony i nieruchomości domyślnie pochodzą z obiegówki.
+6. **Oświadczenie kierownika budowy** (`szablony/oswiadczenie_kierownika.docx`),
+7. **Zawiadomienie o zakończeniu budowy** (`szablony/zawiadomienie_o_zakonczeniu.docx`).
 
 Po wgraniu 1–3 plików DOCX/PDF (typ wskazywany przez użytkownika: obiegówka, decyzja, teczka)
 użytkownik wybiera dokumenty, a formularz pokazuje pola tylko dla wybranych typów.
@@ -42,6 +48,7 @@ app/scalanie_zrodel.py   łączenie źródeł, konflikty, rozpoznanie obcych inw
 app/teryt.py             identyfikator działki / nazwa miejscowości → województwo, powiat, gmina
 app/generator.py         wypełnianie starych szablonów (docxtpl), wybór dokumentów
 app/zakonczenie_dokumenty.py  wypełnianie dostarczonych wzorów zakończenia budowy (python-docx)
+app/formatowanie.py     walidacja wyglądu danych i formatowanie tylko uzupełnianych fragmentów Worda
 app/konfiguracja.py      dane pełnomocnika biura (osoba upoważniona w PB-5)
 app/zapis.py             zapis do wybranego folderu (okno macOS przez osascript), pamięć ostatniego folderu
 app/templates/           HTML: baza.html (obramowanie, nagłówek, pasek kroków), _makra.html (ikony SVG, pola, odmiana)
@@ -137,3 +144,28 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # instalacj
 1. Dodaj funkcję budującą szablon w `narzedzia/zbuduj_szablony.py` (znaczniki `{{ }}` z nazwami pól parsera).
 2. Dodaj w `app/generator.py` funkcję kontekstu i wpis w `generuj_dokumenty()` (jeden plik czy osobny dla każdego inwestora).
 3. Dodaj test w `tests/test_generator.py`, który sprawdza treść oraz brak `{{` w wyniku.
+
+## Wygląd uzupełnionych danych
+- Etap 3: `format-rozmiar` (`normalny` / `wiekszy`, +2 pt do rozmiaru fragmentu wzoru), `format-pogrubienie` (zaznaczone = `tak`) i `format-kolor` (`czarny` / `granatowy`, `1F3864`). Walidacja odrzuca inne lub powtórzone wartości. Brak opcji oznacza dotychczasowy wygląd.
+- Wybór obejmuje wszystkie wybrane Wordy i załączniki PB-5. Oryginalne pogrubienia wzoru pozostają; checkbox dodaje pogrubienie pozostałym danym.
+- Przed docxtpl znaczniki Jinja są izolowane w osobnych runach z zachowaniem właściwości wzoru; styl dotyczy wartości, nie całych akapitów. Nie wyszukuj po wygenerowanych numerach ani nazwach, bo mogłyby występować także w stałych etykietach.
+- Wzory zakończenia budowy izolują wstawione wartości podczas podmiany kropek i wyborów. Linie podpisów, niewypełnione kropki i komunikaty wymagające potwierdzenia zachowują wygląd wzoru.
+- Testy `tests/test_formatowanie.py` sprawdzają treść i format wszystkich czterech dokumentów, załączniki, znaki specjalne, podział runów, ZIP i odrzucanie niedozwolonych ustawień.
+
+## BA-4
+- Kod wyboru `ba4`: jeden wspólny wniosek o wydanie dziennika budowy / rozbiórki. `app/dziennik.py` waliduje i łączy dane. `app/templates/_ba4.html` pokazuje tylko potrzebne pola; poprzedni dziennik jest aktywny dopiero po wybraniu kolejnego.
+- Wzór: `szablony/ba4_dziennik.docx`, odtworzony z jednostronicowego zdjęcia użytkownika z 19.11.2026. Źródło układu: `narzedzia/zbuduj_ba4.py`, wywoływane też przez `ba4()` w ogólnym builderze. Zachowaj pełny tekst druku, adres odbiorcy, tytuły, gwiazdki i podpis bez wypełniania.
+- Style znakowe `BA4_*` identyfikują warianty do skreślania. Zaznaczenia dotyczą wyłącznie jawnych wyborów użytkownika. Oświadczenia nie są potwierdzane automatycznie. Dla pierwszego dziennika punkt 3 jest nieadekwatny i skreślany, dane poprzedniego dziennika są czyszczone.
+- Znak, data i organ wniosku pochodzą z danych decyzji. Parser źródeł obsługuje również pozwolenie na rozbiórkę. BA-4 sprawdza rzeczywiste daty DD.MM.RRRR i kolejność dat, zgodność rodzaju pozwolenia, wymagane dane inwestycji i poprzedniego dziennika. Inne wybrane dokumenty nie wymagają pól BA-4.
+- Wyróżnienie danych przez `formatowanie.przygotuj_szablon` obejmuje tylko wypełnione znaczniki, nie tytuły ani oświadczenia ze wzoru. Wybrane i skreślone warianty zachowują kolor druku.
+
+## Zgłoszenie zmian EGiB
+- Kod `egib`: jeden dokument wspólny. `app/ewidencja.py` odpowiada za domyślne dane, walidację i kontekst, a `_egib.html` za dodatkowe pola w kroku 3. `szablony/egib_zmiany.docx` buduje `narzedzia/zbuduj_egib.py`, także przez ogólny builder.
+- Wzór odtworzony ze zdjęcia użytkownika z 19.11.2026: zachowaj pełną klauzulę i zgodę, adres odbiorcy, podpis pusty. Style znakowe `EGiB_wlasciciel` / `EGiB_wladajacy` służą do podkreślania wybranej roli; `EGiB_zgoda` do przełączenia pustego/zaznaczonego kwadratu. Nie wyróżniaj ich ustawieniami wyglądu danych.
+- Zgoda nigdy nie jest domyślna, adres e-mail jej nie włącza. Zaznaczona zgoda wymaga poprawnego e-maila. Opis zmian i rola są świadomymi wyborami użytkownika. Obręb proponowany z miejscowości wymaga sprawdzenia; adres korespondencyjny domyślnie pochodzi od pierwszego inwestora.
+- Waliduj rzeczywistą datę DD.MM.RRRR, numery działek bez duplikatów, zgodność gminy z rozpoznanym TERYT, długości i powtórzone pola. Dane EGiB są wymagane tylko przy zaznaczeniu tego dokumentu. Testy: `tests/test_egib.py`.
+
+## Pełnomocnictwo do spraw EGiB
+- Kod `pelnomocnictwo_egib` to osobny druk od pełnomocnictwa inwestycyjnego. Wzór `szablony/pelnomocnictwo_egib.docx` odtwarza widoczną stronę ze zdjęcia; builder `narzedzia/zbuduj_pelnomocnictwo_egib.py`.
+- Każdy mocodawca podaje ręcznie numer dowodu, organ wydający i 11 cyfr PESEL. Dane pełnomocnika wpisuje się osobno, ponieważ nie ma ich w konfiguracji biura. Nie automatyzuj ani nie zgaduj tych identyfikatorów.
+- Wybór `samodzielnie` albo `podpisany` jest wymagany; zaznacz tylko wybraną kratkę, a drugi wariant przekreśl. Podpis mocodawcy zostaje pusty. Testy: `tests/test_pelnomocnictwo_egib.py`.

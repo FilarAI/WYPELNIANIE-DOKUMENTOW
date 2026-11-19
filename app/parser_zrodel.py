@@ -14,7 +14,7 @@ from app.parser_obiegowki import rozbierz_adres_inwestycji, rozbierz_inwestorow,
 
 RODZAJE_ZRODEL = {
     "obiegowka": "Obiegówka",
-    "decyzja": "Decyzja o pozwoleniu na budowę",
+    "decyzja": "Decyzja o pozwoleniu na budowę / rozbiórkę",
     "teczka": "Teczka dokumentacji budowy",
 }
 NUMER_DZIALKI = re.compile(r"\b\d{1,5}(?:/\d{1,5})?\b")
@@ -73,10 +73,10 @@ def _dane_decyzji(linie: list[tuple[int, str]], plik: str) -> tuple[dict, dict, 
     pola, dowody, inwestorzy, uwagi = {}, {}, [], []
     start = next((i for i, (_, t) in enumerate(linie)
                   if re.search(r"decyzja\s+nr\b", t, re.I)
-                  and any("udzielam pozwolenia na budow" in _norm(nastepny)
+                  and any(any(fraza in _norm(nastepny) for fraza in ("udzielam pozwolenia na budow", "udzielam pozwolenia na rozbiork"))
                           for _, nastepny in linie[i:i + 15])), -1)
     if start < 0:
-        raise ValueError("Nie znaleziono decyzji o pozwoleniu na budowę. Sprawdź wybrany typ pliku.")
+        raise ValueError("Nie znaleziono decyzji o pozwoleniu na budowę lub rozbiórkę. Sprawdź wybrany typ pliku.")
     koniec = next((i for i in range(start + 1, min(start + 150, len(linie)))
                    if _norm(linie[i][1]) == "uzasadnienie"), min(start + 100, len(linie)))
     sentencja = linie[start:koniec]
@@ -125,9 +125,10 @@ def _dane_decyzji(linie: list[tuple[int, str]], plik: str) -> tuple[dict, dict, 
                 identyfikatory = ", ".join(f"{jednostka.group(1)}.{obreb.group(1)}.{nr}" for nr in numery)
                 wpisz("adres.identyfikator_dzialki", identyfikatory, w,
                        "Sprawdź, czy wszystkie działki należą do inwestycji, a nie do drogi.")
-        if re.search(r"^budowę\s+budynku|^budowa\s+budynku", tekst, re.I):
+        if re.search(r"^(?:budowę|budowa|rozbiórkę|rozbiórka)\s+budynku", tekst, re.I):
             nazwa = re.split(r"\s+wraz\s+z\s+|\s*\(|\s+na\s+działk", tekst, maxsplit=1, flags=re.I)[0].strip(" ,")
             nazwa = re.sub(r"^budowę\b", "Budowa", nazwa, flags=re.I)
+            nazwa = re.sub(r"^rozbiórkę\b", "Rozbiórka", nazwa, flags=re.I)
             if len(nazwa) <= 180:
                 wpisz("nazwa_inwestycji", nazwa[0].upper() + nazwa[1:], w)
 

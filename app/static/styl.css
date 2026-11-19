@@ -16,6 +16,9 @@
   --tekst-3: #98A2B3;
   --tekst-4: #B4BCC8;
   --tekst-przycisku: #344054;
+  --format-papier: #FFFFFF;
+  --format-tekst: #111827;
+  --format-granat: #1F3864;
   --na-akcencie: #FFFFFF;
   --ramka-hover: #B9C0CB;
   --krok-tlo: #EEF0F4;
@@ -93,6 +96,9 @@
   --tekst-3: #737B88;
   --tekst-4: #5A616C;
   --tekst-przycisku: #D0D5DD;
+  --format-papier: #FFFFFF;
+  --format-tekst: #111827;
+  --format-granat: #1F3864;
   --ramka-hover: #4B5260;
   --krok-tlo: #252A32;
   --krok-linia: #323843;
@@ -690,4 +696,52 @@ h2 {
   .lista-dokumentow, .zak-opcje { grid-template-columns: 1fr; }
   .podsumowanie-lista ul { grid-template-columns: 1fr; }
   .krok + .krok::before { width: 20px; margin: 0 7px; }
+}
+
+/* Opcje na górze formularza dotyczą tylko wartości wpisywanych do Worda. */
+.format-danych > summary { min-height: 28px; }
+.format-danych > summary h2 { margin: 0; }
+.format-opcje { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--separator); }
+.format-ustawienia { display: flex; flex-wrap: wrap; align-items: end; gap: 12px 24px; margin-bottom: 16px; }
+.format-ustawienia .zaznacz { min-height: 44px; margin: 0; align-items: center; }
+.format-wybor-koloru { flex: 1; min-width: 190px; }
+.format-danych .podpowiedz { color: var(--tekst-2); }
+.format-podglad {
+  padding: 16px; margin: 8px 0 12px; border: 1px solid var(--ramka-mocna);
+  border-radius: var(--r-maly); background: var(--format-papier); color: var(--format-tekst);
+  font-size: 14px; line-height: 1.7; overflow-wrap: anywhere;
+}
+.format-podglad .format-wiekszy { font-size: 16.667px; }
+.format-podglad .format-granatowy { color: var(--format-granat); }
+.format-podglad .format-pogrubiony { font-weight: 700; }
+@media (max-width: 760px) {
+  .format-ustawienia { flex-direction: column; align-items: stretch; gap: 4px; }
+  .format-wybor-koloru { min-width: 0; margin-top: 8px; }
+}
+
+/* Dwie kolumny dla czytelnych opisów decyzji i oświadczeń BA-4. */
+.ba4-pola .pole { grid-column: span 3; }
+.ba4-pola .pole.cala { grid-column: 1 / -1; }
+@media (max-width: 760px) {
+  .ba4-pola .pole { grid-column: 1 / -1; }
+}
+
+.ba4-oswiadczenia { margin: 0 0 16px; font-size: 13px; line-height: 1.6; }
+.ba4-oswiadczenia summary { color: var(--niebieski); cursor: pointer; }
+.ba4-oswiadczenia p { margin: 12px 0 0; color: var(--tekst-2); }
+
+.ba4-pola { align-items: end; }
+.ba4-formularz .podpowiedz, .ba4-formularz .podgrupa { color: var(--tekst-2); }
+
+/* Dane odrębnego zgłoszenia zmian EGiB. */
+.egib-pola { align-items: end; }
+.egib-pola .pole { grid-column: span 3; }
+.egib-pola .pole.cala { grid-column: 1 / -1; }
+.egib-formularz .podpowiedz { color: var(--tekst-2); }
+.egib-zgoda { margin-top: 20px; }
+.egib-tresc-zgody { margin: 12px 0; font-size: 13px; line-height: 1.6; }
+.egib-tresc-zgody summary { cursor: pointer; color: var(--tekst-przycisku); text-decoration: underline; text-underline-offset: 3px; }
+.egib-tresc-zgody p { color: var(--tekst-2); margin: 12px 0; }
+@media (max-width: 760px) {
+  .egib-pola .pole { grid-column: 1 / -1; }
 }

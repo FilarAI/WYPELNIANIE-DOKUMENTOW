@@ -1,0 +1,9 @@
+SCENARIUSZE WALIDACJI PB-2a
+
+Dla każdego scenariusza aplikacja powinna zwrócić komunikat walidacyjny (HTTP 400) i nie wygenerować pliku:
+
+1. Nie zaznaczono żadnego rodzaju zamierzenia budowlanego.
+2. Nie podano planowanego terminu rozpoczęcia.
+3. Data 31.02.2027 — niepoprawna data kalendarzowa.
+4. Data 2027-03-15 — niepoprawny format; wymagany DD.MM.RRRR.
+5. Zaznaczono działanie przez pełnomocnika, ale nie podano jego imienia i nazwiska.

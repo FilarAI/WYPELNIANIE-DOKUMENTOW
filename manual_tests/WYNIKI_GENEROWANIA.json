@@ -1,0 +1,107 @@
+[
+  {
+    "folder": "01_Pelnomocnictwo",
+    "kod": "pelnomocnictwo",
+    "poprawny_http": 200,
+    "brakujacy_http": 400,
+    "blad": "Podaj co najmniej jednego inwestora (imię i nazwisko). Wróć do formularza."
+  },
+  {
+    "folder": "02_PB5",
+    "kod": "pb5",
+    "poprawny_http": 200,
+    "brakujacy_http": 400,
+    "blad": "Podaj co najmniej jednego inwestora (imię i nazwisko). Wróć do formularza."
+  },
+  {
+    "folder": "03_Oswiadczenie_kierownika",
+    "kod": "oswiadczenie",
+    "poprawny_http": 200,
+    "brakujacy_http": 400,
+    "blad": "Podaj co najmniej jednego inwestora (imię i nazwisko). Wróć do formularza."
+  },
+  {
+    "folder": "04_Zawiadomienie",
+    "kod": "zawiadomienie",
+    "poprawny_http": 200,
+    "brakujacy_http": 400,
+    "blad": "Podaj co najmniej jednego inwestora (imię i nazwisko). Wróć do formularza."
+  },
+  {
+    "folder": "06_BA4",
+    "kod": "ba4",
+    "poprawny_http": 200,
+    "brakujacy_http": 400,
+    "blad": "BA-4: uzupełnij „Data wniosku”."
+  },
+  {
+    "folder": "07_EGiB_zmiany",
+    "kod": "egib",
+    "poprawny_http": 200,
+    "brakujacy_http": 400,
+    "blad": "EGiB: uzupełnij „Opis zgłaszanych zmian”."
+  },
+  {
+    "folder": "09_Pelnomocnictwo_EGiB",
+    "kod": "pelnomocnictwo_egib",
+    "poprawny_http": 200,
+    "brakujacy_http": 400,
+    "blad": "Pełnomocnictwo EGiB: podaj 11-cyfrowy PESEL osoby „Anna Testowa”."
+  },
+  {
+    "folder": "10_EGiB_wypis_wyrys",
+    "kod": "egib_wypis",
+    "poprawny_http": 200,
+    "brakujacy_http": 400,
+    "blad": "EGiB — wypis/wyrys: zaznacz przedmiot wniosku."
+  },
+  {
+    "folder": "11_PB2",
+    "kod": "pb2",
+    "poprawny_http": 200,
+    "brakujacy_http": 400,
+    "blad": "PB-2: opisz rodzaj, zakres i sposób wykonywania robót."
+  },
+  {
+    "folder": "12_PB2a",
+    "kod": "pb2a",
+    "poprawny_http": 200,
+    "brakujacy_http": 400,
+    "blad": "PB-2a: podaj planowany termin rozpoczęcia robót."
+  },
+  {
+    "folder": "13_PB7",
+    "kod": "pb7",
+    "poprawny_http": 200,
+    "brakujacy_http": 400,
+    "blad": "PB-7: uzupełnij organ oraz datę, numer, znak sprawy i nazwę zamierzenia z decyzji."
+  },
+  {
+    "folder": "14_PB9",
+    "kod": "pb9",
+    "poprawny_http": 200,
+    "brakujacy_http": 400,
+    "blad": "PB-9: uzupełnij dotychczasowego inwestora oraz datę, numer, znak sprawy i nazwę zamierzenia z decyzji."
+  },
+  {
+    "folder": "15_PB1",
+    "kod": "pb1",
+    "poprawny_http": 200,
+    "brakujacy_http": 400,
+    "blad": "PB-1: podaj ogólną nazwę zamierzenia budowlanego."
+  },
+  {
+    "folder": "16_OS6165",
+    "kod": "os616",
+    "poprawny_http": 200,
+    "brakujacy_http": 400,
+    "blad": "OŚ-6165: podaj numery działek ewidencyjnych."
+  },
+  {
+    "folder": "18_Formularz_P",
+    "kod": "formularz_p",
+    "poprawny_http": 200,
+    "brakujacy_http": 400,
+    "blad": "Formularz P: zaznacz co najmniej jeden rodzaj materiału."
+  }
+]

@@ -18,6 +18,11 @@
       </select>
     </label>{% endif %}
   </div>
+  {% if 'pelnomocnictwo_egib' in wybrane %}<div class="siatka egib-pola">
+    <label class="pole"><span>Numer dowodu osobistego</span><input name="pel-egib-{{ n }}-dowod" maxlength="30" required></label>
+    <label class="pole"><span>Organ wydający dowód</span><input name="pel-egib-{{ n }}-organ" maxlength="120" required></label>
+    <label class="pole cala"><span>PESEL</span><input name="pel-egib-{{ n }}-pesel" inputmode="numeric" maxlength="11" pattern="[0-9]{11}" required></label>
+  </div>{% endif %}
   <p class="podgrupa">Adres zamieszkania</p>
   <div class="siatka">
     {{ m.pole('inw-%s-ulica' % n, 'Ulica', i.ulica, 'polowa') }}
@@ -56,6 +61,38 @@
   {% if token_wgrania %}<input type="hidden" name="token_wgrania" value="{{ token_wgrania }}">{% endif %}
   <input type="hidden" name="wybor_potwierdzony" value="tak">
   {% for kod in wybrane %}<input type="hidden" name="dokumenty" value="{{ kod }}">{% endfor %}
+  <details class="sekcja dodatkowe format-danych" aria-labelledby="format-tytul">
+    <summary>
+      <h2 id="format-tytul">Wygląd uzupełnionych danych</h2>
+      {{ m.ikona('strzalka-dol', 'rozwin') }}
+    </summary>
+    <div class="format-opcje">
+      <p class="opis-sekcji">Wyróżnienie obejmie tylko wartości wpisane przez program do dokumentów Word: nazwiska, adresy, daty i pozostałe dane z formularza.</p>
+      <div class="format-ustawienia">
+        <label class="zaznacz">
+          <input type="checkbox" name="format-rozmiar" id="format-rozmiar" value="wiekszy">
+          <span class="pole-wyboru">{{ m.ikona('ptaszek') }}</span>
+          <span>Większy tekst (+2 pkt)</span>
+        </label>
+        <label class="zaznacz">
+          <input type="checkbox" name="format-pogrubienie" id="format-pogrubienie" value="tak">
+          <span class="pole-wyboru">{{ m.ikona('ptaszek') }}</span>
+          <span>Pogrubienie</span>
+        </label>
+        <label class="pole format-wybor-koloru">
+          <span>Kolor uzupełnionych danych</span>
+          <select name="format-kolor" id="format-kolor">
+            <option value="czarny">Czarny</option>
+            <option value="granatowy">Ciemnoniebieski</option>
+          </select>
+        </label>
+      </div>
+      <p class="podpowiedz" id="format-podglad-opis">Przykład wyglądu w dokumencie</p>
+      <p class="format-podglad" aria-describedby="format-podglad-opis">Inwestor: <span id="format-przyklad">{{ dane.inwestorzy[0].imie_nazwisko or 'Imię i nazwisko inwestora' }}</span></p>
+      <p class="podpowiedz">Etykiety i stała treść dokumentu zachowają swój wygląd. Niezaznaczony większy tekst oznacza rozmiar zgodny ze wzorem.</p>
+    </div>
+  </details>
+
   {% for plik in pliki_zrodlowe %}<div class="plik-zrodlowy">{{ m.ikona('plik') }}<div><b>{{ plik.nazwa }}</b><small>{{ plik.typ }}</small></div>{% if loop.first %}<a class="przycisk-tekstowy" href="{{ url_for('start') }}">Zmień pliki</a>{% endif %}</div>{% endfor %}
   <p class="wybrane-podsumowanie"><b>Przygotujesz:</b> {% for kod in wybrane %}{{ nazwy_dokumentow[kod] }}{{ ', ' if not loop.last }}{% endfor %}</p>
 
@@ -99,6 +136,7 @@
     <dl>{% for p in pochodzenie %}<dt>{{ p.etykieta }}</dt><dd><b>{{ p.wartosc }}</b><br><small>{{ p.plik }} · {{ p.miejsce }}{% if p.uwaga %} · {{ p.uwaga }}{% endif %}<br>{{ p.fragment }}</small></dd>{% endfor %}</dl>
   </details>{% endif %}
 
+
   <section class="sekcja {{ 'z-ostrzezeniem' if uwaga_inwestycja }}">
     <h2>Inwestycja {{ znacznik_uwagi(uwaga_inwestycja) }}</h2>
     <div class="siatka">
@@ -119,7 +157,7 @@
       </label>{% endfor %}
     </div>{% endif %}
     <div class="siatka">
-      {% if 'pb5' in wybrane %}{{ m.pole('adres-identyfikator_dzialki', 'Identyfikator działki (TERYT)', dane.adres_inwestycji.identyfikator_dzialki, 'szeroko') }}{% endif %}
+      {% if 'pb5' in wybrane or 'egib' in wybrane %}{{ m.pole('adres-identyfikator_dzialki', 'Identyfikator działki (TERYT)', dane.adres_inwestycji.identyfikator_dzialki, 'szeroko') }}{% endif %}
       {{ m.pole('adres-nr_dzialki', 'Nr działki', dane.adres_inwestycji.nr_dzialki) }}
     </div>
     <p class="podgrupa">Adres inwestycji</p>
@@ -147,11 +185,11 @@
     <button type="button" class="dodaj-inwestora" onclick="dodajInwestora()">{{ m.ikona('plus') }} Dodaj inwestora</button>
   </section>
 
-  {% if 'pelnomocnictwo' in wybrane or 'pb5' in wybrane %}<section class="sekcja">
+  {% if 'pelnomocnictwo' in wybrane or 'pelnomocnictwo_egib' in wybrane or 'pb5' in wybrane %}<section class="sekcja">
     <h2>Dokumenty</h2>
     <p class="opis-sekcji">Dodatkowe dane do wybranych dokumentów.</p>
     <div class="siatka">
-      {% if 'pelnomocnictwo' in wybrane %}{{ m.pole('data_pelnomocnictwa', 'Data pełnomocnictwa', dzisiaj) }}{% endif %}
+      {% if 'pelnomocnictwo' in wybrane or 'pelnomocnictwo_egib' in wybrane %}{{ m.pole('data_pelnomocnictwa', 'Data pełnomocnictwa', dzisiaj) }}{% endif %}
     </div>
     {% if 'pb5' in wybrane %}<label class="zaznacz">
       <input type="checkbox" name="upowazniony_w_pb5" value="tak">
@@ -161,6 +199,20 @@
   </section>{% endif %}
 
   {% if 'oswiadczenie' in wybrane or 'zawiadomienie' in wybrane %}{% include '_zakonczenie.html' %}{% endif %}
+
+  {% if 'ba4' in wybrane %}{% include '_ba4.html' %}{% endif %}
+
+  {% if 'pb2' in wybrane %}{% include '_pb2.html' %}{% endif %}
+  {% if 'pb2a' in wybrane %}{% include '_pb2a.html' %}{% endif %}
+  {% if 'pb7' in wybrane %}{% include '_pb7.html' %}{% endif %}
+  {% if 'pb9' in wybrane %}{% include '_pb9.html' %}{% endif %}
+  {% if 'pb1' in wybrane %}{% include '_pb1.html' %}{% endif %}
+  {% if 'os616' in wybrane %}{% include '_os616.html' %}{% endif %}
+  {% if 'egib_wypis' in wybrane %}{% include '_egib_wypis.html' %}{% endif %}
+  {% if 'formularz_p' in wybrane %}{% include '_formularz_p.html' %}{% endif %}
+
+  {% if 'egib' in wybrane %}{% include '_egib.html' %}{% endif %}
+  {% if 'pelnomocnictwo_egib' in wybrane %}{% include '_pelnomocnictwo_egib.html' %}{% endif %}
 
   <details class="sekcja dodatkowe {{ 'z-ostrzezeniem' if uwaga_pozostale }}" {{ 'open' if uwaga_pozostale }}>
     <summary>
@@ -281,6 +333,19 @@
   // Stan „Zapisuję…” tylko przy zapisie do folderu (ZIP to pobranie – strona zostaje bez zmian).
   const formularz = document.getElementById('formularz');
   const zapisz = document.getElementById('przycisk-zapisz');
+  const formatPrzyklad = document.getElementById('format-przyklad');
+  function aktualizujFormat() {
+    const wiekszy = document.getElementById('format-rozmiar').checked;
+    const granatowy = document.getElementById('format-kolor').value === 'granatowy';
+    formatPrzyklad.classList.toggle('format-wiekszy', wiekszy);
+    formatPrzyklad.classList.toggle('format-granatowy', granatowy);
+    formatPrzyklad.classList.toggle('format-pogrubiony', document.getElementById('format-pogrubienie').checked);
+    const inwestor = formularz.querySelector('#inwestorzy .inwestor:not(.usuwany) input[name$="-imie_nazwisko"]');
+    formatPrzyklad.textContent = inwestor?.value.trim() || 'Imię i nazwisko inwestora';
+  }
+  formularz.addEventListener('input', aktualizujFormat);
+  formularz.addEventListener('change', aktualizujFormat);
+  aktualizujFormat();
   document.querySelectorAll('.wybierz-wariant').forEach(przycisk => przycisk.addEventListener('click', () => {
     const cel = formularz.querySelector(`[name="${przycisk.dataset.cel}"]`);
     if (!cel) return;
@@ -346,6 +411,31 @@
       lista.append(wiersz);
     });
   }
+  {% if 'ba4' in wybrane %}
+  function aktualizujBA4() {
+    const kolejny = document.getElementById('ba4-kolejnosc').value === 'kolejny';
+    const blok = document.getElementById('ba4-kolejny');
+    blok.hidden = !kolejny;
+    blok.querySelectorAll('input, select, textarea').forEach(p => {
+      p.disabled = !kolejny;
+      p.required = kolejny && p.tagName !== 'TEXTAREA';
+    });
+    const stan = document.getElementById('ba4-stan').value;
+    blok.querySelector('textarea').required = kolejny && ['zagubiony', 'zniszczony', 'inne'].includes(stan);
+  }
+  document.getElementById('ba4-kolejnosc').addEventListener('change', aktualizujBA4);
+  document.getElementById('ba4-stan').addEventListener('change', aktualizujBA4);
+  window.addEventListener('pageshow', () => { aktualizujBA4(); aktualizujPodsumowanie(); });
+  aktualizujBA4();
+  {% endif %}
+  {% if 'egib' in wybrane %}
+  function aktualizujEGiB() {
+    formularz.querySelector('[name="egib-email"]').required = document.getElementById('egib-zgoda-email').checked;
+  }
+  document.getElementById('egib-zgoda-email').addEventListener('change', aktualizujEGiB);
+  window.addEventListener('pageshow', aktualizujEGiB);
+  aktualizujEGiB();
+  {% endif %}
   formularz.addEventListener('input', aktualizujPodsumowanie);
   formularz.addEventListener('change', aktualizujPodsumowanie);
   aktualizujPodsumowanie();
@@ -356,6 +446,7 @@
     }
   });
   window.addEventListener('pageshow', () => {
+    aktualizujFormat();
     if (zapisz) {
       zapisz.classList.remove('w-toku');
       zapisz.querySelector('.etykieta').textContent = 'Zapisz dokumenty w folderze';

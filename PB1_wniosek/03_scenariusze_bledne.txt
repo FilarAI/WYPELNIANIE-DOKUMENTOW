@@ -1,0 +1,6 @@
+PB-1 — przykłady walidacji
+
+- Brak nazwy zamierzenia budowlanego: blokuje generowanie.
+- Brak zaznaczonego rodzaju zamierzenia: blokuje generowanie.
+- Nieznany kod rodzaju zamierzenia: blokuje generowanie.
+- Wybrany pełnomocnik bez imienia i nazwiska: blokuje generowanie.

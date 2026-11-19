@@ -1,0 +1,46 @@
+{% macro pole_egib(nazwa, wymagana=false, klasa='') -%}
+<label class="pole {{ klasa }}">
+  <span>{{ egib_pola[nazwa][0] }}</span>
+  <input type="text" name="egib-{{ nazwa }}" maxlength="{{ egib_pola[nazwa][1] }}" value="{{ egib_wartosci.get(nazwa, '') }}" {% if wymagana %}required{% endif %} {% if nazwa == 'data' %}placeholder="DD.MM.RRRR" inputmode="numeric"{% endif %} {% if nazwa == 'email' %}inputmode="email" autocomplete="email"{% endif %}>
+</label>
+{%- endmacro %}
+<section class="sekcja egib-formularz" aria-labelledby="egib-tytul">
+  <h2 id="egib-tytul">Zgłoszenie zmian danych EGiB</h2>
+  <p class="opis-sekcji">Zgłaszającego i nieruchomość uzupełniliśmy na podstawie źródeł. Adres korespondencyjny pochodzi domyślnie od pierwszego inwestora — sprawdź go i w razie potrzeby zmień.</p>
+  <div class="siatka egib-pola">
+    {{ pole_egib('zglaszajacy', true, 'cala') }}
+    {{ pole_egib('adres1', true) }}
+    {{ pole_egib('adres2', true) }}
+    {{ pole_egib('telefon') }}
+    {{ pole_egib('email') }}
+    {{ pole_egib('miejscowosc', true) }}
+    {{ pole_egib('data', true) }}
+    {{ pole_egib('gmina', true) }}
+    {{ pole_egib('obreb', true) }}
+  </div>
+  <p class="podpowiedz">Gmina pochodzi z danych działki. Jako propozycję obrębu wpisaliśmy miejscowość inwestycji — potwierdź jej zgodność z nazwą obrębu ewidencyjnego. Numery działek trafią z sekcji „Nieruchomość / działka” powyżej.</p>
+  <div class="siatka egib-pola">
+    <label class="pole"><span>Zgłaszam zmianę jako</span>
+      <select name="egib-rola" required>
+        <option value="">— wybierz —</option>
+        {% for kod, nazwa in egib_role %}<option value="{{ kod }}">{{ nazwa }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="pole cala"><span>{{ egib_pola.opis_zmian[0] }}</span>
+      <textarea name="egib-opis_zmian" rows="5" maxlength="3000" required></textarea>
+    </label>
+    <label class="pole cala"><span>{{ egib_pola.zalaczniki[0] }}</span>
+      <textarea name="egib-zalaczniki" rows="3" maxlength="1500"></textarea>
+    </label>
+  </div>
+  <label class="zaznacz egib-zgoda">
+    <input type="checkbox" name="egib-zgoda_email" id="egib-zgoda-email" value="tak">
+    <span class="pole-wyboru">{{ m.ikona('ptaszek') }}</span>
+    <span>Wyrażam/y zgodę na przesłanie zawiadomienia o zmianach danych ewidencyjnych na podany adres e-mail.</span>
+  </label>
+  <details class="egib-tresc-zgody">
+    <summary>Przeczytaj pełną treść zgody z druku</summary>
+    <p>Wyrażam/y zgodę na przesłanie zawiadomienia o zmianach danych ewidencyjnych w postaci dokumentów elektronicznych w rozumieniu przepisów ustawy z dnia 17 lutego 2005r. o informatyzacji działalności podmiotów realizujących zadania publiczne (Dz. U. 2025, poz. 1703) za pomocą środków komunikacji elektronicznej w rozumieniu przepisów ustawy z dnia 18 lipca 2002 r. o świadczeniu usług drogą elektroniczną na podany w/w adres poczty elektronicznej, stosownie do § 35 pkt 5 rozporządzenia MRiT w sprawie ewidencji gruntów i budynków (Dz. U. 2024, poz. 219 z późn. zm.).</p>
+  </details>
+  <p class="podpowiedz">Zgoda jest opcjonalna i początkowo niezaznaczona. W Wordzie pozostanie pełna klauzula informacyjna oraz puste miejsce na podpis.</p>
+</section>

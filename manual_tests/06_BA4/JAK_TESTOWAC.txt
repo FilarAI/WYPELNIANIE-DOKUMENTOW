@@ -1,0 +1,7 @@
+BA-4 — dziennik budowy / rozbiórki
+
+01_obiegowka_testowa.docx — fikcyjne dane źródłowe do wgrania w aplikacji.
+02_wynik_poprawny.docx — przykładowy, wygenerowany poprawny dokument.
+03_scenariusz_brakujacy.json — komplet danych do powtórzenia poprawnego przebiegu oraz jedno pole do wyczyszczenia.
+Oczekiwany wynik próby z brakiem: HTTP 400 — BA-4: uzupełnij „Data wniosku”.
+Dane są fikcyjne. Podpisy złóż po wydrukowaniu; nie składaj tych przykładów do urzędu.

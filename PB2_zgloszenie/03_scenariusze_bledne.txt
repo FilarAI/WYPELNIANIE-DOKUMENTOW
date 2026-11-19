@@ -1,0 +1,9 @@
+PRÓBY NEGATYWNE PB-2
+
+Wgraj 01_obiegowka_testowa.docx, wybierz PB-2, przejdź do kroku 3 i sprawdź poniższe przypadki. Każda próba ma zakończyć się komunikatem błędu i nie może pobrać dokumentu.
+
+1. Usuń treść pola „Rodzaj, zakres i sposób wykonywania robót” i spróbuj wygenerować. Oczekiwany błąd: wymagany opis robót.
+2. Wpisz termin 31.02.2027. Oczekiwany błąd: niepoprawna data.
+3. Wpisz termin w formacie 2027-03-15. Oczekiwany błąd: wymagany format DD.MM.RRRR.
+4. Wybierz pełnomocnika, ale nie wpisuj jego imienia i nazwiska. Oczekiwany błąd: wymagane dane pełnomocnika.
+5. Wpisz w opisie robót więcej niż 1200 znaków. Oczekiwany błąd: przekroczona długość pola.

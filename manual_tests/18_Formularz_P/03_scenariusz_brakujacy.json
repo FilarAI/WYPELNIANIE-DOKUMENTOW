@@ -1,0 +1,51 @@
+{
+  "dokument": "formularz_p",
+  "scenariusz": "brak rodzaju materiału",
+  "pole_do_usuniecia_lub_wyczyszczenia": "p-material",
+  "wartosc_w_przypadku_poprawnym": [
+    "mapa",
+    "egib"
+  ],
+  "wartosc_w_przypadku_brakujacym": [],
+  "oczekiwany_wynik": {
+    "http": 400,
+    "komunikat": "Formularz P: zaznacz co najmniej jeden rodzaj materiału."
+  },
+  "dane_poprawnego_przebiegu": {
+    "wybor_potwierdzony": "tak",
+    "inw-0-imie_nazwisko": "Anna Testowa",
+    "inw-0-plec": "K",
+    "inw-0-ulica": "ul. Przykładowa",
+    "inw-0-nr_domu": "12",
+    "inw-0-nr_lokalu": "2",
+    "inw-0-kod_pocztowy": "34-400",
+    "inw-0-miejscowosc": "Nowy Targ",
+    "adres-miejscowosc": "Nowy Targ",
+    "adres-ulica": "ul. Testowa",
+    "adres-nr_domu": "25",
+    "adres-kod_pocztowy": "34-400",
+    "adres-nr_dzialki": "1401/2",
+    "adres-identyfikator_dzialki": "121101_1.0001.1401/2",
+    "dokumenty": "formularz_p",
+    "p-wnioskodawca": "Anna Testowa\nul. Przykładowa 12/2, 34-400 Nowy Targ",
+    "p-data": "20.11.2026",
+    "p-telefon": "600 123 456",
+    "p-kontakt": "anna@example.invalid",
+    "p-oznaczenie": "TEST/P/2026/01",
+    "p-material": [
+      "mapa",
+      "egib"
+    ],
+    "p-materialy_opis": "Mapa zasadnicza, skala 1:500",
+    "p-cel": "wlasne",
+    "p-teren": "małopolskie, nowotarski, Nowy Targ, ul. Testowa 25",
+    "p-dzialki": "1401/2",
+    "p-obreb": "Nowy Targ",
+    "p-kontakt_osoba": "Anna Testowa",
+    "p-email": "anna@example.invalid",
+    "p-sposob": [
+      "osobiscie"
+    ]
+  },
+  "instrukcja": "Wgraj 01_obiegowka_testowa.docx, wybierz wskazany dokument, przepisz dane z dane_poprawnego_przebiegu; dla próby błędnej wyczyść pole wskazane wyżej."
+}

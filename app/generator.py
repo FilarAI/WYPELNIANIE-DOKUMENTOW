@@ -19,7 +19,7 @@ from docx import Document
 from docx.shared import Pt
 
 from app.konfiguracja import BRAK_LOKALU, PELNOMOCNIK, PUSTE_POLE
-from app import dokumenty, zakonczenie_dokumenty
+from app import dokumenty, dziennik, ewidencja, egib_wypis, formularz_p, formatowanie, os616, pelnomocnictwo_egib, zakonczenie_dokumenty, pb1, pb2, pb2a, pb7, pb9
 
 SZABLONY = Path(__file__).resolve().parent.parent / "szablony"
 SZABLON_PELNOMOCNICTWA = SZABLONY / "pelnomocnictwo.docx"
@@ -130,8 +130,116 @@ def kontekst_pb5(dane: dict, inwestor: dict) -> dict:
     }
 
 
-def _wypelnij(szablon: Path, kontekst: dict) -> bytes:
-    dokument = DocxTemplate(szablon)
+def kontekst_pb2(dane: dict, inwestor: dict, nr: int) -> dict:
+    """PB-2: jeden formularz na inwestora, z ręcznie uzupełnianymi opcjami pełnomocnika."""
+    adres=dane.get("adres_inwestycji",{}); nier=dane.get("nieruchomosc",{}); dodat=dane.get("pb2",{}).get("dodatkowe",{}).get(str(nr),{})
+    def puste(obj, klucz): return obj.get(klucz) or "……………………"
+    kor=dodat.get("korespondencja",{}); proxy=dodat.get("proxy",{}) if dodat.get("typ_pelnomocnika") else {}
+    inwestor_pb={"imie_nazwisko":inwestor.get("imie_nazwisko"),"kraj":"Polska","wojewodztwo":inwestor.get("wojewodztwo"),"powiat":inwestor.get("powiat"),"gmina":inwestor.get("gmina"),"ulica":_bez_prefiksu_ulicy(inwestor.get("ulica")),"nr_domu":inwestor.get("nr_domu"),"nr_lokalu":inwestor.get("nr_lokalu"),"miejscowosc":inwestor.get("miejscowosc"),"kod_pocztowy":inwestor.get("kod_pocztowy")}
+    inwestor_pb=_albo_kropki(inwestor_pb)
+    def adres_wartosci(a): return {k:puste(a,k) for k in pb2.ADRES}
+    return {"inwestor":inwestor_pb,"email":puste(dodat,"email"),"telefon":puste(dodat,"telefon"),"korespondencja":adres_wartosci(kor),"proxy":adres_wartosci(proxy),"proxy_nazwa":puste(dodat,"proxy_nazwa") if dodat.get("typ_pelnomocnika") else "……………………","roboty":dane.get("pb2",{}).get("roboty") or "……………………………………","termin":dane.get("pb2",{}).get("termin") or "……………………",
+      "nieruchomosc":_albo_kropki({"wojewodztwo":nier.get("wojewodztwo"),"powiat":nier.get("powiat"),"gmina":nier.get("gmina"),"ulica":_bez_prefiksu_ulicy(adres.get("ulica")),"nr_domu":adres.get("nr_domu"),"miejscowosc":adres.get("miejscowosc"),"kod_pocztowy":adres.get("kod_pocztowy"),"identyfikator_dzialki":(adres.get("identyfikator_dzialki") or "").split(",")[0].strip()})}
+
+
+def kontekst_pb2a(dane: dict, inwestor: dict, nr: int) -> dict:
+    """PB-2a: jedno zgłoszenie na inwestora; adres korespondencyjny i pełnomocnik są opcjonalne."""
+    adres=dane.get("adres_inwestycji",{});nier=dane.get("nieruchomosc",{});dodat=dane.get("pb2a",{}).get("dodatkowe",{}).get(str(nr),{})
+    def puste(obj,k): return obj.get(k) or "……………………"
+    kor=dodat.get("korespondencja",{});proxy=dodat.get("proxy",{}) if dodat.get("typ_pelnomocnika") else {}
+    inwestor_pb=_albo_kropki({"imie_nazwisko":inwestor.get("imie_nazwisko"),"kraj":"Polska","wojewodztwo":inwestor.get("wojewodztwo"),"powiat":inwestor.get("powiat"),"gmina":inwestor.get("gmina"),"ulica":_bez_prefiksu_ulicy(inwestor.get("ulica")),"nr_domu":inwestor.get("nr_domu"),"nr_lokalu":_nr_lokalu(inwestor),"miejscowosc":inwestor.get("miejscowosc"),"kod_pocztowy":inwestor.get("kod_pocztowy")})
+    return {"inwestor":inwestor_pb,"email":puste(dodat,"email"),"telefon":puste(dodat,"telefon"),"korespondencja":{k:puste(kor,k) for k in pb2a.ADRES},"proxy":{k:puste(proxy,k) for k in pb2a.ADRES},"proxy_nazwa":puste(dodat,"proxy_nazwa") if dodat.get("typ_pelnomocnika") else "……………………","termin":dane.get("pb2a",{}).get("termin") or "……………………",
+      "rodzaje":dane.get("pb2a",{}).get("rodzaje",[]),"nieruchomosc":_albo_kropki({"wojewodztwo":nier.get("wojewodztwo"),"powiat":nier.get("powiat"),"gmina":nier.get("gmina"),"ulica":_bez_prefiksu_ulicy(adres.get("ulica")),"nr_domu":adres.get("nr_domu"),"miejscowosc":adres.get("miejscowosc"),"kod_pocztowy":adres.get("kod_pocztowy"),"identyfikator_dzialki":(adres.get("identyfikator_dzialki") or "").split(",")[0].strip()})}
+
+
+def kontekst_pb7(dane: dict, inwestor: dict, nr: int) -> dict:
+    """PB-7: dane jednej osoby składającej wniosek o zmianę pozwolenia."""
+    dodat = dane.get("pb7", {}).get("dodatkowe", {}).get(str(nr), {})
+    def puste(obj, klucz): return obj.get(klucz) or "……………………"
+    kor = dodat.get("korespondencja", {})
+    proxy = dodat.get("proxy", {}) if dodat.get("typ_pelnomocnika") else {}
+    inwestor_pb = _albo_kropki({
+        "imie_nazwisko": inwestor.get("imie_nazwisko"), "kraj": "Polska",
+        "wojewodztwo": inwestor.get("wojewodztwo"), "powiat": inwestor.get("powiat"),
+        "gmina": inwestor.get("gmina"), "ulica": _bez_prefiksu_ulicy(inwestor.get("ulica")),
+        "nr_domu": inwestor.get("nr_domu"), "nr_lokalu": _nr_lokalu(inwestor),
+        "miejscowosc": inwestor.get("miejscowosc"), "kod_pocztowy": inwestor.get("kod_pocztowy"),
+    })
+    return {
+        "organ": puste(dodat, "organ"), "inwestor": inwestor_pb,
+        "email": puste(dodat, "email"), "telefon": puste(dodat, "telefon"),
+        "korespondencja": {k: puste(kor, k) for k in pb7.ADRES},
+        "proxy": {k: puste(proxy, k) for k in pb7.ADRES},
+        "proxy_nazwa": puste(dodat, "proxy_nazwa") if dodat.get("typ_pelnomocnika") else "……………………",
+        "data_decyzji": puste(dodat, "data_decyzji"), "nr_decyzji": puste(dodat, "nr_decyzji"),
+        "znak_sprawy": puste(dodat, "znak_sprawy"), "nazwa_zamierzenia": puste(dodat, "nazwa_zamierzenia"),
+    }
+
+
+def kontekst_pb9(dane: dict, inwestor: dict, nr: int) -> dict:
+    """PB-9: dane nowego inwestora pochodzą z obiegówki; resztę dopisuje użytkownik."""
+    dodat = dane.get("pb9", {}).get("dodatkowe", {}).get(str(nr), {})
+    def puste(obj, klucz): return obj.get(klucz) or "……………………"
+    kor = dodat.get("korespondencja", {})
+    proxy = dodat.get("proxy", {}) if dodat.get("typ_pelnomocnika") else {}
+    inwestor_pb = _albo_kropki({
+        "imie_nazwisko": inwestor.get("imie_nazwisko"), "kraj": "Polska",
+        "wojewodztwo": inwestor.get("wojewodztwo"), "powiat": inwestor.get("powiat"),
+        "gmina": inwestor.get("gmina"), "ulica": _bez_prefiksu_ulicy(inwestor.get("ulica")),
+        "nr_domu": inwestor.get("nr_domu"), "nr_lokalu": _nr_lokalu(inwestor),
+        "miejscowosc": inwestor.get("miejscowosc"), "kod_pocztowy": inwestor.get("kod_pocztowy"),
+    })
+    return {
+        "inwestor": inwestor_pb, "email": puste(dodat, "email"), "telefon": puste(dodat, "telefon"),
+        "korespondencja": {k: puste(kor, k) for k in pb9.ADRES},
+        "proxy": {k: puste(proxy, k) for k in pb9.ADRES},
+        "proxy_nazwa": puste(dodat, "proxy_nazwa") if dodat.get("typ_pelnomocnika") else "……………………",
+        "dotychczasowy_inwestor": puste(dodat, "dotychczasowy_inwestor"),
+        "data_decyzji": puste(dodat, "data_decyzji"), "nr_decyzji": puste(dodat, "nr_decyzji"),
+        "znak_sprawy": puste(dodat, "znak_sprawy"), "nazwa_zamierzenia": puste(dodat, "nazwa_zamierzenia"),
+    }
+
+
+def kontekst_pb1(dane: dict, inwestor: dict, nr: int) -> dict:
+    """PB-1: dane osobowe i działki pobieramy z obiegówki, resztę z formularza."""
+    dodat = dane.get("pb1", {}).get("dodatkowe", {}).get(str(nr), {})
+    def puste(obj, klucz): return obj.get(klucz) or "……………………"
+    kor = dodat.get("korespondencja", {})
+    proxy = dodat.get("proxy", {}) if dodat.get("typ_pelnomocnika") else {}
+    adres = dane.get("adres_inwestycji", {})
+    nier = dane.get("nieruchomosc", {})
+    inwestor_pb = _albo_kropki({
+        "imie_nazwisko": inwestor.get("imie_nazwisko"), "kraj": "Polska",
+        "wojewodztwo": inwestor.get("wojewodztwo"), "powiat": inwestor.get("powiat"),
+        "gmina": inwestor.get("gmina"), "ulica": _bez_prefiksu_ulicy(inwestor.get("ulica")),
+        "nr_domu": inwestor.get("nr_domu"), "nr_lokalu": _nr_lokalu(inwestor),
+        "miejscowosc": inwestor.get("miejscowosc"), "kod_pocztowy": inwestor.get("kod_pocztowy"),
+    })
+    return {
+        "inwestor": inwestor_pb, "email": puste(dodat, "email"), "telefon": puste(dodat, "telefon"),
+        "korespondencja": {k: puste(kor, k) for k in pb1.ADRES},
+        "proxy": {k: puste(proxy, k) for k in pb1.ADRES},
+        "proxy_nazwa": puste(dodat, "proxy_nazwa") if dodat.get("typ_pelnomocnika") else "……………………",
+        "zal_opis": puste(dodat, "zal_opis"),
+        "nazwa": puste(dane.get("pb1", {}), "nazwa"),
+        "rodzaje": dane.get("pb1", {}).get("rodzaje", []),
+        "nieruchomosc": _albo_kropki({
+            "wojewodztwo": nier.get("wojewodztwo"), "powiat": nier.get("powiat"),
+            "gmina": nier.get("gmina"), "ulica": _bez_prefiksu_ulicy(adres.get("ulica")),
+            "nr_domu": adres.get("nr_domu"), "miejscowosc": adres.get("miejscowosc"),
+            "kod_pocztowy": adres.get("kod_pocztowy"),
+            "identyfikator_dzialki": adres.get("identyfikator_dzialki"),
+        }),
+    }
+
+
+def _wypelnij(szablon: Path, kontekst: dict, styl: dict) -> bytes:
+    wzor = Document(szablon)
+    formatowanie.przygotuj_szablon(wzor, kontekst, styl)
+    wejscie = io.BytesIO()
+    wzor.save(wejscie)
+    wejscie.seek(0)
+    dokument = DocxTemplate(wejscie)
     dokument.render(kontekst, autoescape=True)
     bufor = io.BytesIO()
     dokument.save(bufor)
@@ -144,12 +252,12 @@ def _strony_kolejnych_dzialek(wypelniony: bytes, dane: dict, inwestor: dict) -> 
     if len(wszystkie) < 2:
         return wypelniony
     dokument = Document(io.BytesIO(wypelniony))
+    styl = formatowanie.z_danych(dane)
     for akapit in dokument.paragraphs:
         if "Liczba stron zawierających dane o kolejnych nieruchomościach" in akapit.text:
-            for run in akapit.runs:
-                if "……" in run.text:
-                    run.text = re.sub(r"…+", str(len(wszystkie) - 1), run.text)
-                    break
+            miejsce = re.search(r"…+", akapit.text)
+            if miejsce:
+                formatowanie.zastap(akapit, miejsce.start(), miejsce.end(), str(len(wszystkie) - 1), styl)
     adres = dane["adres_inwestycji"]
     jednostka = dane.get("nieruchomosc", {})
     for numer, identyfikator in enumerate(wszystkie[1:], start=1):
@@ -157,8 +265,12 @@ def _strony_kolejnych_dzialek(wypelniony: bytes, dane: dict, inwestor: dict) -> 
         tytul = dokument.add_paragraph()
         tytul.add_run("PB-5 — dane kolejnej nieruchomości").bold = True
         tytul.runs[0].font.size = Pt(12)
-        dokument.add_paragraph(f"Załącznik {numer} z {len(wszystkie) - 1} do oświadczenia inwestora: "
-                               f"{inwestor.get('imie_nazwisko', '')}")
+        opis = dokument.add_paragraph("Załącznik ")
+        formatowanie.zastosuj(opis.add_run(str(numer)), styl)
+        opis.add_run(" z ")
+        formatowanie.zastosuj(opis.add_run(str(len(wszystkie) - 1)), styl)
+        opis.add_run(" do oświadczenia inwestora: ")
+        formatowanie.zastosuj(opis.add_run(inwestor.get("imie_nazwisko", "")), styl)
         tabela = dokument.add_table(rows=0, cols=2)
         for etykieta, wartosc in (
             ("Województwo", jednostka.get("wojewodztwo", "")),
@@ -173,6 +285,8 @@ def _strony_kolejnych_dzialek(wypelniony: bytes, dane: dict, inwestor: dict) -> 
             komorki = tabela.add_row().cells
             komorki[0].text = etykieta
             komorki[1].text = wartosc or PUSTE_POLE
+            if wartosc:
+                formatowanie.zastosuj(komorki[1].paragraphs[0].runs[0], styl)
         dokument.add_paragraph("Data i podpis inwestora albo osoby upoważnionej: ................................................")
     bufor = io.BytesIO()
     dokument.save(bufor)
@@ -193,13 +307,14 @@ def _nazwisko(imie_nazwisko: str) -> str:
 def generuj_dokumenty(dane: dict) -> dict[str, bytes]:
     """Zwraca tylko wybrane dokumenty; PB-5 osobno dla każdego inwestora."""
     inwestorzy = dane["inwestorzy"]
+    styl = formatowanie.z_danych(dane)
     wybrane = dane.get("dokumenty", dokumenty.DOMYSLNE)
     nazwiska = list(dict.fromkeys(_nazwisko(i["imie_nazwisko"]) for i in inwestorzy if i["imie_nazwisko"]))
     sufiks = _do_nazwy_pliku("_".join(nazwiska) or "inwestor")
     pliki = {}
     if "pelnomocnictwo" in wybrane:
         pliki[f"Pelnomocnictwo_{sufiks}.docx"] = _wypelnij(SZABLON_PELNOMOCNICTWA,
-                                                             kontekst_pelnomocnictwa(dane))
+                                                             kontekst_pelnomocnictwa(dane), styl)
     if "pb5" in wybrane:
         for nr, inwestor in enumerate(inwestorzy, start=1):
             czesci = inwestor["imie_nazwisko"].split()
@@ -207,12 +322,72 @@ def generuj_dokumenty(dane: dict) -> dict[str, bytes]:
             plik = f"PB-5_{_do_nazwy_pliku(nazwa)}.docx"
             if plik in pliki:
                 plik = plik.replace(".docx", f"_{nr}.docx")
-            pliki[plik] = _strony_kolejnych_dzialek(_wypelnij(SZABLON_PB5, kontekst_pb5(dane, inwestor)),
+            pliki[plik] = _strony_kolejnych_dzialek(_wypelnij(SZABLON_PB5, kontekst_pb5(dane, inwestor), styl),
                                                      dane, inwestor)
+    if "pb2" in wybrane:
+        for nr, inwestor in enumerate(inwestorzy):
+            ctx=kontekst_pb2(dane,inwestor,nr)
+            wypelniony=_wypelnij(SZABLONY / "pb2_zgloszenie.docx",ctx,styl)
+            dodat=dane.get("pb2",{}).get("dodatkowe",{}).get(str(nr),{})
+            plik=f"PB-2_{_do_nazwy_pliku(inwestor.get('imie_nazwisko','Inwestor'))}.docx"
+            if plik in pliki: plik=plik.replace('.docx',f'_{nr+1}.docx')
+            pliki[plik]=pb2.zastosuj(wypelniony,dodat)
+    if "pb2a" in wybrane:
+        for nr,inwestor in enumerate(inwestorzy):
+            ctx=kontekst_pb2a(dane,inwestor,nr)
+            wypelniony=_wypelnij(SZABLONY/"pb2a_zgloszenie.docx",ctx,styl)
+            dodat=dane.get("pb2a",{}).get("dodatkowe",{}).get(str(nr),{}) | {"rodzaje":dane.get("pb2a",{}).get("rodzaje",[])}
+            plik=f"PB-2a_{_do_nazwy_pliku(inwestor.get('imie_nazwisko','Inwestor'))}.docx"
+            if plik in pliki:plik=plik.replace('.docx',f'_{nr+1}.docx')
+            pliki[plik]=pb2a.zastosuj(wypelniony,dodat)
+    if "pb7" in wybrane:
+        for nr, inwestor in enumerate(inwestorzy):
+            ctx = kontekst_pb7(dane, inwestor, nr)
+            wypelniony = _wypelnij(SZABLONY / "pb7_wniosek.docx", ctx, styl)
+            dodat = dane.get("pb7", {}).get("dodatkowe", {}).get(str(nr), {})
+            plik = f"PB-7_{_do_nazwy_pliku(inwestor.get('imie_nazwisko', 'Inwestor'))}.docx"
+            if plik in pliki:
+                plik = plik.replace(".docx", f"_{nr+1}.docx")
+            pliki[plik] = pb7.zastosuj(wypelniony, dodat)
+    if "pb9" in wybrane:
+        for nr, inwestor in enumerate(inwestorzy):
+            ctx = kontekst_pb9(dane, inwestor, nr)
+            wypelniony = _wypelnij(SZABLONY / "pb9_wniosek.docx", ctx, styl)
+            dodat = dane.get("pb9", {}).get("dodatkowe", {}).get(str(nr), {})
+            plik = f"PB-9_{_do_nazwy_pliku(inwestor.get('imie_nazwisko', 'Nowy_inwestor'))}.docx"
+            if plik in pliki:
+                plik = plik.replace(".docx", f"_{nr+1}.docx")
+            pliki[plik] = pb9.zastosuj(wypelniony, dodat)
+    if "pb1" in wybrane:
+        for nr, inwestor in enumerate(inwestorzy):
+            ctx = kontekst_pb1(dane, inwestor, nr)
+            wypelniony = _wypelnij(SZABLONY / "pb1_wniosek.docx", ctx, styl)
+            dodat = dane.get("pb1", {}).get("dodatkowe", {}).get(str(nr), {}) | {"rodzaje": dane["pb1"]["rodzaje"]}
+            plik = f"PB-1_{_do_nazwy_pliku(inwestor.get('imie_nazwisko', 'Inwestor'))}.docx"
+            if plik in pliki: plik = plik.replace(".docx", f"_{nr+1}.docx")
+            pliki[plik] = pb1.zastosuj(wypelniony, dodat)
+    if "os616" in wybrane:
+        wypelniony = _wypelnij(SZABLONY / "os616_zaswiadczenie.docx", os616.kontekst(dane), styl)
+        pliki[f"OS-6165_Zaswiadczenie_UPUL_{sufiks}.docx"] = os616.zastosuj(wypelniony, dane["os616"])
+    if "egib_wypis" in wybrane:
+        wypelniony = _wypelnij(SZABLONY / "egib_wypis_wyrys.docx", egib_wypis.kontekst(dane), styl)
+        pliki[f"EGiB_Wypis_Wyrys_{sufiks}.docx"] = egib_wypis.zastosuj(wypelniony, dane["egib_wypis"])
+    if "formularz_p" in wybrane:
+        wypelniony = _wypelnij(SZABLONY / "formularz_p.docx", formularz_p.kontekst(dane), styl)
+        pliki[f"Formularz_P_PZGiK_{sufiks}.docx"] = formularz_p.zastosuj(wypelniony, dane["formularz_p"])
     if "oswiadczenie" in wybrane:
         pliki[f"Oswiadczenie_kierownika_{sufiks}.docx"] = zakonczenie_dokumenty.oswiadczenie(dane)
     if "zawiadomienie" in wybrane:
         pliki[f"Zawiadomienie_o_zakonczeniu_{sufiks}.docx"] = zakonczenie_dokumenty.zawiadomienie(dane)
+    if "ba4" in wybrane:
+        wypelniony = _wypelnij(SZABLONY / "ba4_dziennik.docx", dziennik.kontekst(dane), styl)
+        pliki[f"BA-4_Wniosek_o_dziennik_{sufiks}.docx"] = dziennik.zastosuj_warianty(wypelniony, dane.get("ba4", {}))
+    if "egib" in wybrane:
+        wypelniony = _wypelnij(SZABLONY / "egib_zmiany.docx", ewidencja.kontekst(dane), styl)
+        pliki[f"EGiB_Zgloszenie_zmian_{sufiks}.docx"] = ewidencja.zastosuj_warianty(wypelniony, dane.get("egib", {}))
+    if "pelnomocnictwo_egib" in wybrane:
+        wypelniony = _wypelnij(SZABLONY / "pelnomocnictwo_egib.docx", pelnomocnictwo_egib.kontekst(dane), styl)
+        pliki[f"Pelnomocnictwo_EGiB_{sufiks}.docx"] = pelnomocnictwo_egib.zastosuj(wypelniony, dane["pelnomocnictwo_egib"])
     return pliki
 
 

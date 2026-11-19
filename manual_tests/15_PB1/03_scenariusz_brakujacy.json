@@ -1,0 +1,34 @@
+{
+  "dokument": "pb1",
+  "scenariusz": "brak ogólnej nazwy zamierzenia",
+  "pole_do_usuniecia_lub_wyczyszczenia": "pb1-nazwa",
+  "wartosc_w_przypadku_poprawnym": "Budowa budynku mieszkalnego jednorodzinnego",
+  "wartosc_w_przypadku_brakujacym": "",
+  "oczekiwany_wynik": {
+    "http": 400,
+    "komunikat": "PB-1: podaj ogólną nazwę zamierzenia budowlanego."
+  },
+  "dane_poprawnego_przebiegu": {
+    "dokumenty": "pb1",
+    "wybor_potwierdzony": "tak",
+    "inw-0-imie_nazwisko": "Anna Testowa",
+    "inw-0-miejscowosc": "Nowy Targ",
+    "inw-0-ulica": "ul. Przykładowa",
+    "inw-0-nr_domu": "12",
+    "inw-0-nr_lokalu": "2",
+    "inw-0-kod_pocztowy": "34-400",
+    "inw-0-wojewodztwo": "małopolskie",
+    "inw-0-powiat": "krakowski",
+    "inw-0-gmina": "Zielonki",
+    "adres-miejscowosc": "Nowy Targ",
+    "adres-ulica": "ul. Testowa",
+    "adres-nr_domu": "25",
+    "adres-kod_pocztowy": "34-400",
+    "adres-nr_dzialki": "1401/2",
+    "adres-identyfikator_dzialki": "121101_1.0001.1401/2",
+    "pb1-nazwa": "Budowa budynku mieszkalnego jednorodzinnego",
+    "pb1-rodzaje": "budowa",
+    "inw-0-plec": "K"
+  },
+  "instrukcja": "Wgraj 01_obiegowka_testowa.docx, wybierz wskazany dokument, przepisz dane z dane_poprawnego_przebiegu; dla próby błędnej wyczyść pole wskazane wyżej."
+}

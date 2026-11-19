@@ -18,7 +18,7 @@ import webbrowser
 
 from flask import Flask, Response, jsonify, render_template, request
 
-from app import WERSJA, dokumenty, teryt, zapis, zakonczenie
+from app import WERSJA, dokumenty, dziennik, ewidencja, egib_wypis, formularz_p, formatowanie, os616, pb1, pb2, pb2a, pb7, pb9, teryt, zapis, zakonczenie
 from app.generator import generuj_dokumenty, spakuj
 from app.parser_obiegowki import NAZWY_POL
 from app.parser_zrodel import RODZAJE_ZRODEL
@@ -148,6 +148,22 @@ def podglad():
                            zalaczniki=zakonczenie.ZALACZNIKI,
                            kierownik=PELNOMOCNIK,
                            kierownik_adres=zakonczenie.adres_kierownika(),
+                           pb2_pola=pb2.POLA,
+                           pb2_adres=pb2.ADRES,
+                           pb2a_rodzaje=pb2a.RODZAJE,
+                           pb1_rodzaje=pb1.RODZAJE,
+                           os616_wartosci=os616.domyslne(dane, datetime.date.today().strftime("%d.%m.%Y")),
+                           egibw_wartosci=egib_wypis.domyslne(dane, datetime.date.today().strftime("%d.%m.%Y")),
+                           egibw_przedmioty=egib_wypis.PRZEDMIOTY, egibw_uzasadnienia=egib_wypis.UZASADNIENIA,
+                           egibw_postac=egib_wypis.POSTAC, egibw_odbior=egib_wypis.ODBIOR,
+                           p_wartosci=formularz_p.domyslne(dane, datetime.date.today().strftime("%d.%m.%Y")),
+                           p_materialy=formularz_p.MATERIALY, p_cele=formularz_p.CELE,
+                           p_sposoby=formularz_p.SPOSOBY,
+                           ba4_wartosci=dziennik.domyslne(dane, datetime.date.today().strftime("%d.%m.%Y")),
+                           ba4_wybory=dziennik.WYBORY, ba4_etykiety=dziennik.ETYKIETY, ba4_pola=dziennik.POLA,
+                           egib_wartosci=ewidencja.domyslne(dane, datetime.date.today().strftime("%d.%m.%Y")),
+                           egib_pola=ewidencja.POLA, egib_role=ewidencja.ROLE,
+                           pelnomocnicy=dane.get("inwestorzy", []),
                            folder_zapisu=zapis.ostatni_folder())
 
 
@@ -167,7 +183,7 @@ def _dane_z_formularza(f) -> dict:
     nieruchomosc = {p: f.get(f"nier-{p}", "").strip() for p in POLA_JEDNOSTKI}
     if not any(nieruchomosc.values()):
         nieruchomosc = vars(teryt.z_identyfikatora(adres["identyfikator_dzialki"]) or teryt.Jednostka())
-    return {
+    dane = {
         "nazwa_inwestycji": " ".join(f.get("nazwa_inwestycji", "").split()),
         "adres_inwestycji": adres,
         "nieruchomosc": nieruchomosc,
@@ -176,7 +192,33 @@ def _dane_z_formularza(f) -> dict:
         "upowazniony_w_pb5": f.get("upowazniony_w_pb5") == "tak",
         "dokumenty": dokumenty.odczytaj_wybor(f, domyslne=f.get("wybor_potwierdzony") != "tak"),
         "zakonczenie": zakonczenie.odczytaj_z_formularza(f),
+        "formatowanie": formatowanie.odczytaj_z_formularza(f),
     }
+
+    if "ba4" in dane["dokumenty"]:
+        dane["ba4"] = dziennik.odczytaj_z_formularza(f, dane)
+    if "egib" in dane["dokumenty"]:
+        dane["egib"] = ewidencja.odczytaj_z_formularza(f, dane)
+    if "pelnomocnictwo_egib" in dane["dokumenty"]:
+        from app import pelnomocnictwo_egib
+        dane["pelnomocnictwo_egib"] = pelnomocnictwo_egib.odczytaj(f, dane)
+    if "pb2" in dane["dokumenty"]:
+        dane["pb2"] = pb2.odczytaj(f, dane)
+    if "pb2a" in dane["dokumenty"]:
+        dane["pb2a"] = pb2a.odczytaj(f, dane)
+    if "pb7" in dane["dokumenty"]:
+        dane["pb7"] = pb7.odczytaj(f, dane)
+    if "pb9" in dane["dokumenty"]:
+        dane["pb9"] = pb9.odczytaj(f, dane)
+    if "pb1" in dane["dokumenty"]:
+        dane["pb1"] = pb1.odczytaj(f, dane)
+    if "os616" in dane["dokumenty"]:
+        dane["os616"] = os616.odczytaj(f, dane)
+    if "egib_wypis" in dane["dokumenty"]:
+        dane["egib_wypis"] = egib_wypis.odczytaj(f, dane)
+    if "formularz_p" in dane["dokumenty"]:
+        dane["formularz_p"] = formularz_p.odczytaj(f, dane)
+    return dane
 
 
 @app.post("/generuj")
