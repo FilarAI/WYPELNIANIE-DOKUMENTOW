@@ -2,6 +2,7 @@
    program nie pobiera niczego z internetu. #}
 
 {% set SCIEZKI_IKON = {
+  'formatowanie': '<path d="M4 7V4h16v3"/><path d="M12 4v16"/><path d="M8 20h8"/>',
   'plik': '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/>',
   'folder': '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
   'ptaszek': '<path d="M20 6 9 17l-5-5"/>',
@@ -37,7 +38,7 @@
 {# Pasek kroków kreatora: krok = numer aktywnego kroku (1–4). #}
 {% macro kroki(krok) -%}
 <ol class="kroki" aria-label="Postęp">
-  {% for nazwa in ['Wgraj obiegówkę', 'Wybierz dokumenty', 'Sprawdź dane', 'Gotowe'] %}
+  {% for nazwa in ['Pliki', 'Dokumenty', 'Dane i generowanie'] %}
   {% set nr = loop.index %}
   <li class="krok {{ 'ukonczony' if nr < krok else ('aktywny' if nr == krok else '') }}"
       {% if nr == krok %}aria-current="step"{% endif %}>

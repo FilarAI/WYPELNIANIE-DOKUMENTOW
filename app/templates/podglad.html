@@ -53,16 +53,15 @@
 {% set uwaga_pozostale = pola_z_ostrzezeniem | select('in', ['kategoria_obiektu', 'data_opracowania', 'projektant_glowny', 'jednostka_projektowa']) | list | length > 0 %}
 
 <div class="wejscie">
-  <h1>Sprawdź dane</h1>
+  <h1>Sprawdź dane i wygeneruj dokumenty</h1>
   <p class="podtytul">Sprawdź dane odczytane z plików przed zapisaniem dokumentów.</p>
 </div>
 
-<form method="post" action="{{ url_for('generuj') }}" class="formularz" id="formularz">
-  {% if token_wgrania %}<input type="hidden" name="token_wgrania" value="{{ token_wgrania }}">{% endif %}
-  <input type="hidden" name="wybor_potwierdzony" value="tak">
-  {% for kod in wybrane %}<input type="hidden" name="dokumenty" value="{{ kod }}">{% endfor %}
+<div class="uklad-pracy"><div class="obszar-pracy">
+<form method="post" action="{{ url_for('generuj') }}" class="formularz" id="formularz" novalidate>
   <details class="sekcja dodatkowe format-danych" aria-labelledby="format-tytul">
     <summary>
+      <span class="format-ikona">{{ m.ikona('formatowanie') }}</span>
       <h2 id="format-tytul">Wygląd uzupełnionych danych</h2>
       {{ m.ikona('strzalka-dol', 'rozwin') }}
     </summary>
@@ -93,15 +92,29 @@
     </div>
   </details>
 
+  <div class="zadania-v2 sekcja" id="zadania-v2"><h2>Do sprawdzenia</h2><p id="status-walidacji" role="status" aria-live="polite">Sprawdzam wymagane dane…</p><ul id="zadania-lista"></ul><p class="podpowiedz">Pola opcjonalne nie są traktowane jako braki. Rozbieżności w źródłach wymagają osobnego sprawdzenia poniżej.</p></div>
+  <div class="komunikat blad" id="blad-generowania" tabindex="-1" role="alert" hidden></div>
+  <section class="sekcja" id="wynik-generowania" tabindex="-1" hidden><h2>Dokumenty gotowe</h2><p id="wynik-opis"></p><ul id="wynik-pliki"></ul></section>
+  {% if token_wgrania %}<input type="hidden" name="token_wgrania" value="{{ token_wgrania }}">{% endif %}
+  <input type="hidden" name="wybor_potwierdzony" value="tak">
+  {% for kod in wybrane %}<input type="hidden" name="dokumenty" value="{{ kod }}">{% endfor %}
+
+
   {% for plik in pliki_zrodlowe %}<div class="plik-zrodlowy">{{ m.ikona('plik') }}<div><b>{{ plik.nazwa }}</b><small>{{ plik.typ }}</small></div>{% if loop.first %}<a class="przycisk-tekstowy" href="{{ url_for('start') }}">Zmień pliki</a>{% endif %}</div>{% endfor %}
-  <p class="wybrane-podsumowanie"><b>Przygotujesz:</b> {% for kod in wybrane %}{{ nazwy_dokumentow[kod] }}{{ ', ' if not loop.last }}{% endfor %}</p>
+  <div class="wybrane-podsumowanie" id="wybrane-dokumenty"><b>Przygotujesz:</b><ul>{% for kod in wybrane %}<li>{{ nazwy_dokumentow[kod] }}</li>{% endfor %}</ul></div>
 
   {% if dane.ostrzezenia %}
   <div class="komunikat ostrzezenie" role="alert">
     {{ m.ikona('ostrzezenie') }}
     <div>
       <b>Dane wymagają sprawdzenia</b>
-      <ul>{% for o in dane.ostrzezenia %}<li>{{ o.komunikat }}</li>{% endfor %}</ul>
+      <ul class="lista-ostrzezen">{% for o in dane.ostrzezenia %}
+        {% set opis = o | ostrzezenie_ui(pliki_zrodlowe) %}
+        <li><b class="ostrzezenie-nazwa">{{ opis.tytul }}</b>
+          <p>{{ opis.wskazowka }}</p>
+          {% if opis.plik %}<small class="ostrzezenie-plik">Plik: {{ opis.plik }}</small>{% endif %}
+          {% if opis.szczegoly %}<details class="ostrzezenie-szczegoly"><summary>Pokaż szczegóły rozbieżności</summary><p>{{ opis.szczegoly }}</p></details>{% endif %}
+        </li>{% endfor %}</ul>
     </div>
   </div>
   {% else %}
@@ -132,7 +145,7 @@
       <button type="button" class="przycisk-tekstowy wybierz-wariant" data-cel="{{ p.cel }}" data-wartosc="{{ p.wartosc }}">Wpisz po sprawdzeniu</button></div>{% endfor %}
   </section>{% endif %}
 
-  {% if pochodzenie %}<details class="sekcja zrodla-danych"><summary><h2>Skąd pochodzą wpisane dane</h2>{{ m.ikona('strzalka-dol', 'rozwin') }}</summary>
+  {% if pochodzenie %}<details class="sekcja dodatkowe zrodla-danych"><summary><h2>Skąd pochodzą wpisane dane</h2>{{ m.ikona('strzalka-dol', 'rozwin') }}</summary>
     <dl>{% for p in pochodzenie %}<dt>{{ p.etykieta }}</dt><dd><b>{{ p.wartosc }}</b><br><small>{{ p.plik }} · {{ p.miejsce }}{% if p.uwaga %} · {{ p.uwaga }}{% endif %}<br>{{ p.fragment }}</small></dd>{% endfor %}</dl>
   </details>{% endif %}
 
@@ -230,15 +243,8 @@
     </dl>
   </details>
 
-  <section class="sekcja podsumowanie-brakow" aria-labelledby="podsumowanie-tytul">
-    <h2 id="podsumowanie-tytul">Przed zapisaniem</h2>
-    <p class="opis-sekcji">Sprawdź puste pola i niewybrane odpowiedzi w wybranych dokumentach. Możesz je pozostawić puste i uzupełnić wydruk ręcznie.</p>
-    <p class="podsumowanie-status" id="podsumowanie-status" role="status" aria-live="polite"></p>
-    <details class="podsumowanie-lista" id="podsumowanie-lista" hidden>
-      <summary id="podsumowanie-rozwin">Pokaż pola do sprawdzenia</summary>
-      <ul id="podsumowanie-pozycje"></ul>
-    </details>
-  </section>
+
+
 
   <section class="sekcja">
     <h2>Zapis dokumentów</h2>
@@ -251,7 +257,8 @@
     </div>
     <p class="podpowiedz" id="komunikat-folderu">Program zapamięta wybrany folder na następny raz. Istniejące pliki nie zostaną nadpisane.</p>
 
-    {% if not blokada_zestawu %}<div class="akcje">
+    {% if not blokada_zestawu %}<div class="akcje pasek-generowania">
+      <span class="status-generowania" id="status-generowania" role="status">Sprawdź dane przed generowaniem</span>
       {# Pierwszy przycisk = domyślny po naciśnięciu Enter w polu formularza. #}
       <button type="submit" name="akcja" value="zapisz" class="przycisk" id="przycisk-zapisz">
         <span class="kolko-ladowania" aria-hidden="true"></span>{{ m.ikona('plik') }}
@@ -261,7 +268,10 @@
     </div>{% endif %}
   </section>
 </form>
-
+</div><aside class="kontekst-pracy"><h2>W tej sprawie</h2><p>{{ wybrane|length }} typów dokumentów</p><nav aria-label="Sekcje formularza" id="nawigacja-sekcji"></nav>
+{% if token_wgrania %}<a id="powrot-wybor" class="przycisk-tekstowy" href="{{ url_for('powrot_do_wyboru', token=token_wgrania, dokumenty=wybrane) }}">Zmień wybór dokumentów</a>{% endif %}
+<p class="podpowiedz">Zmiany formularza zachowujemy w pamięci aplikacji przez czas ważności plików.</p></aside></div>
+<script id="szkic-formularza" type="application/json">{{ szkic|default([])|tojson }}</script>
 <template id="wzor-inwestora">{{ inwestor('__N__', {'plec': 'M'}) }}</template>
 
 <script>
@@ -351,65 +361,12 @@
     if (!cel) return;
     cel.value = przycisk.dataset.wartosc;
     cel.dispatchEvent(new Event('input', {bubbles: true}));
-    cel.scrollIntoView({behavior: 'smooth', block: 'center'});
+    for (let p = cel.parentElement; p; p = p.parentElement) if (p.tagName === 'DETAILS') p.open = true;
+    cel.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center'});
     cel.focus({preventScroll: true});
   }));
   function aktualizujPodsumowanie() {
-    const pozycje = [];
-    let puste = 0, bezOdpowiedzi = 0;
-    const dodaj = (pole, etykieta, typ) => {
-      const blok = pole.closest('.zak-blok');
-      const inwestor = pole.closest('.inwestor');
-      const grupa = blok?.querySelector('summary')?.textContent.trim()
-        || (inwestor ? 'Inwestor ' + (inwestor.querySelector('.numer')?.textContent.trim() || '1') : '')
-        || pole.closest('.sekcja')?.querySelector('h2')?.textContent.trim()
-        || 'Dane wspólne';
-      pozycje.push({pole, opis: `${grupa}: ${etykieta} (${typ})`});
-    };
-    formularz.querySelectorAll('.pole input[type="text"], .pole select, .pole textarea').forEach(pole => {
-      if (!pole.name || pole.name === 'folder_zapisu' || pole.disabled || pole.value.trim()) return;
-      const etykieta = pole.closest('label')?.querySelector('span')?.textContent.trim() || pole.name;
-      if (pole.tagName === 'SELECT') {
-        bezOdpowiedzi++;
-        dodaj(pole, etykieta, 'bez odpowiedzi');
-      } else {
-        puste++;
-        dodaj(pole, etykieta, 'puste pole');
-      }
-    });
-    for (const [nazwa, etykieta] of [
-      ['zak-rodzaje_obiektu', 'Rodzaj oddawanego obiektu'],
-      ['zak-zalaczniki', 'Załączniki']
-    ]) {
-      const pola = [...formularz.querySelectorAll(`input[name="${nazwa}"]`)];
-      if (pola.length && !pola.some(pole => pole.checked)) {
-        bezOdpowiedzi++;
-        dodaj(pola[0], etykieta, 'nic nie zaznaczono');
-      }
-    }
-    const status = document.getElementById('podsumowanie-status');
-    const szczegoly = document.getElementById('podsumowanie-lista');
-    const lista = document.getElementById('podsumowanie-pozycje');
-    status.textContent = pozycje.length
-      ? `Puste pola: ${puste} · niewybrane odpowiedzi: ${bezOdpowiedzi}.`
-      : 'Wszystkie widoczne pola i odpowiedzi są uzupełnione.';
-    szczegoly.hidden = pozycje.length === 0;
-    document.getElementById('podsumowanie-rozwin').textContent = `Pokaż ${pozycje.length} ${pozycje.length === 1 ? 'pozycję' : 'pozycji'} do sprawdzenia`;
-    lista.replaceChildren();
-    pozycje.forEach(({pole, opis}) => {
-      const wiersz = document.createElement('li');
-      const przycisk = document.createElement('button');
-      przycisk.type = 'button';
-      przycisk.textContent = opis;
-      przycisk.addEventListener('click', () => {
-        const blok = pole.closest('details');
-        if (blok) blok.open = true;
-        pole.scrollIntoView({behavior: 'smooth', block: 'center'});
-        pole.focus({preventScroll: true});
-      });
-      wiersz.append(przycisk);
-      lista.append(wiersz);
-    });
+    document.dispatchEvent(new Event('filar:zmiana'));
   }
   {% if 'ba4' in wybrane %}
   function aktualizujBA4() {
@@ -439,12 +396,6 @@
   formularz.addEventListener('input', aktualizujPodsumowanie);
   formularz.addEventListener('change', aktualizujPodsumowanie);
   aktualizujPodsumowanie();
-  formularz.addEventListener('submit', e => {
-    if (zapisz && e.submitter === zapisz) {
-      zapisz.classList.add('w-toku');
-      zapisz.querySelector('.etykieta').textContent = 'Zapisuję…';
-    }
-  });
   window.addEventListener('pageshow', () => {
     aktualizujFormat();
     if (zapisz) {

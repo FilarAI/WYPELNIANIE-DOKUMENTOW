@@ -17,6 +17,16 @@
       var KLUCZ = 'dokumenty-filar-motyw', html = document.documentElement;
       var ciemnySystem = matchMedia('(prefers-color-scheme: dark)');
       var wybor = 'auto';
+      var rozmiar = 'standard';
+      try { rozmiar = localStorage.getItem('dokumenty-filar-tekst') || 'standard'; } catch (e) {}
+      function zastosujRozmiar() {
+        if (!['standard','wiekszy','najwiekszy'].includes(rozmiar)) rozmiar = 'standard';
+        html.dataset.tekst = rozmiar;
+        document.querySelectorAll('[data-rozmiar-tekstu]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.rozmiarTekstu === rozmiar)); });
+      }
+      window.ustawRozmiarTekstu = function (nowy) { rozmiar = nowy; try { localStorage.setItem('dokumenty-filar-tekst', rozmiar); } catch (e) {} zastosujRozmiar(); };
+      document.addEventListener('DOMContentLoaded', zastosujRozmiar);
+      zastosujRozmiar();
       try { wybor = localStorage.getItem(KLUCZ) || 'auto'; } catch (e) {}
       function zastosuj() {
         html.dataset.motyw = (wybor === 'ciemny' || (wybor === 'auto' && ciemnySystem.matches)) ? 'ciemny' : 'jasny';
@@ -36,8 +46,11 @@
       zastosuj();
     })();
   </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css', v=wersja) }}">
+  <script src="{{ url_for('static', filename='ui-v2.js', v=wersja) }}" defer></script>
 </head>
 <body>
+  <a class="pomin" href="#tresc">Przejdź do treści</a>
   <div class="aplikacja">
     {% if not bez_naglowka %}
     <header class="naglowek">
@@ -49,6 +62,11 @@
         </div>
       </div>
       <div class="naglowek-akcje">
+        <div class="rozmiar-tekstu" role="group" aria-label="Wielkość tekstu interfejsu">
+          <button type="button" data-rozmiar-tekstu="standard" aria-label="Tekst standardowy" title="Tekst standardowy" onclick="ustawRozmiarTekstu('standard')">A</button>
+          <button type="button" data-rozmiar-tekstu="wiekszy" aria-label="Tekst większy" title="Tekst większy" onclick="ustawRozmiarTekstu('wiekszy')">A</button>
+          <button type="button" data-rozmiar-tekstu="najwiekszy" aria-label="Tekst największy" title="Tekst największy" onclick="ustawRozmiarTekstu('najwiekszy')">A</button>
+        </div>
         <div class="motyw" role="radiogroup" aria-label="Wygląd">
           <button type="button" role="radio" data-wybor="auto" title="Jak w systemie" aria-label="Jak w systemie" onclick="ustawMotyw('auto')">{{ m.ikona('monitor') }}</button>
           <button type="button" role="radio" data-wybor="jasny" title="Jasny" aria-label="Jasny" onclick="ustawMotyw('jasny')">{{ m.ikona('slonce') }}</button>
@@ -60,7 +78,7 @@
       </div>
     </header>
     {% endif %}
-    <main class="tresc {{ szerokosc or '' }}">
+    <main id="tresc" class="tresc {{ szerokosc or '' }}">
       {% if krok %}{{ m.kroki(krok) }}{% endif %}
       {% block tresc %}{% endblock %}
     </main>

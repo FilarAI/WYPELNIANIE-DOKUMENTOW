@@ -2,20 +2,24 @@
 {% import "_makra.html" as m %}
 {% set krok = 2 %}
 {% block tresc %}
-<div class="wejscie">
-  <h1>Wybierz dokumenty</h1>
-  <p class="podtytul">Zaznacz pliki, których potrzebujesz. W następnym kroku pokażemy dotyczące ich pola.</p>
-</div>
-<form class="formularz" method="post" action="{{ url_for('podglad') }}" onsubmit="if (!this.querySelector('input[name=dokumenty]:checked')) { alert('Wybierz co najmniej jeden dokument.'); return false; }">
-  <section class="sekcja">
-    {% for plik in pliki_zrodlowe %}<div class="plik-zrodlowy">{{ m.ikona('plik') }}<div><b>{{ plik.nazwa }}</b><small>{{ plik.typ }}</small></div></div>{% endfor %}
+<div class="wejscie"><h1>Wybierz dokumenty</h1><p class="podtytul">Znajdź potrzebne formularze i przygotuj je z danych jednej sprawy.</p></div>
+<form class="formularz uklad-pracy" id="wybor-dokumentow" method="post" action="{{ url_for('podglad') }}">
+  <section class="sekcja obszar-pracy">
     <input type="hidden" name="token" value="{{ token }}">
+    <label class="pole cala szukaj-dokumentow"><span>Szukaj po nazwie lub kodzie</span><input type="search" id="szukaj-dokumentow" placeholder="Np. PB-1 lub pełnomocnictwo" autocomplete="off"></label>
+    <div class="filtry-dokumentow" role="group" aria-label="Kategorie dokumentów">
+      {% for kod,nazwa in [('wszystkie','Wszystkie'),('budowlane','Budowlane'),('geodezyjne','Geodezyjne'),('pelnomocnictwa','Pełnomocnictwa')] %}<button type="button" data-filtr="{{ kod }}" aria-pressed="{{ 'true' if loop.first else 'false' }}">{{ nazwa }}</button>{% endfor %}
+    </div>
+    <p id="blad-wyboru" class="blad-upload" tabindex="-1" role="alert" hidden>Wybierz co najmniej jeden dokument.</p>
+    <p id="wynik-szukania" role="status" class="podpowiedz" aria-live="polite"></p>
     <div class="lista-dokumentow">
       {% for kod, nazwa in dokumenty.items() %}
-      <label class="zaznacz"><input type="checkbox" name="dokumenty" value="{{ kod }}" {{ 'checked' if kod in domyslne }}><span class="pole-wyboru">{{ m.ikona('ptaszek') }}</span><span>{{ nazwa }}</span></label>
+      {% set kategoria = 'pelnomocnictwa' if kod.startswith('pelnomocnictwo') else ('geodezyjne' if kod in ['egib','egib_wypis','formularz_p','os616'] else 'budowlane') %}
+      <label class="zaznacz dokument-wiersz" data-kategoria="{{ kategoria }}"><input type="checkbox" name="dokumenty" value="{{ kod }}" {{ 'checked' if kod in domyslne }}><span class="pole-wyboru">{{ m.ikona('ptaszek') }}</span><span class="dokument-nazwa"><strong>{{ nazwa.split(' (osobno')[0] }}</strong>{% if ' (osobno' in nazwa %}<small>{{ nazwa.split(' (')[1].rstrip(')') | capitalize }}</small>{% endif %}</span></label>
       {% endfor %}
     </div>
-    <div class="akcje"><button type="submit" class="przycisk">Dalej: sprawdź dane</button></div>
+    <div class="akcje"><button type="submit" class="przycisk">Sprawdź dane {{ m.ikona('strzalka-dol') }}</button></div>
   </section>
+  <aside class="kontekst-pracy"><h2>Wybrane dokumenty</h2><p id="licznik-wyboru" role="status" aria-live="polite"></p><ul id="lista-wybranych"></ul><h3>Pliki źródłowe</h3>{% for plik in pliki_zrodlowe %}<p class="zrodlo-kontekst">{{ plik.nazwa }}<small>{{ plik.typ }}</small></p>{% endfor %}<p class="podpowiedz">Wybór kategorii i wyszukiwanie nie usuwają zaznaczeń.</p></aside>
 </form>
 {% endblock %}
