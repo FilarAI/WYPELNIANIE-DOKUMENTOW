@@ -31,17 +31,12 @@ utworz_ikone() {
     rm -f "$ZASOBY/Assets.car"
     /usr/libexec/PlistBuddy -c "Delete :CFBundleIconName" "$APLIKACJA/Contents/Info.plist" >/dev/null 2>&1 || true
   fi
-  # Ponowny podpis po zmianie Info.plist i zasobów (podpis lokalny, jak przy osacompile).
-  codesign --force --sign - "$APLIKACJA" >/dev/null 2>&1 || true
-  if [ -f "$IKONA" ]; then
-    # Ikona ustawiona bezpośrednio w Finderze – działa także wtedy, gdy macOS pamięta starą ikonę z tej samej ścieżki.
-    IKONA="$IKONA" APLIKACJA="$APLIKACJA" osascript -l JavaScript -e '
-      ObjC.import("AppKit");
-      var env = $.NSProcessInfo.processInfo.environment;
-      var obraz = $.NSImage.alloc.initWithContentsOfFile(env.objectForKey("IKONA"));
-      $.NSWorkspace.sharedWorkspace.setIconForFileOptions(obraz, env.objectForKey("APLIKACJA"), 0);' >/dev/null 2>&1 || true
-    touch "$APLIKACJA"
-  fi
+  # Ikona pochodzi z applet.icns. Ustawienie dodatkowej ikony Findera dodawało
+  # resource fork po podpisaniu i powodowało błąd weryfikacji pakietu.
+  xattr -cr "$APLIKACJA"
+  codesign --force --sign - "$APLIKACJA" >/dev/null
+  codesign --verify --deep --strict "$APLIKACJA"
+  touch "$APLIKACJA"
   # Rejestracja w systemie: ikona i adres dokumentyfilar://
   /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
     -f "$APLIKACJA" >/dev/null 2>&1 || true
