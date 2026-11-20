@@ -11,7 +11,17 @@ utworz_ikone() {
   APLIKACJA="$HOME/Desktop/Dokumenty FILAR.app"
   IKONA="$KATALOG/ikona/ikona.icns"
   rm -rf "$APLIKACJA"
-  osacompile -o "$APLIKACJA" -e "do shell script \"open \" & quoted form of \"$KATALOG/start.command\""
+  URUCHOM="do shell script \"open \" & quoted form of \"$KATALOG/start.command\""
+  # „open location” = start z linku dokumentyfilar:// (np. z ekranu aplikacji biura w przeglądarce).
+  osacompile -o "$APLIKACJA" -e "on run" -e "$URUCHOM" -e "end run" \
+    -e "on open location adres" -e "$URUCHOM" -e "end open location"
+  /usr/libexec/PlistBuddy \
+    -c "Add :CFBundleURLTypes array" \
+    -c "Add :CFBundleURLTypes:0 dict" \
+    -c "Add :CFBundleURLTypes:0:CFBundleURLName string pl.filar.dokumenty" \
+    -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" \
+    -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string dokumentyfilar" \
+    "$APLIKACJA/Contents/Info.plist"
 
   if [ -f "$IKONA" ]; then
     ZASOBY="$APLIKACJA/Contents/Resources"
@@ -20,8 +30,10 @@ utworz_ikone() {
     # razem z odwołaniem w Info.plist, żeby została nasza ikona.
     rm -f "$ZASOBY/Assets.car"
     /usr/libexec/PlistBuddy -c "Delete :CFBundleIconName" "$APLIKACJA/Contents/Info.plist" >/dev/null 2>&1 || true
-    # Ponowny podpis po zmianie zasobów (podpis lokalny, jak przy osacompile).
-    codesign --force --sign - "$APLIKACJA" >/dev/null 2>&1 || true
+  fi
+  # Ponowny podpis po zmianie Info.plist i zasobów (podpis lokalny, jak przy osacompile).
+  codesign --force --sign - "$APLIKACJA" >/dev/null 2>&1 || true
+  if [ -f "$IKONA" ]; then
     # Ikona ustawiona bezpośrednio w Finderze – działa także wtedy, gdy macOS pamięta starą ikonę z tej samej ścieżki.
     IKONA="$IKONA" APLIKACJA="$APLIKACJA" osascript -l JavaScript -e '
       ObjC.import("AppKit");
@@ -29,9 +41,10 @@ utworz_ikone() {
       var obraz = $.NSImage.alloc.initWithContentsOfFile(env.objectForKey("IKONA"));
       $.NSWorkspace.sharedWorkspace.setIconForFileOptions(obraz, env.objectForKey("APLIKACJA"), 0);' >/dev/null 2>&1 || true
     touch "$APLIKACJA"
-    /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
-      -f "$APLIKACJA" >/dev/null 2>&1 || true
   fi
+  # Rejestracja w systemie: ikona i adres dokumentyfilar://
+  /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
+    -f "$APLIKACJA" >/dev/null 2>&1 || true
   echo "Dodano ikonę „Dokumenty FILAR” na pulpicie – uruchamia program z folderu:"
   echo "  $KATALOG"
 }
