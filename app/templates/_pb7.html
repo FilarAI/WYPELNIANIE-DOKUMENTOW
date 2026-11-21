@@ -1,0 +1,36 @@
+{% macro pb7pole(name,label,klasa='',required=false) -%}<label class="pole {{ klasa }}"><span>{{ label }}</span><input name="{{ name }}" maxlength="500" {{ 'required' if required }}></label>{%- endmacro %}
+{% macro adres(prefix) -%}
+<div class="siatka">
+ {{ pb7pole(prefix+'kraj','Kraj') }}{{ pb7pole(prefix+'wojewodztwo','Województwo') }}
+ {{ pb7pole(prefix+'powiat','Powiat') }}{{ pb7pole(prefix+'gmina','Gmina') }}
+ {{ pb7pole(prefix+'ulica','Ulica') }}{{ pb7pole(prefix+'nr_domu','Nr domu','waskie') }}{{ pb7pole(prefix+'nr_lokalu','Nr lokalu','waskie') }}
+ {{ pb7pole(prefix+'miejscowosc','Miejscowość') }}{{ pb7pole(prefix+'kod_pocztowy','Kod pocztowy','waskie') }}
+ {{ pb7pole(prefix+'adres_elektroniczny','Adres do doręczeń elektronicznych') }}{{ pb7pole(prefix+'email','E-mail (nieobowiązkowo)') }}{{ pb7pole(prefix+'telefon','Nr tel. (nieobowiązkowo)') }}
+</div>{%- endmacro %}
+<section class="sekcja pb7-formularz" aria-labelledby="pb7-tytul">
+ <h2 id="pb7-tytul">PB-7 — wniosek o zmianę pozwolenia na budowę</h2>
+ <p class="opis-sekcji">Dane inwestora i nieruchomości pobieramy z obiegówki. Wpisz organ oraz dane pierwotnej decyzji i uzupełnij ewentualne dane korespondencyjne, pełnomocnika i załączników.</p>
+ {% for i in dane.inwestorzy %}{% set n=loop.index0 %}<details class="pb2-inwestor" {% if loop.first %}open{% endif %}>
+  <summary><b>PB-7 — {{ i.imie_nazwisko }}</b></summary>
+  <label class="pole"><span>Organ administracji architektoniczno-budowlanej</span><input name="pb7-{{ n }}-organ" maxlength="300" placeholder="Nazwa organu" required></label>
+  <div class="siatka">{{ pb7pole('pb7-'~n~'-email','E-mail inwestora (nieobowiązkowo)') }}{{ pb7pole('pb7-'~n~'-telefon','Nr tel. inwestora (nieobowiązkowo)') }}</div>
+  <p class="podgrupa">Dane inwestora do korespondencji</p><p class="podpowiedz">Wypełnij tylko wtedy, gdy adres korespondencyjny różni się od adresu inwestora.</p>
+  {{ adres('pb7-'~n~'-koresp-') }}
+  <p class="podgrupa">Pełnomocnik / pełnomocnik do doręczeń</p><p class="podpowiedz">Wybierz rodzaj i podaj dane pełnomocnika, jeśli inwestor działa przez pełnomocnika.</p>
+  <div class="siatka">
+   <label class="pole"><span>Rodzaj pełnomocnika</span><select name="pb7-{{ n }}-typ_pelnomocnika"><option value="">Brak</option><option value="pelnomocnik">Pełnomocnik</option><option value="do_doreczen">Pełnomocnik do doręczeń</option></select></label>
+   {{ pb7pole('pb7-'~n~'-proxy-imie_nazwisko','Imię i nazwisko pełnomocnika') }}
+  </div>{{ adres('pb7-'~n~'-proxy-') }}
+  <p class="podgrupa">Informacje o pozwoleniu na budowę</p>
+  <div class="siatka">
+   <label class="pole"><span>Data wydania decyzji</span><input name="pb7-{{ n }}-data_decyzji" placeholder="DD.MM.RRRR" inputmode="numeric" maxlength="10" required></label>
+   {{ pb7pole('pb7-'~n~'-nr_decyzji','Nr decyzji','',true) }}{{ pb7pole('pb7-'~n~'-znak_sprawy','Znak sprawy','',true) }}
+   <label class="pole cala"><span>Nazwa zamierzenia budowlanego objętego decyzją</span><textarea name="pb7-{{ n }}-nazwa_zamierzenia" rows="2" maxlength="500" required></textarea></label>
+  </div>
+  <p class="podgrupa">Załączniki</p>
+  {% for kod,opis in [('oswiadczenie','Oświadczenie o prawie do dysponowania nieruchomością na cele budowlane'),('pelnomocnictwo','Pełnomocnictwo do reprezentowania inwestora'),('oplata','Potwierdzenie opłaty skarbowej'),('projekt','Projekt zagospodarowania działki/terenu i projekt architektoniczno-budowlany'),('warunki','Decyzja o warunkach zabudowy'),('inne','Inne załączniki')] %}
+   <label class="zaznacz"><input type="checkbox" name="pb7-{{ n }}-zal-{{ kod }}" value="tak"><span class="pole-wyboru">{{ m.ikona('ptaszek') }}</span><span>{{ opis }}</span></label>
+  {% endfor %}
+  <label class="pole"><span>Opis innych załączników</span><input name="pb7-{{ n }}-zal-opis" maxlength="500"></label>
+ </details>{% endfor %}
+</section>

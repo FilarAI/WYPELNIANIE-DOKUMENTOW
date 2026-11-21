@@ -1,0 +1,40 @@
+<section class="sekcja" aria-labelledby="p-tytul">
+  <h2 id="p-tytul">Formularz P — materiały zasobu geodezyjnego</h2>
+  <p class="opis-sekcji">Wybierz materiały, jeden cel udostępnienia i sposób odbioru. Dane wnioskodawcy i położenie działki przepisaliśmy z obiegówki.</p>
+  <div class="siatka">
+    <label class="pole cala"><span>1. Imię i nazwisko / nazwa oraz adres wnioskodawcy</span><textarea name="p-wnioskodawca" rows="2" maxlength="700" required>{{ p_wartosci.wnioskodawca }}</textarea></label>
+    <label class="pole"><span>2. Data</span><input name="p-data" maxlength="10" placeholder="DD.MM.RRRR" value="{{ p_wartosci.data }}" required></label>
+    <label class="pole"><span>Telefon</span><input name="p-telefon" maxlength="40" value="{{ p_wartosci.telefon }}"></label>
+    <label class="pole cala"><span>4. Kontakt wnioskodawcy (telefon, adres do doręczeń elektronicznych lub e-mail)</span><input name="p-kontakt" maxlength="254" value="{{ p_wartosci.kontakt }}"></label>
+    <label class="pole"><span>5. Własne oznaczenie wniosku (opcjonalnie)</span><input name="p-oznaczenie" maxlength="100"></label>
+    <label class="pole"><span>9. Obręb ewidencyjny (jeśli znany)</span><input name="p-obreb" maxlength="200" value="{{ p_wartosci.obreb }}"></label>
+  </div>
+  <p class="podgrupa">3. Adresat</p><p>Starostwo Powiatowe w Nowym Targu, Wydział Geodezji, Katastru i Kartografii, ul. Bolesława Wstydliwego 14, 34-400 Nowy Targ</p>
+  <p class="podgrupa">6. Oznaczenie kancelaryjne wniosku (wypełnia urząd)</p><p><strong>GK.6642.1. …………… .2026</strong></p>
+  <fieldset><legend>7. Materiały, o które wnioskujesz</legend><div class="siatka">
+    {% for kod, opis in p_materialy.items() %}<label class="zaznacz"><input type="checkbox" name="p-material" value="{{ kod }}"><span class="pole-wyboru">{{ m.ikona('ptaszek') }}</span><span>{{ opis }}</span></label>{% endfor %}
+  </div>
+  <div class="siatka"><label class="pole cala"><span>Doprecyzowanie materiałów (np. arkusz, skala, rodzaj raportu)</span><input name="p-materialy_opis" maxlength="1000"></label></div></fieldset>
+  <div class="siatka">
+    <label class="pole cala"><span>9. Położenie materiałów / nieruchomości</span><input name="p-teren" maxlength="500" value="{{ p_wartosci.teren }}"></label>
+    <label class="pole"><span>Numery działek</span><input name="p-dzialki" maxlength="500" value="{{ p_wartosci.dzialki }}"></label>
+  </div>
+  <fieldset><legend>8. Cel pobrania materiałów — wybierz jeden</legend>
+    <p class="podgrupa">a. Odpłatne udostępnienie (współczynnik CL)</p>
+    {% for kod, opis in p_cele.items() %}<label class="zaznacz"><input type="radio" name="p-cel" value="{{ kod }}" required><span class="pole-wyboru">{{ m.ikona('ptaszek') }}</span><span>{{ opis }}{% if kod in ['wlasne','publiczne','dowolne','operator'] %} <b>CL {{ {'wlasne':'1,0','publiczne':'1,0','dowolne':'2,0','operator':'0,1'}[kod] }}</b>{% else %} <small>(zwolnienie z opłaty — po spełnieniu warunków)</small>{% endif %}</span></label>{% endfor %}
+  </fieldset>
+  <div class="siatka">
+    <label class="pole"><span>9. Osoba do kontaktu</span><input name="p-kontakt_osoba" maxlength="200" value="{{ p_wartosci.kontakt_osoba }}"></label>
+    <label class="pole"><span>E-mail</span><input type="email" name="p-email" maxlength="254" value="{{ p_wartosci.email }}"></label>
+    <label class="pole"><span>Dane serwera FTP (jeśli dotyczy)</span><input name="p-ftp" maxlength="254"></label>
+  </div>
+  <fieldset><legend>10. Sposób udostępnienia materiałów</legend><div class="siatka">
+    {% for kod, opis in p_sposoby.items() %}<label class="zaznacz"><input type="checkbox" name="p-sposob" value="{{ kod }}"><span class="pole-wyboru">{{ m.ikona('ptaszek') }}</span><span>{{ opis }}</span></label>{% endfor %}
+  </div>
+  <div class="siatka">
+    <label class="pole cala"><span>Inny adres wysyłki</span><input name="p-adres_inny" maxlength="500"></label>
+    <label class="pole cala"><span>Informacje o nośniku (opcjonalnie)</span><input name="p-nosnik" maxlength="200"></label>
+  </div></fieldset>
+  <label class="pole cala"><span>11. Dodatkowe wyjaśnienia i uwagi</span><textarea name="p-uwagi" rows="2" maxlength="1200"></textarea></label>
+  <p class="podpowiedz">Podpis wnioskodawcy złóż po wydrukowaniu. Wzór zgodny z Formularzem P z Dz.U. 2026 poz. 1068.</p>
+</section>

@@ -1,0 +1,17 @@
+<section class="sekcja egib-formularz" aria-labelledby="pel-egib-tytul">
+  <h2 id="pel-egib-tytul">Pełnomocnictwo do spraw EGiB</h2>
+  <p class="opis-sekcji">Dane mocodawców uzupełnij osobno dla każdej osoby. Numery PESEL i dowodów nie są odczytywane automatycznie. Wpisz je tylko wtedy, gdy mają znaleźć się na druku.</p>
+  <div class="siatka egib-pola">
+    <label class="pole"><span>Pełnomocnik — nr dowodu osobistego</span><input name="pel-egib-pelnomocnik-dowod" maxlength="30" required></label>
+    <label class="pole"><span>Pełnomocnik — organ wydający dowód</span><input name="pel-egib-pelnomocnik-organ" maxlength="120" required></label>
+    <label class="pole cala"><span>Pełnomocnik — PESEL</span><input name="pel-egib-pelnomocnik-pesel" inputmode="numeric" maxlength="11" pattern="[0-9]{11}" required></label>
+  </div>
+  <label class="pole"><span>Zakres pełnomocnictwa (wybierz jedną opcję)</span>
+    <select name="pel-egib-zakres" required>
+      <option value="">— wybierz —</option>
+      <option value="samodzielnie">Pełnomocnik składa wniosek o wypis/wyrys i odbiera dokument</option>
+      <option value="podpisany">Pełnomocnik składa wniosek wypełniony i podpisany przez właściciela/władającego oraz odbiera dokument</option>
+    </select>
+  </label>
+  <p class="podpowiedz">Na wygenerowanym druku pozostają miejsca na podpisy mocodawców. Potwierdź właściwy zakres przed podpisaniem.</p>
+</section>

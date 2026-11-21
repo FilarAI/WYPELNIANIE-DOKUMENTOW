@@ -231,7 +231,36 @@ def pelnomocnictwo(cel: Path = SZABLONY / "pelnomocnictwo.docx", grafika: Path =
     return z_banerem
 
 
+def ba4(cel: Path = SZABLONY / "ba4_dziennik.docx"):
+    """Druk BA-4 odtworzony ze zdjęcia; szczegółowy układ w zbuduj_ba4.py."""
+    if __package__:
+        from .zbuduj_ba4 import zbuduj
+    else:
+        from zbuduj_ba4 import zbuduj
+    return zbuduj(cel)
+
+
+def egib(cel: Path = SZABLONY / "egib_zmiany.docx"):
+    """Druk zgłoszenia zmian ewidencji gruntów i budynków ze zdjęcia."""
+    if __package__:
+        from .zbuduj_egib import zbuduj
+    else:
+        from zbuduj_egib import zbuduj
+    return zbuduj(cel)
+
+
+def pelnomocnictwo_egib(cel: Path = SZABLONY / "pelnomocnictwo_egib.docx"):
+    if __package__:
+        from .zbuduj_pelnomocnictwo_egib import zbuduj
+    else:
+        from zbuduj_pelnomocnictwo_egib import zbuduj
+    return zbuduj(cel)
+
+
 if __name__ == "__main__":
+    ba4()
+    egib()
+    pelnomocnictwo_egib()
     SZABLONY.mkdir(exist_ok=True)
     pb5()
     z_banerem = pelnomocnictwo()

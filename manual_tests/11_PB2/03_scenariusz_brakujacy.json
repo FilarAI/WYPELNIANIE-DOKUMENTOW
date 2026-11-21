@@ -1,0 +1,31 @@
+{
+  "dokument": "pb2",
+  "scenariusz": "brak opisu robót",
+  "pole_do_usuniecia_lub_wyczyszczenia": "pb2-roboty",
+  "wartosc_w_przypadku_poprawnym": "Budowa wolnostojącego budynku gospodarczego o powierzchni zabudowy 24 m².",
+  "wartosc_w_przypadku_brakujacym": "",
+  "oczekiwany_wynik": {
+    "http": 400,
+    "komunikat": "PB-2: opisz rodzaj, zakres i sposób wykonywania robót."
+  },
+  "dane_poprawnego_przebiegu": {
+    "dokumenty": "pb2",
+    "wybor_potwierdzony": "tak",
+    "inw-0-imie_nazwisko": "Anna Testowa",
+    "inw-0-miejscowosc": "Nowy Targ",
+    "inw-0-ulica": "ul. Przykładowa",
+    "inw-0-nr_domu": "12",
+    "inw-0-kod_pocztowy": "34-400",
+    "adres-miejscowosc": "Nowy Targ",
+    "adres-nr_domu": "25",
+    "adres-nr_dzialki": "1401/2",
+    "adres-identyfikator_dzialki": "121101_1.0001.1401/2",
+    "pb2-roboty": "Budowa wolnostojącego budynku gospodarczego o powierzchni zabudowy 24 m².",
+    "pb2-termin": "15.03.2027",
+    "inw-0-plec": "K",
+    "inw-0-nr_lokalu": "2",
+    "adres-ulica": "ul. Testowa",
+    "adres-kod_pocztowy": "34-400"
+  },
+  "instrukcja": "Wgraj 01_obiegowka_testowa.docx, wybierz wskazany dokument, przepisz dane z dane_poprawnego_przebiegu; dla próby błędnej wyczyść pole wskazane wyżej."
+}

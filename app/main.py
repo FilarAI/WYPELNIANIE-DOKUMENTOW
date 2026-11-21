@@ -18,7 +18,8 @@ import webbrowser
 
 from flask import Flask, Response, jsonify, render_template, request
 
-from app import WERSJA, dokumenty, teryt, zapis, zakonczenie
+from app.prezentacja import klucz_nazwy, ostrzezenie_ui
+from app import WERSJA, dokumenty, dziennik, ewidencja, egib_wypis, formularz_p, formatowanie, os616, pb1, pb2, pb2a, pb7, pb9, teryt, zapis, zakonczenie
 from app.generator import generuj_dokumenty, spakuj
 from app.parser_obiegowki import NAZWY_POL
 from app.parser_zrodel import RODZAJE_ZRODEL
@@ -26,10 +27,12 @@ from app.scalanie_zrodel import odczytaj_zestaw
 from app.konfiguracja import PELNOMOCNIK
 
 app = Flask(__name__)
+app.add_template_filter(ostrzezenie_ui, "ostrzezenie_ui")
 app.config["MAX_CONTENT_LENGTH"] = 150 * 1024 * 1024
 FOLDER_PROGRAMU = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _wgrane: dict[str, tuple[float, dict, str]] = {}
 _blokada_wgranych = threading.Lock()
+_szkice: dict[str, list] = {}
 
 
 @app.after_request
@@ -87,11 +90,27 @@ def _odczytaj_plik():
     return dane, ", ".join(nazwa for _, nazwa, _ in pliki)
 
 
+@app.post("/sprawdz-plik")
+def sprawdz_plik():
+    from app.kontrola_pliku import sprawdz
+    plik = request.files.get("plik")
+    if not plik or not plik.filename:
+        return jsonify(blad="Wybierz plik Word lub PDF."), 400
+    try:
+        return jsonify(sprawdz(plik.read(), os.path.basename(plik.filename)))
+    except ValueError as e:
+        return jsonify(blad=str(e)), 400
+    except Exception:
+        return jsonify(blad="Nie udało się odczytać pliku. Sprawdź, czy dokument nie jest uszkodzony lub zabezpieczony hasłem."), 400
+
+
 @app.post("/wybierz-dokumenty")
 def wybierz_dokumenty():
     try:
         dane, nazwa = _odczytaj_plik()
     except ValueError as e:
+        if request.headers.get("X-Requested-With") == "fetch":
+            return jsonify(blad=str(e)), 400
         return render_template("start.html", blad=str(e), rodzaje_zrodel=RODZAJE_ZRODEL), 400
     token = secrets.token_urlsafe(24)
     with _blokada_wgranych:
@@ -99,13 +118,57 @@ def wybierz_dokumenty():
         for stary, (czas, _, _) in list(_wgrane.items()):
             if teraz - czas > 3600:
                 del _wgrane[stary]
+                _szkice.pop(stary, None)
         if len(_wgrane) >= 100:
             najstarszy = min(_wgrane, key=lambda x: _wgrane[x][0])
             del _wgrane[najstarszy]
+            _szkice.pop(najstarszy, None)
         _wgrane[token] = (teraz, dane, nazwa)
+    if request.headers.get("X-Requested-With") == "fetch":
+        return jsonify(token=token)
     return render_template("wybor_dokumentow.html", token=token, nazwa_pliku=nazwa,
-                           dokumenty=dokumenty.DOKUMENTY, domyslne=dokumenty.DOMYSLNE,
+                           dokumenty=dict(sorted(dokumenty.DOKUMENTY.items(), key=lambda x: klucz_nazwy(x[1]))), domyslne=dokumenty.DOMYSLNE,
                            pliki_zrodlowe=dane["pliki_zrodlowe"])
+
+
+@app.get("/wybierz-dokumenty")
+def powrot_do_wyboru():
+    token = request.args.get("token", "")
+    with _blokada_wgranych:
+        wpis = _wgrane.get(token)
+    if not wpis or time.monotonic() - wpis[0] > 3600:
+        return render_template("start.html", blad="Wygasły pliki. Wgraj je ponownie.", rodzaje_zrodel=RODZAJE_ZRODEL), 400
+    return render_template("wybor_dokumentow.html", token=token, nazwa_pliku=wpis[2],
+                           dokumenty=dict(sorted(dokumenty.DOKUMENTY.items(), key=lambda x: klucz_nazwy(x[1]))),
+                           domyslne=request.args.getlist("dokumenty") or dokumenty.DOMYSLNE,
+                           pliki_zrodlowe=wpis[1]["pliki_zrodlowe"])
+
+
+@app.post("/sprawdz-dane")
+def sprawdz_dane():
+    token = request.form.get("token_wgrania", "")
+    with _blokada_wgranych:
+        wpis = _wgrane.get(token)
+        if not wpis or time.monotonic() - wpis[0] > 3600:
+            return jsonify(zadania=[{"kod": "", "opis": "Wygasły pliki źródłowe. Wgraj je ponownie."}], wygaslo=True), 400
+        _szkice[token] = list(request.form.items(multi=True))
+    zadania = []
+    try:
+        wybrane = dokumenty.odczytaj_wybor(request.form)
+    except ValueError as e:
+        return jsonify(zadania=[{"kod": "", "opis": str(e)}]), 400
+    if wpis[1].get("blokada_zestawu"):
+        zadania.append({"kod": "", "opis": "Pliki dotyczą różnych inwestycji. Zmień pliki źródłowe."})
+    for kod in wybrane:
+        formularz = request.form.copy()
+        formularz.setlist("dokumenty", [kod])
+        try:
+            dane = _dane_z_formularza(formularz)
+            if not dane["inwestorzy"]:
+                raise ValueError("Podaj co najmniej jednego inwestora (imię i nazwisko).")
+        except ValueError as e:
+            zadania.append({"kod": kod, "opis": str(e)})
+    return jsonify(zadania=zadania)
 
 
 @app.post("/podglad")
@@ -131,7 +194,7 @@ def podglad():
         wybrane = dokumenty.DOMYSLNE
     pola_z_ostrzezeniem = {o["pole"] for o in dane["ostrzezenia"]}
     return render_template("podglad.html", dane=dane, nazwa_pliku=nazwa,
-                           wybrane=wybrane, nazwy_dokumentow=dokumenty.DOKUMENTY,
+                           szkic=_szkice.get(token, []), wybrane=wybrane, nazwy_dokumentow=dokumenty.DOKUMENTY,
                            pola_z_ostrzezeniem=pola_z_ostrzezeniem, nazwy_pol=NAZWY_POL,
                            dzisiaj=datetime.date.today().strftime("%d.%m.%Y"),
                            zak={"miejscowosc_sporzadzenia": dane["adres_inwestycji"].get("miejscowosc", ""),
@@ -148,6 +211,22 @@ def podglad():
                            zalaczniki=zakonczenie.ZALACZNIKI,
                            kierownik=PELNOMOCNIK,
                            kierownik_adres=zakonczenie.adres_kierownika(),
+                           pb2_pola=pb2.POLA,
+                           pb2_adres=pb2.ADRES,
+                           pb2a_rodzaje=pb2a.RODZAJE,
+                           pb1_rodzaje=pb1.RODZAJE,
+                           os616_wartosci=os616.domyslne(dane, datetime.date.today().strftime("%d.%m.%Y")),
+                           egibw_wartosci=egib_wypis.domyslne(dane, datetime.date.today().strftime("%d.%m.%Y")),
+                           egibw_przedmioty=egib_wypis.PRZEDMIOTY, egibw_uzasadnienia=egib_wypis.UZASADNIENIA,
+                           egibw_postac=egib_wypis.POSTAC, egibw_odbior=egib_wypis.ODBIOR,
+                           p_wartosci=formularz_p.domyslne(dane, datetime.date.today().strftime("%d.%m.%Y")),
+                           p_materialy=formularz_p.MATERIALY, p_cele=formularz_p.CELE,
+                           p_sposoby=formularz_p.SPOSOBY,
+                           ba4_wartosci=dziennik.domyslne(dane, datetime.date.today().strftime("%d.%m.%Y")),
+                           ba4_wybory=dziennik.WYBORY, ba4_etykiety=dziennik.ETYKIETY, ba4_pola=dziennik.POLA,
+                           egib_wartosci=ewidencja.domyslne(dane, datetime.date.today().strftime("%d.%m.%Y")),
+                           egib_pola=ewidencja.POLA, egib_role=ewidencja.ROLE,
+                           pelnomocnicy=dane.get("inwestorzy", []),
                            folder_zapisu=zapis.ostatni_folder())
 
 
@@ -167,7 +246,7 @@ def _dane_z_formularza(f) -> dict:
     nieruchomosc = {p: f.get(f"nier-{p}", "").strip() for p in POLA_JEDNOSTKI}
     if not any(nieruchomosc.values()):
         nieruchomosc = vars(teryt.z_identyfikatora(adres["identyfikator_dzialki"]) or teryt.Jednostka())
-    return {
+    dane = {
         "nazwa_inwestycji": " ".join(f.get("nazwa_inwestycji", "").split()),
         "adres_inwestycji": adres,
         "nieruchomosc": nieruchomosc,
@@ -176,7 +255,33 @@ def _dane_z_formularza(f) -> dict:
         "upowazniony_w_pb5": f.get("upowazniony_w_pb5") == "tak",
         "dokumenty": dokumenty.odczytaj_wybor(f, domyslne=f.get("wybor_potwierdzony") != "tak"),
         "zakonczenie": zakonczenie.odczytaj_z_formularza(f),
+        "formatowanie": formatowanie.odczytaj_z_formularza(f),
     }
+
+    if "ba4" in dane["dokumenty"]:
+        dane["ba4"] = dziennik.odczytaj_z_formularza(f, dane)
+    if "egib" in dane["dokumenty"]:
+        dane["egib"] = ewidencja.odczytaj_z_formularza(f, dane)
+    if "pelnomocnictwo_egib" in dane["dokumenty"]:
+        from app import pelnomocnictwo_egib
+        dane["pelnomocnictwo_egib"] = pelnomocnictwo_egib.odczytaj(f, dane)
+    if "pb2" in dane["dokumenty"]:
+        dane["pb2"] = pb2.odczytaj(f, dane)
+    if "pb2a" in dane["dokumenty"]:
+        dane["pb2a"] = pb2a.odczytaj(f, dane)
+    if "pb7" in dane["dokumenty"]:
+        dane["pb7"] = pb7.odczytaj(f, dane)
+    if "pb9" in dane["dokumenty"]:
+        dane["pb9"] = pb9.odczytaj(f, dane)
+    if "pb1" in dane["dokumenty"]:
+        dane["pb1"] = pb1.odczytaj(f, dane)
+    if "os616" in dane["dokumenty"]:
+        dane["os616"] = os616.odczytaj(f, dane)
+    if "egib_wypis" in dane["dokumenty"]:
+        dane["egib_wypis"] = egib_wypis.odczytaj(f, dane)
+    if "formularz_p" in dane["dokumenty"]:
+        dane["formularz_p"] = formularz_p.odczytaj(f, dane)
+    return dane
 
 
 @app.post("/generuj")
@@ -203,10 +308,12 @@ def generuj():
             folder = zapis.sprawdz_folder(request.form.get("folder_zapisu", ""))
             zapisane = zapis.zapisz_pliki(folder, pliki)
         except ValueError as e:
-            return render_template("zapisano.html", blad=str(e)), 400
+            return (jsonify(blad=str(e)), 400) if request.headers.get("X-Requested-With") == "fetch" else (render_template("zapisano.html", blad=str(e)), 400)
         except OSError as e:
-            return render_template("zapisano.html", blad=f"Nie udało się zapisać plików: {e.strerror}."), 500
+            return (jsonify(blad=f"Nie udało się zapisać plików: {e.strerror}."), 500) if request.headers.get("X-Requested-With") == "fetch" else (render_template("zapisano.html", blad=f"Nie udało się zapisać plików: {e.strerror}."), 500)
         zapis.zapamietaj_folder(str(folder))
+        if request.headers.get("X-Requested-With") == "fetch":
+            return jsonify(folder=str(folder), pliki=[p.name for p in zapisane])
         return render_template("zapisano.html", folder=folder, zapisane=[p.name for p in zapisane])
 
     pierwszy = next(iter(pliki)).rsplit(".", 1)[0]

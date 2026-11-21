@@ -1,0 +1,32 @@
+{% macro pb9pole(name,label,required=false) -%}<label class="pole"><span>{{ label }}</span><input name="{{ name }}" maxlength="500" {{ 'required' if required }}></label>{%- endmacro %}
+{% macro adres(prefix) -%}
+<div class="siatka">
+ {{ pb9pole(prefix+'kraj','Kraj') }}{{ pb9pole(prefix+'wojewodztwo','Województwo') }}
+ {{ pb9pole(prefix+'powiat','Powiat') }}{{ pb9pole(prefix+'gmina','Gmina') }}
+ {{ pb9pole(prefix+'ulica','Ulica') }}{{ pb9pole(prefix+'nr_domu','Nr domu') }}{{ pb9pole(prefix+'nr_lokalu','Nr lokalu') }}
+ {{ pb9pole(prefix+'miejscowosc','Miejscowość') }}{{ pb9pole(prefix+'kod_pocztowy','Kod pocztowy') }}
+ {{ pb9pole(prefix+'adres_elektroniczny','Adres do doręczeń elektronicznych') }}{{ pb9pole(prefix+'email','E-mail (nieobowiązkowo)') }}{{ pb9pole(prefix+'telefon','Nr tel. (nieobowiązkowo)') }}
+</div>{%- endmacro %}
+<section class="sekcja pb9-formularz" aria-labelledby="pb9-tytul">
+ <h2 id="pb9-tytul">PB-9 — wniosek o przeniesienie decyzji o pozwoleniu na budowę</h2>
+ <p class="opis-sekcji">Dane nowego inwestora pobieramy z obiegówki. Uzupełnij dotychczasowego inwestora i dane pierwotnej decyzji, a także sprawdź pełnomocnika i załączniki.</p>
+ {% for i in dane.inwestorzy %}{% set n=loop.index0 %}<details class="pb2-inwestor" {% if loop.first %}open{% endif %}>
+  <summary><b>PB-9 — nowy inwestor: {{ i.imie_nazwisko }}</b></summary>
+  <p class="podgrupa">Dane kontaktowe nowego inwestora</p><div class="siatka">{{ pb9pole('pb9-'~n~'-email','E-mail (nieobowiązkowo)') }}{{ pb9pole('pb9-'~n~'-telefon','Nr tel. (nieobowiązkowo)') }}</div>
+  <p class="podgrupa">Dane nowego inwestora do korespondencji</p><p class="podpowiedz">Wypełnij, jeżeli adres korespondencyjny jest inny niż adres nowego inwestora.</p>{{ adres('pb9-'~n~'-koresp-') }}
+  <p class="podgrupa">Pełnomocnik / pełnomocnik do doręczeń</p>
+  <div class="siatka"><label class="pole"><span>Rodzaj pełnomocnika</span><select name="pb9-{{ n }}-typ_pelnomocnika"><option value="">Brak</option><option value="pelnomocnik">Pełnomocnik</option><option value="do_doreczen">Pełnomocnik do doręczeń</option></select></label>{{ pb9pole('pb9-'~n~'-proxy-imie_nazwisko','Imię i nazwisko pełnomocnika') }}</div>
+  {{ adres('pb9-'~n~'-proxy-') }}
+  <p class="podgrupa">Dotychczasowy inwestor i pierwotna decyzja</p>
+  {{ pb9pole('pb9-'~n~'-dotychczasowy_inwestor','Imię i nazwisko lub nazwa dotychczasowego inwestora',true) }}
+  <div class="siatka">
+   <label class="pole"><span>Data wydania decyzji</span><input name="pb9-{{ n }}-data_decyzji" placeholder="DD.MM.RRRR" inputmode="numeric" maxlength="10" required></label>
+   {{ pb9pole('pb9-'~n~'-nr_decyzji','Nr decyzji',true) }}{{ pb9pole('pb9-'~n~'-znak_sprawy','Znak sprawy',true) }}
+   <label class="pole cala"><span>Nazwa zamierzenia budowlanego objętego decyzją</span><textarea name="pb9-{{ n }}-nazwa_zamierzenia" rows="2" maxlength="500" required></textarea></label>
+  </div>
+  <p class="podgrupa">Załączniki</p>
+  {% for kod,opis in [('oswiadczenie','Oświadczenie o prawie do dysponowania nieruchomością na cele budowlane'),('pelnomocnictwo','Pełnomocnictwo nowego inwestora'),('oplata','Potwierdzenie opłaty skarbowej'),('zgoda','Zgoda dotychczasowego inwestora')] %}
+   <label class="zaznacz"><input type="checkbox" name="pb9-{{ n }}-zal-{{ kod }}" value="tak"><span class="pole-wyboru">{{ m.ikona('ptaszek') }}</span><span>{{ opis }}</span></label>
+  {% endfor %}
+ </details>{% endfor %}
+</section>

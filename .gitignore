@@ -17,6 +17,7 @@ wyniki/
 # Wyjątki: szablony biura i zanonimizowane pliki testowe
 !szablony/*.docx
 !tests/fixtures/*.docx
+!manual_tests/**/*.docx
 
 # macOS
 .DS_Store

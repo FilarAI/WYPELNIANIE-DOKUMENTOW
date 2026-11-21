@@ -1,0 +1,41 @@
+<section class="sekcja" aria-labelledby="egibw-tytul">
+  <h2 id="egibw-tytul">EGiB — wniosek o wypis lub wyrys</h2>
+  <p class="opis-sekcji">Dane osoby i nieruchomości uzupełniliśmy z obiegówki. Zaznacz materiały, które zamawiasz, oraz sposób ich udostępnienia.</p>
+  <div class="siatka">
+    <label class="pole cala"><span>Imię i nazwisko / nazwa oraz adres wnioskodawcy</span><textarea name="egibw-wnioskodawca" rows="3" maxlength="500" required>{{ egibw_wartosci.wnioskodawca }}</textarea></label>
+    <label class="pole"><span>Data wniosku</span><input name="egibw-data" maxlength="10" placeholder="DD.MM.RRRR" value="{{ egibw_wartosci.data }}" required></label>
+    <label class="pole"><span>PESEL lub REGON (jeśli dotyczy)</span><input name="egibw-pesel_regon" maxlength="20" value="{{ egibw_wartosci.pesel_regon }}"></label>
+    <label class="pole cala"><span>Kontakt wnioskodawcy: telefon / e-mail / adres do doręczeń elektronicznych</span><input name="egibw-kontakt" maxlength="254" value="{{ egibw_wartosci.kontakt }}"></label>
+    <label class="pole cala"><span>Oznaczenie wniosku nadane przez wnioskodawcę (opcjonalnie)</span><input name="egibw-oznaczenie" maxlength="100" value="{{ egibw_wartosci.oznaczenie }}"></label>
+  </div>
+  <fieldset><legend>Przedmiot wniosku <span aria-hidden="true">*</span></legend><div class="siatka">
+    {% for kod,opis in egibw_przedmioty.items() %}<label class="zaznacz"><input type="checkbox" name="egibw-przedmiot" value="{{ kod }}"><span class="pole-wyboru">{{ m.ikona('ptaszek') }}</span><span>{{ opis }}</span></label>{% endfor %}
+  </div></fieldset>
+  <div class="siatka">
+    <label class="pole"><span>Powiat</span><input name="egibw-powiat" maxlength="100" value="{{ egibw_wartosci.powiat }}" required></label>
+    <label class="pole"><span>Gmina</span><input name="egibw-gmina" maxlength="150" value="{{ egibw_wartosci.gmina }}" required></label>
+    <label class="pole"><span>Obręb ewidencyjny</span><input name="egibw-obreb" maxlength="150" value="{{ egibw_wartosci.obreb }}" required></label>
+    <label class="pole"><span>Nr jednostki rejestrowej (opcjonalnie)</span><input name="egibw-jednostka" maxlength="100" value="{{ egibw_wartosci.jednostka }}"></label>
+    <label class="pole cala"><span>Numery działek ewidencyjnych</span><input name="egibw-dzialki" maxlength="500" value="{{ egibw_wartosci.dzialki }}" required></label>
+    <label class="pole"><span>Numery budynków (opcjonalnie)</span><input name="egibw-budynki" maxlength="300" value="{{ egibw_wartosci.budynki }}"></label>
+    <label class="pole"><span>Numery lokali (opcjonalnie)</span><input name="egibw-lokale" maxlength="300" value="{{ egibw_wartosci.lokale }}"></label>
+    <label class="pole"><span>Numer księgi wieczystej (opcjonalnie)</span><input name="egibw-kw" maxlength="100" value="{{ egibw_wartosci.kw }}"></label>
+    <label class="pole"><span>Adres nieruchomości (opcjonalnie)</span><input name="egibw-adres_nieruchomosci" maxlength="300" value="{{ egibw_wartosci.adres_nieruchomosci }}"></label>
+  </div>
+  <fieldset><legend>Uzasadnienie wniosku o wypis zawierający dane podmiotów</legend>
+    {% for kod,opis in egibw_uzasadnienia.items() %}<label class="zaznacz"><input type="checkbox" name="egibw-uzasadnienie" value="{{ kod }}"><span class="pole-wyboru">{{ m.ikona('ptaszek') }}</span><span>{{ opis }}</span></label>{% endfor %}
+    <div class="siatka"><label class="pole"><span>Interes prawny — akt prawny (opcjonalnie)</span><input name="egibw-uzasadnienie_akt" maxlength="500"></label><label class="pole"><span>Okoliczności (opcjonalnie)</span><input name="egibw-uzasadnienie_okolicznosci" maxlength="500"></label></div>
+  </fieldset>
+  <div class="siatka">
+    <label class="pole"><span>Osoba do kontaktu (opcjonalnie)</span><input name="egibw-kontakt_osoba" maxlength="200" value="{{ egibw_wartosci.kontakt_osoba }}"></label>
+    <label class="pole"><span>E-mail (opcjonalnie)</span><input type="email" name="egibw-email" maxlength="254" value="{{ egibw_wartosci.email }}"></label>
+    <label class="pole"><span>Telefon (opcjonalnie)</span><input name="egibw-telefon" maxlength="40" value="{{ egibw_wartosci.telefon }}"></label>
+  </div>
+  <fieldset><legend>Postać dokumentów i sposób udostępnienia</legend>
+    {% for kod,opis in egibw_postac.items() %}<label class="zaznacz"><input type="checkbox" name="egibw-postac" value="{{ kod }}"><span class="pole-wyboru">{{ m.ikona('ptaszek') }}</span><span>{{ opis }}</span></label>{% endfor %}
+    {% for kod,opis in egibw_odbior.items() %}<label class="zaznacz"><input type="checkbox" name="egibw-odbior" value="{{ kod }}"><span class="pole-wyboru">{{ m.ikona('ptaszek') }}</span><span>{{ opis }}</span></label>{% endfor %}
+    <label class="pole cala"><span>Adres wysyłki, jeśli inny niż w nagłówku</span><input name="egibw-inny_adres" maxlength="300"></label>
+  </fieldset>
+  <label class="pole cala"><span>Dodatkowe wyjaśnienia i uwagi (opcjonalnie)</span><textarea name="egibw-uwagi" rows="2" maxlength="1000"></textarea></label>
+  <p class="podpowiedz">Wniosek odtworzono ze zdjęcia formularza EGiB. Podpis złóż po wydrukowaniu. Informacje urzędowe i klauzula informacyjna: nowotarski.pl.</p>
+</section>

@@ -1,0 +1,52 @@
+{% macro tekst_ba4(nazwa, wymagana=false) -%}
+<label class="pole">
+  <span>{{ ba4_pola[nazwa][0] }}</span>
+  <input type="text" name="ba4-{{ nazwa }}" value="{{ ba4_wartosci.get(nazwa, '') }}" maxlength="{{ ba4_pola[nazwa][1] }}" {% if wymagana %}required{% endif %} {% if nazwa in ['data_wniosku', 'data_pozwolenia'] %}placeholder="DD.MM.RRRR" inputmode="numeric"{% endif %}>
+</label>
+{%- endmacro %}
+{% macro wybor_ba4(nazwa) -%}
+<label class="pole">
+  <span>{{ ba4_etykiety[nazwa] }}</span>
+  <select name="ba4-{{ nazwa }}" id="ba4-{{ nazwa }}" required>
+    <option value="">— wybierz —</option>
+    {% for kod, opis in ba4_wybory[nazwa] %}<option value="{{ kod }}">{{ opis }}</option>{% endfor %}
+  </select>
+</label>
+{%- endmacro %}
+<section class="sekcja ba4-formularz" aria-labelledby="ba4-tytul">
+  <h2 id="ba4-tytul">BA-4 — wniosek o wydanie dziennika</h2>
+  <p class="opis-sekcji">Inwestorów i opis inwestycji przepiszemy z danych powyżej. Sprawdź decyzję lub zgłoszenie i samodzielnie wybierz oświadczenia. Podpis pozostanie pusty.</p>
+  <div class="siatka ba4-pola">
+    {{ tekst_ba4('data_wniosku', true) }}
+    {{ wybor_ba4('rodzaj') }}
+    {{ wybor_ba4('cel') }}
+    {{ wybor_ba4('podstawa') }}
+    {{ tekst_ba4('organ', true) }}
+    {{ tekst_ba4('znak', true) }}
+    {{ tekst_ba4('data_pozwolenia', true) }}
+    {{ wybor_ba4('kolejnosc') }}
+  </div>
+  <p class="podgrupa">Oświadczenia z papierowego wzoru</p>
+  <p class="opis-sekcji">Wybranie „Nie dotyczy” skreśli dany punkt. Pozostałe warianty będą skreślane zgodnie z wyborem, bez dopisywania podpisów.</p>
+  <details class="ba4-oswiadczenia">
+    <summary>Przeczytaj treść oświadczeń z druku</summary>
+    <p>1. Znane mi są przepisy art. 41 ust. 4 Prawa budowlanego dotyczące konieczności zawiadomienia o zamierzonym terminie rozpoczęcia robót budowlanych Powiatowego Inspektora Nadzoru Budowlanego w Nowym Targu oraz projektanta.</p>
+    <p>2. Nie upłynęły 3 lata od dnia, w którym budowa została przerwana (odpowiedni wpis znajduje się w dzienniku budowy).</p>
+  </details>
+  <div class="siatka ba4-pola">
+    {{ wybor_ba4('deklaracja1') }}
+    {{ wybor_ba4('deklaracja2') }}
+  </div>
+  <div id="ba4-kolejny" hidden>
+    <p class="podgrupa">Poprzedni dziennik</p>
+    <div class="siatka ba4-pola">
+      {{ tekst_ba4('poprzedni_numer') }}
+      {{ wybor_ba4('posiadanie') }}
+      {{ wybor_ba4('stan') }}
+      <label class="pole cala"><span>{{ ba4_pola.okolicznosci[0] }}</span>
+        <textarea name="ba4-okolicznosci" rows="3" maxlength="1000"></textarea>
+      </label>
+    </div>
+  </div>
+  <p class="podpowiedz">Dla pierwszego dziennika punkt o posiadanym poprzednim dzienniku zostanie skreślony. Odtworzony druk zawiera adres Starosty Nowotarskiego ze zdjęcia.</p>
+</section>

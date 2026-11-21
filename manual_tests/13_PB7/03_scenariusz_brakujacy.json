@@ -1,0 +1,34 @@
+{
+  "dokument": "pb7",
+  "scenariusz": "brak numeru decyzji",
+  "pole_do_usuniecia_lub_wyczyszczenia": "pb7-0-nr_decyzji",
+  "wartosc_w_przypadku_poprawnym": "12/2025",
+  "wartosc_w_przypadku_brakujacym": "",
+  "oczekiwany_wynik": {
+    "http": 400,
+    "komunikat": "PB-7: uzupełnij organ oraz datę, numer, znak sprawy i nazwę zamierzenia z decyzji."
+  },
+  "dane_poprawnego_przebiegu": {
+    "dokumenty": "pb7",
+    "wybor_potwierdzony": "tak",
+    "inw-0-imie_nazwisko": "Anna Testowa",
+    "inw-0-miejscowosc": "Nowy Targ",
+    "inw-0-ulica": "ul. Przykładowa",
+    "inw-0-nr_domu": "12",
+    "inw-0-nr_lokalu": "2",
+    "inw-0-kod_pocztowy": "34-400",
+    "adres-miejscowosc": "Nowy Targ",
+    "adres-ulica": "ul. Testowa",
+    "adres-nr_domu": "25",
+    "adres-kod_pocztowy": "34-400",
+    "adres-nr_dzialki": "1401/2",
+    "adres-identyfikator_dzialki": "121101_1.0001.1401/2",
+    "pb7-0-organ": "Starosta Nowotarski",
+    "pb7-0-data_decyzji": "10.02.2025",
+    "pb7-0-nr_decyzji": "12/2025",
+    "pb7-0-znak_sprawy": "AB.6740.12.2025",
+    "pb7-0-nazwa_zamierzenia": "Budowa budynku mieszkalnego jednorodzinnego",
+    "inw-0-plec": "K"
+  },
+  "instrukcja": "Wgraj 01_obiegowka_testowa.docx, wybierz wskazany dokument, przepisz dane z dane_poprawnego_przebiegu; dla próby błędnej wyczyść pole wskazane wyżej."
+}

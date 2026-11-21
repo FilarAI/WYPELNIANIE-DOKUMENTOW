@@ -1,0 +1,9 @@
+Scenariusze walidacji formularza P
+
+- Brak wybranego materiału → formularz nie zostanie wygenerowany.
+- Brak lub wielokrotny cel pobrania → wymagany jest dokładnie jeden cel.
+- Brak sposobu udostępnienia → formularz nie zostanie wygenerowany.
+- Brak lokalizacji i numerów działek → uzupełnij lokalizację lub identyfikatory działek.
+- Niepoprawny adres e-mail / telefon / data / numer działki → popraw pole.
+- Wysyłka na inny adres bez adresu → uzupełnij adres.
+- Udostępnienie przez e-mail lub FTP bez danych kontaktowych → uzupełnij adres e-mail / dane serwera.

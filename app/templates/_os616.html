@@ -1,0 +1,17 @@
+<section class="sekcja os616-formularz" aria-labelledby="os616-tytul">
+  <h2 id="os616-tytul">OŚ-6165 — zaświadczenie o uproszczonym planie urządzenia lasu</h2>
+  <p class="opis-sekcji">Dane wnioskodawcy i działek wstępnie przepisaliśmy z obiegówki. Sprawdź je przed wygenerowaniem wniosku.</p>
+  <div class="siatka">
+    <label class="pole cala"><span>Imię i nazwisko oraz adres</span><textarea name="os616-wnioskodawca" rows="3" maxlength="500" required>{{ os616_wartosci.wnioskodawca }}</textarea></label>
+    <label class="pole"><span>Nr telefonu (opcjonalnie)</span><input name="os616-telefon" maxlength="40" value="{{ os616_wartosci.telefon }}"></label>
+    <label class="pole"><span>Data wniosku</span><input name="os616-data" placeholder="DD.MM.RRRR" inputmode="numeric" maxlength="10" value="{{ os616_wartosci.data }}" required></label>
+    <label class="pole cala"><span>Numery działek ewidencyjnych</span><input name="os616-dzialki" maxlength="500" value="{{ os616_wartosci.dzialki }}" required></label>
+    <label class="pole cala"><span>Miejscowość położenia działki</span><input name="os616-miejscowosc" maxlength="120" value="{{ os616_wartosci.miejscowosc }}" required></label>
+  </div>
+  <fieldset><legend>Sposób odbioru zaświadczenia <span aria-hidden="true">*</span></legend>
+    {% for kod,opis in [('osobiscie_dzis','Osobiście w dniu złożenia'),('osobiscie_inny','Osobiście w innym dniu'),('poczta','Przesyłka listowna')] %}
+    <label class="zaznacz"><input type="radio" name="os616-odbior" value="{{ kod }}" required><span class="pole-wyboru">{{ m.ikona('ptaszek') }}</span><span>{{ opis }}</span></label>
+    {% endfor %}
+  </fieldset>
+  <p class="podpowiedz">Druk podaje opłatę skarbową 17 zł i numer rachunku Urzędu Miasta Nowy Targ. Sprawdź dane przed wpłatą. Odwrotna strona zawiera klauzulę informacyjną RODO.</p>
+</section>

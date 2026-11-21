@@ -1,0 +1,7 @@
+Scenariusze negatywne OŚ-6165
+
+1. Wnioskodawca pusty — generowanie ma zostać zablokowane.
+2. Numer działki niezgodny ze wzorem (np. abc) — generowanie ma zostać zablokowane.
+3. Powtórzony numer działki — generowanie ma zostać zablokowane.
+4. Niepoprawna data (np. 31.02.2026) — generowanie ma zostać zablokowane.
+5. Brak wyboru sposobu odbioru — generowanie ma zostać zablokowane.

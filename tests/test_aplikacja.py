@@ -18,7 +18,7 @@ def klient():
 def test_strona_startowa(klient):
     odp = klient.get("/")
     assert odp.status_code == 200
-    assert "Wgraj obiegówkę" in odp.get_data(as_text=True)
+    assert "Wgraj pliki źródłowe" in odp.get_data(as_text=True)
 
 
 def test_podglad_pokazuje_dane_i_ostrzezenia(klient):

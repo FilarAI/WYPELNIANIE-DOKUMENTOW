@@ -1,0 +1,9 @@
+SCENARIUSZE WALIDACJI PB-9
+
+Każdy przypadek powinien zwrócić komunikat walidacyjny (HTTP 400) i nie wygenerować dokumentu:
+
+1. Puste dane dotychczasowego inwestora.
+2. Data decyzji 31.02.2025 — niepoprawna data kalendarzowa.
+3. Data decyzji 2025-02-10 — niepoprawny format; wymagany DD.MM.RRRR.
+4. Pusty numer decyzji (analogicznie sprawdź pusty znak sprawy oraz nazwę zamierzenia).
+5. Wybrany pełnomocnik bez podanego imienia i nazwiska.

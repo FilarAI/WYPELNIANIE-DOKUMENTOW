@@ -1,0 +1,29 @@
+{% macro pole(name,label,klasa='') -%}<label class="pole {{ klasa }}"><span>{{ label }}</span><input name="{{ name }}" maxlength="300"></label>{%- endmacro %}
+{% macro adres(prefix, include_contact=true) -%}
+<div class="siatka">
+ {{ pole(prefix+'kraj','Kraj') }}{{ pole(prefix+'wojewodztwo','Województwo') }}{{ pole(prefix+'powiat','Powiat') }}{{ pole(prefix+'gmina','Gmina') }}
+ {{ pole(prefix+'ulica','Ulica') }}{{ pole(prefix+'nr_domu','Nr domu','waskie') }}{{ pole(prefix+'nr_lokalu','Nr lokalu','waskie') }}
+ {{ pole(prefix+'miejscowosc','Miejscowość') }}{{ pole(prefix+'kod_pocztowy','Kod pocztowy','waskie') }}{{ pole(prefix+'adres_elektroniczny','Adres do doręczeń elektronicznych') }}
+ {% if include_contact %}{{ pole(prefix+'email','E-mail (nieobowiązkowo)') }}{{ pole(prefix+'telefon','Nr tel. (nieobowiązkowo)') }}{% endif %}
+</div>{%- endmacro %}
+<section class="sekcja pb2a-formularz" aria-labelledby="pb2a-tytul">
+ <h2 id="pb2a-tytul">PB-2a — zgłoszenie domu jednorodzinnego</h2>
+ <p class="opis-sekcji">Dane inwestora i nieruchomości pobraliśmy z obiegówki. Wybierz rodzaj robót, wpisz termin i sprawdź dane pełnomocnika oraz załączniki.</p>
+ <fieldset class="pb2a-rodzaje"><legend>Rodzaj zamierzenia budowlanego <span aria-hidden="true">*</span></legend>
+  <p class="podpowiedz">Możesz wybrać kilka rodzajów, jeżeli dotyczą tej inwestycji.</p>
+  {% for kod,nazwa in pb2a_rodzaje.items() %}<label class="zaznacz"><input type="checkbox" name="pb2a-rodzaje" value="{{ kod }}"><span class="pole-wyboru">{{ m.ikona('ptaszek') }}</span><span>{{ nazwa }}</span></label>{% endfor %}
+ </fieldset>
+ <label class="pole"><span>Planowany termin rozpoczęcia robót budowlanych</span><input name="pb2a-termin" placeholder="DD.MM.RRRR" inputmode="numeric" maxlength="10" required></label>
+ {% for i in dane.inwestorzy %}{% set n=loop.index0 %}<details class="pb2a-inwestor" {% if loop.first %}open{% endif %}>
+  <summary><b>Ustawienia PB-2a — {{ i.imie_nazwisko }}</b></summary>
+  <p class="podgrupa">Kontakt inwestora</p><div class="siatka">{{ pole('pb2a-'~n~'-email','E-mail (nieobowiązkowo)') }}{{ pole('pb2a-'~n~'-telefon','Nr tel. (nieobowiązkowo)') }}</div>
+  <p class="podgrupa">Dane inwestora do korespondencji</p><p class="podpowiedz">Wypełnij, jeżeli adres korespondencyjny różni się od adresu inwestora.</p>{{ adres('pb2a-'~n~'-koresp-') }}
+  <p class="podgrupa">Pełnomocnik</p><label class="pole"><span>Rodzaj pełnomocnika</span><select name="pb2a-{{ n }}-typ_pelnomocnika"><option value="">Brak</option><option value="pelnomocnik">Pełnomocnik</option><option value="do_doreczen">Pełnomocnik do doręczeń</option></select></label>
+  {{ pole('pb2a-'~n~'-proxy-imie_nazwisko','Imię i nazwisko pełnomocnika') }}{{ adres('pb2a-'~n~'-proxy-') }}
+  <p class="podgrupa">Załączniki</p>
+  {% for kod,opis in [('oswiadczenie','Oświadczenie o prawie do dysponowania nieruchomością'),('pelnomocnictwo','Pełnomocnictwo do reprezentowania inwestora'),('oplata','Potwierdzenie opłaty skarbowej'),('projekt','Projekt zagospodarowania działki i projekt architektoniczno-budowlany'),('warunki','Decyzja o warunkach zabudowy'),('inne','Inne załączniki')] %}
+   <label class="zaznacz"><input type="checkbox" name="pb2a-{{ n }}-zal-{{ kod }}" value="tak"><span class="pole-wyboru">{{ m.ikona('ptaszek') }}</span><span>{{ opis }}</span></label>
+  {% endfor %}
+  <label class="pole"><span>Opis innych załączników</span><input name="pb2a-{{ n }}-zal-opis" maxlength="500"></label>
+ </details>{% endfor %}
+</section>

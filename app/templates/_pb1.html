@@ -1,0 +1,24 @@
+{% macro pole(name,label,required=false) -%}<label class="pole"><span>{{ label }}</span><input name="{{ name }}" maxlength="500" {{ 'required' if required }}></label>{%- endmacro %}
+{% macro adres(prefix,include_contact=false) -%}<div class="siatka">
+ {{ pole(prefix+'kraj','Kraj') }}{{ pole(prefix+'wojewodztwo','Województwo') }}{{ pole(prefix+'powiat','Powiat') }}{{ pole(prefix+'gmina','Gmina') }}
+ {{ pole(prefix+'ulica','Ulica') }}{{ pole(prefix+'nr_domu','Nr domu') }}{{ pole(prefix+'nr_lokalu','Nr lokalu') }}
+ {{ pole(prefix+'miejscowosc','Miejscowość') }}{{ pole(prefix+'kod_pocztowy','Kod pocztowy') }}{{ pole(prefix+'adres_elektroniczny','Adres do doręczeń elektronicznych') }}
+ {% if include_contact %}{{ pole(prefix+'email','E-mail (nieobowiązkowo)') }}{{ pole(prefix+'telefon','Nr tel. (nieobowiązkowo)') }}{% endif %}
+</div>{%- endmacro %}
+<section class="sekcja pb1-formularz" aria-labelledby="pb1-tytul">
+ <h2 id="pb1-tytul">PB-1 — wniosek o pozwolenie na budowę</h2>
+ <p class="opis-sekcji">Dane inwestorów i nieruchomości pobieramy z obiegówki. Wpisz ogólną nazwę zamierzenia, wybierz rodzaj robót i sprawdź opcjonalne dane do korespondencji, pełnomocnika oraz załączniki.</p>
+ <fieldset><legend>Rodzaj zamierzenia budowlanego <span aria-hidden="true">*</span></legend><p class="podpowiedz">Zaznacz wszystkie rodzaje dotyczące inwestycji.</p>
+  {% for kod,opis in pb1_rodzaje.items() %}<label class="zaznacz"><input type="checkbox" name="pb1-rodzaje" value="{{ kod }}"><span class="pole-wyboru">{{ m.ikona('ptaszek') }}</span><span>{{ opis }}</span></label>{% endfor %}
+ </fieldset>
+ <label class="pole cala"><span>Nazwa zamierzenia budowlanego <span aria-hidden="true">*</span></span><textarea name="pb1-nazwa" rows="2" maxlength="500" placeholder="np. Zespół budynków jednorodzinnych wraz z infrastrukturą" required></textarea></label>
+ {% for i in dane.inwestorzy %}{% set n=loop.index0 %}<details class="pb2-inwestor" {% if loop.first %}open{% endif %}>
+  <summary><b>Ustawienia PB-1 — {{ i.imie_nazwisko }}</b></summary>
+  <p class="podgrupa">Kontakt inwestora</p><div class="siatka">{{ pole('pb1-'~n~'-email','E-mail (nieobowiązkowo)') }}{{ pole('pb1-'~n~'-telefon','Nr tel. (nieobowiązkowo)') }}</div>
+  <p class="podgrupa">Dane inwestora do korespondencji</p><p class="podpowiedz">Wypełnij, jeżeli adres jest inny niż wskazany w obiegówce.</p>{{ adres('pb1-'~n~'-koresp-') }}
+  <p class="podgrupa">Pełnomocnik / pełnomocnik do doręczeń</p><div class="siatka"><label class="pole"><span>Rodzaj pełnomocnika</span><select name="pb1-{{ n }}-typ_pelnomocnika"><option value="">Brak</option><option value="pelnomocnik">Pełnomocnik</option><option value="do_doreczen">Pełnomocnik do doręczeń</option></select></label>{{ pole('pb1-'~n~'-proxy-imie_nazwisko','Imię i nazwisko pełnomocnika') }}</div>{{ adres('pb1-'~n~'-proxy-',true) }}
+  <p class="podgrupa">Załączniki</p>
+  {% for kod,opis in [('oswiadczenie','Oświadczenie o prawie do dysponowania nieruchomością na cele budowlane'),('pelnomocnictwo','Pełnomocnictwo do reprezentowania inwestora'),('oplata','Potwierdzenie opłaty skarbowej'),('projekt','Projekt zagospodarowania działki i projekt architektoniczno-budowlany'),('warunki','Decyzja o warunkach zabudowy, jeżeli wymagana'),('inne','Inne załączniki wymagane przepisami prawa')] %}<label class="zaznacz"><input type="checkbox" name="pb1-{{ n }}-zal-{{ kod }}" value="tak"><span class="pole-wyboru">{{ m.ikona('ptaszek') }}</span><span>{{ opis }}</span></label>{% endfor %}
+  {{ pole('pb1-'~n~'-zal-opis','Opis innych załączników') }}
+ </details>{% endfor %}
+</section>

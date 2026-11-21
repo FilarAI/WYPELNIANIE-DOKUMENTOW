@@ -18,6 +18,11 @@
       </select>
     </label>{% endif %}
   </div>
+  {% if 'pelnomocnictwo_egib' in wybrane %}<div class="siatka egib-pola">
+    <label class="pole"><span>Numer dowodu osobistego</span><input name="pel-egib-{{ n }}-dowod" maxlength="30" required></label>
+    <label class="pole"><span>Organ wydający dowód</span><input name="pel-egib-{{ n }}-organ" maxlength="120" required></label>
+    <label class="pole cala"><span>PESEL</span><input name="pel-egib-{{ n }}-pesel" inputmode="numeric" maxlength="11" pattern="[0-9]{11}" required></label>
+  </div>{% endif %}
   <p class="podgrupa">Adres zamieszkania</p>
   <div class="siatka">
     {{ m.pole('inw-%s-ulica' % n, 'Ulica', i.ulica, 'polowa') }}
@@ -48,23 +53,68 @@
 {% set uwaga_pozostale = pola_z_ostrzezeniem | select('in', ['kategoria_obiektu', 'data_opracowania', 'projektant_glowny', 'jednostka_projektowa']) | list | length > 0 %}
 
 <div class="wejscie">
-  <h1>Sprawdź dane</h1>
+  <h1>Sprawdź dane i wygeneruj dokumenty</h1>
   <p class="podtytul">Sprawdź dane odczytane z plików przed zapisaniem dokumentów.</p>
 </div>
 
-<form method="post" action="{{ url_for('generuj') }}" class="formularz" id="formularz">
+<div class="uklad-pracy"><div class="obszar-pracy">
+<form method="post" action="{{ url_for('generuj') }}" class="formularz" id="formularz" novalidate>
+  <details class="sekcja dodatkowe format-danych" aria-labelledby="format-tytul">
+    <summary>
+      <span class="format-ikona">{{ m.ikona('formatowanie') }}</span>
+      <h2 id="format-tytul">Wygląd uzupełnionych danych</h2>
+      {{ m.ikona('strzalka-dol', 'rozwin') }}
+    </summary>
+    <div class="format-opcje">
+      <p class="opis-sekcji">Wyróżnienie obejmie tylko wartości wpisane przez program do dokumentów Word: nazwiska, adresy, daty i pozostałe dane z formularza.</p>
+      <div class="format-ustawienia">
+        <label class="zaznacz">
+          <input type="checkbox" name="format-rozmiar" id="format-rozmiar" value="wiekszy">
+          <span class="pole-wyboru">{{ m.ikona('ptaszek') }}</span>
+          <span>Większy tekst (+2 pkt)</span>
+        </label>
+        <label class="zaznacz">
+          <input type="checkbox" name="format-pogrubienie" id="format-pogrubienie" value="tak">
+          <span class="pole-wyboru">{{ m.ikona('ptaszek') }}</span>
+          <span>Pogrubienie</span>
+        </label>
+        <label class="pole format-wybor-koloru">
+          <span>Kolor uzupełnionych danych</span>
+          <select name="format-kolor" id="format-kolor">
+            <option value="czarny">Czarny</option>
+            <option value="granatowy">Ciemnoniebieski</option>
+          </select>
+        </label>
+      </div>
+      <p class="podpowiedz" id="format-podglad-opis">Przykład wyglądu w dokumencie</p>
+      <p class="format-podglad" aria-describedby="format-podglad-opis">Inwestor: <span id="format-przyklad">{{ dane.inwestorzy[0].imie_nazwisko or 'Imię i nazwisko inwestora' }}</span></p>
+      <p class="podpowiedz">Etykiety i stała treść dokumentu zachowają swój wygląd. Niezaznaczony większy tekst oznacza rozmiar zgodny ze wzorem.</p>
+    </div>
+  </details>
+
+  <div class="zadania-v2 sekcja" id="zadania-v2"><h2>Do sprawdzenia</h2><p id="status-walidacji" role="status" aria-live="polite">Sprawdzam wymagane dane…</p><ul id="zadania-lista"></ul><p class="podpowiedz">Pola opcjonalne nie są traktowane jako braki. Rozbieżności w źródłach wymagają osobnego sprawdzenia poniżej.</p></div>
+  <div class="komunikat blad" id="blad-generowania" tabindex="-1" role="alert" hidden></div>
+  <section class="sekcja" id="wynik-generowania" tabindex="-1" hidden><h2>Dokumenty gotowe</h2><p id="wynik-opis"></p><ul id="wynik-pliki"></ul></section>
   {% if token_wgrania %}<input type="hidden" name="token_wgrania" value="{{ token_wgrania }}">{% endif %}
   <input type="hidden" name="wybor_potwierdzony" value="tak">
   {% for kod in wybrane %}<input type="hidden" name="dokumenty" value="{{ kod }}">{% endfor %}
+
+
   {% for plik in pliki_zrodlowe %}<div class="plik-zrodlowy">{{ m.ikona('plik') }}<div><b>{{ plik.nazwa }}</b><small>{{ plik.typ }}</small></div>{% if loop.first %}<a class="przycisk-tekstowy" href="{{ url_for('start') }}">Zmień pliki</a>{% endif %}</div>{% endfor %}
-  <p class="wybrane-podsumowanie"><b>Przygotujesz:</b> {% for kod in wybrane %}{{ nazwy_dokumentow[kod] }}{{ ', ' if not loop.last }}{% endfor %}</p>
+  <div class="wybrane-podsumowanie" id="wybrane-dokumenty"><b>Przygotujesz:</b><ul>{% for kod in wybrane %}<li>{{ nazwy_dokumentow[kod] }}</li>{% endfor %}</ul></div>
 
   {% if dane.ostrzezenia %}
   <div class="komunikat ostrzezenie" role="alert">
     {{ m.ikona('ostrzezenie') }}
     <div>
       <b>Dane wymagają sprawdzenia</b>
-      <ul>{% for o in dane.ostrzezenia %}<li>{{ o.komunikat }}</li>{% endfor %}</ul>
+      <ul class="lista-ostrzezen">{% for o in dane.ostrzezenia %}
+        {% set opis = o | ostrzezenie_ui(pliki_zrodlowe) %}
+        <li><b class="ostrzezenie-nazwa">{{ opis.tytul }}</b>
+          <p>{{ opis.wskazowka }}</p>
+          {% if opis.plik %}<small class="ostrzezenie-plik">Plik: {{ opis.plik }}</small>{% endif %}
+          {% if opis.szczegoly %}<details class="ostrzezenie-szczegoly"><summary>Pokaż szczegóły rozbieżności</summary><p>{{ opis.szczegoly }}</p></details>{% endif %}
+        </li>{% endfor %}</ul>
     </div>
   </div>
   {% else %}
@@ -95,9 +145,10 @@
       <button type="button" class="przycisk-tekstowy wybierz-wariant" data-cel="{{ p.cel }}" data-wartosc="{{ p.wartosc }}">Wpisz po sprawdzeniu</button></div>{% endfor %}
   </section>{% endif %}
 
-  {% if pochodzenie %}<details class="sekcja zrodla-danych"><summary><h2>Skąd pochodzą wpisane dane</h2>{{ m.ikona('strzalka-dol', 'rozwin') }}</summary>
+  {% if pochodzenie %}<details class="sekcja dodatkowe zrodla-danych"><summary><h2>Skąd pochodzą wpisane dane</h2>{{ m.ikona('strzalka-dol', 'rozwin') }}</summary>
     <dl>{% for p in pochodzenie %}<dt>{{ p.etykieta }}</dt><dd><b>{{ p.wartosc }}</b><br><small>{{ p.plik }} · {{ p.miejsce }}{% if p.uwaga %} · {{ p.uwaga }}{% endif %}<br>{{ p.fragment }}</small></dd>{% endfor %}</dl>
   </details>{% endif %}
+
 
   <section class="sekcja {{ 'z-ostrzezeniem' if uwaga_inwestycja }}">
     <h2>Inwestycja {{ znacznik_uwagi(uwaga_inwestycja) }}</h2>
@@ -119,7 +170,7 @@
       </label>{% endfor %}
     </div>{% endif %}
     <div class="siatka">
-      {% if 'pb5' in wybrane %}{{ m.pole('adres-identyfikator_dzialki', 'Identyfikator działki (TERYT)', dane.adres_inwestycji.identyfikator_dzialki, 'szeroko') }}{% endif %}
+      {% if 'pb5' in wybrane or 'egib' in wybrane %}{{ m.pole('adres-identyfikator_dzialki', 'Identyfikator działki (TERYT)', dane.adres_inwestycji.identyfikator_dzialki, 'szeroko') }}{% endif %}
       {{ m.pole('adres-nr_dzialki', 'Nr działki', dane.adres_inwestycji.nr_dzialki) }}
     </div>
     <p class="podgrupa">Adres inwestycji</p>
@@ -147,11 +198,11 @@
     <button type="button" class="dodaj-inwestora" onclick="dodajInwestora()">{{ m.ikona('plus') }} Dodaj inwestora</button>
   </section>
 
-  {% if 'pelnomocnictwo' in wybrane or 'pb5' in wybrane %}<section class="sekcja">
+  {% if 'pelnomocnictwo' in wybrane or 'pelnomocnictwo_egib' in wybrane or 'pb5' in wybrane %}<section class="sekcja">
     <h2>Dokumenty</h2>
     <p class="opis-sekcji">Dodatkowe dane do wybranych dokumentów.</p>
     <div class="siatka">
-      {% if 'pelnomocnictwo' in wybrane %}{{ m.pole('data_pelnomocnictwa', 'Data pełnomocnictwa', dzisiaj) }}{% endif %}
+      {% if 'pelnomocnictwo' in wybrane or 'pelnomocnictwo_egib' in wybrane %}{{ m.pole('data_pelnomocnictwa', 'Data pełnomocnictwa', dzisiaj) }}{% endif %}
     </div>
     {% if 'pb5' in wybrane %}<label class="zaznacz">
       <input type="checkbox" name="upowazniony_w_pb5" value="tak">
@@ -161,6 +212,20 @@
   </section>{% endif %}
 
   {% if 'oswiadczenie' in wybrane or 'zawiadomienie' in wybrane %}{% include '_zakonczenie.html' %}{% endif %}
+
+  {% if 'ba4' in wybrane %}{% include '_ba4.html' %}{% endif %}
+
+  {% if 'pb2' in wybrane %}{% include '_pb2.html' %}{% endif %}
+  {% if 'pb2a' in wybrane %}{% include '_pb2a.html' %}{% endif %}
+  {% if 'pb7' in wybrane %}{% include '_pb7.html' %}{% endif %}
+  {% if 'pb9' in wybrane %}{% include '_pb9.html' %}{% endif %}
+  {% if 'pb1' in wybrane %}{% include '_pb1.html' %}{% endif %}
+  {% if 'os616' in wybrane %}{% include '_os616.html' %}{% endif %}
+  {% if 'egib_wypis' in wybrane %}{% include '_egib_wypis.html' %}{% endif %}
+  {% if 'formularz_p' in wybrane %}{% include '_formularz_p.html' %}{% endif %}
+
+  {% if 'egib' in wybrane %}{% include '_egib.html' %}{% endif %}
+  {% if 'pelnomocnictwo_egib' in wybrane %}{% include '_pelnomocnictwo_egib.html' %}{% endif %}
 
   <details class="sekcja dodatkowe {{ 'z-ostrzezeniem' if uwaga_pozostale }}" {{ 'open' if uwaga_pozostale }}>
     <summary>
@@ -178,15 +243,8 @@
     </dl>
   </details>
 
-  <section class="sekcja podsumowanie-brakow" aria-labelledby="podsumowanie-tytul">
-    <h2 id="podsumowanie-tytul">Przed zapisaniem</h2>
-    <p class="opis-sekcji">Sprawdź puste pola i niewybrane odpowiedzi w wybranych dokumentach. Możesz je pozostawić puste i uzupełnić wydruk ręcznie.</p>
-    <p class="podsumowanie-status" id="podsumowanie-status" role="status" aria-live="polite"></p>
-    <details class="podsumowanie-lista" id="podsumowanie-lista" hidden>
-      <summary id="podsumowanie-rozwin">Pokaż pola do sprawdzenia</summary>
-      <ul id="podsumowanie-pozycje"></ul>
-    </details>
-  </section>
+
+
 
   <section class="sekcja">
     <h2>Zapis dokumentów</h2>
@@ -199,7 +257,8 @@
     </div>
     <p class="podpowiedz" id="komunikat-folderu">Program zapamięta wybrany folder na następny raz. Istniejące pliki nie zostaną nadpisane.</p>
 
-    {% if not blokada_zestawu %}<div class="akcje">
+    {% if not blokada_zestawu %}<div class="akcje pasek-generowania">
+      <span class="status-generowania" id="status-generowania" role="status">Sprawdź dane przed generowaniem</span>
       {# Pierwszy przycisk = domyślny po naciśnięciu Enter w polu formularza. #}
       <button type="submit" name="akcja" value="zapisz" class="przycisk" id="przycisk-zapisz">
         <span class="kolko-ladowania" aria-hidden="true"></span>{{ m.ikona('plik') }}
@@ -209,7 +268,10 @@
     </div>{% endif %}
   </section>
 </form>
-
+</div><aside class="kontekst-pracy"><h2>W tej sprawie</h2><p>{{ wybrane|length }} typów dokumentów</p><nav aria-label="Sekcje formularza" id="nawigacja-sekcji"></nav>
+{% if token_wgrania %}<a id="powrot-wybor" class="przycisk-tekstowy" href="{{ url_for('powrot_do_wyboru', token=token_wgrania, dokumenty=wybrane) }}">Zmień wybór dokumentów</a>{% endif %}
+<p class="podpowiedz">Zmiany formularza zachowujemy w pamięci aplikacji przez czas ważności plików.</p></aside></div>
+<script id="szkic-formularza" type="application/json">{{ szkic|default([])|tojson }}</script>
 <template id="wzor-inwestora">{{ inwestor('__N__', {'plec': 'M'}) }}</template>
 
 <script>
@@ -281,81 +343,61 @@
   // Stan „Zapisuję…” tylko przy zapisie do folderu (ZIP to pobranie – strona zostaje bez zmian).
   const formularz = document.getElementById('formularz');
   const zapisz = document.getElementById('przycisk-zapisz');
+  const formatPrzyklad = document.getElementById('format-przyklad');
+  function aktualizujFormat() {
+    const wiekszy = document.getElementById('format-rozmiar').checked;
+    const granatowy = document.getElementById('format-kolor').value === 'granatowy';
+    formatPrzyklad.classList.toggle('format-wiekszy', wiekszy);
+    formatPrzyklad.classList.toggle('format-granatowy', granatowy);
+    formatPrzyklad.classList.toggle('format-pogrubiony', document.getElementById('format-pogrubienie').checked);
+    const inwestor = formularz.querySelector('#inwestorzy .inwestor:not(.usuwany) input[name$="-imie_nazwisko"]');
+    formatPrzyklad.textContent = inwestor?.value.trim() || 'Imię i nazwisko inwestora';
+  }
+  formularz.addEventListener('input', aktualizujFormat);
+  formularz.addEventListener('change', aktualizujFormat);
+  aktualizujFormat();
   document.querySelectorAll('.wybierz-wariant').forEach(przycisk => przycisk.addEventListener('click', () => {
     const cel = formularz.querySelector(`[name="${przycisk.dataset.cel}"]`);
     if (!cel) return;
     cel.value = przycisk.dataset.wartosc;
     cel.dispatchEvent(new Event('input', {bubbles: true}));
-    cel.scrollIntoView({behavior: 'smooth', block: 'center'});
+    for (let p = cel.parentElement; p; p = p.parentElement) if (p.tagName === 'DETAILS') p.open = true;
+    cel.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center'});
     cel.focus({preventScroll: true});
   }));
   function aktualizujPodsumowanie() {
-    const pozycje = [];
-    let puste = 0, bezOdpowiedzi = 0;
-    const dodaj = (pole, etykieta, typ) => {
-      const blok = pole.closest('.zak-blok');
-      const inwestor = pole.closest('.inwestor');
-      const grupa = blok?.querySelector('summary')?.textContent.trim()
-        || (inwestor ? 'Inwestor ' + (inwestor.querySelector('.numer')?.textContent.trim() || '1') : '')
-        || pole.closest('.sekcja')?.querySelector('h2')?.textContent.trim()
-        || 'Dane wspólne';
-      pozycje.push({pole, opis: `${grupa}: ${etykieta} (${typ})`});
-    };
-    formularz.querySelectorAll('.pole input[type="text"], .pole select, .pole textarea').forEach(pole => {
-      if (!pole.name || pole.name === 'folder_zapisu' || pole.disabled || pole.value.trim()) return;
-      const etykieta = pole.closest('label')?.querySelector('span')?.textContent.trim() || pole.name;
-      if (pole.tagName === 'SELECT') {
-        bezOdpowiedzi++;
-        dodaj(pole, etykieta, 'bez odpowiedzi');
-      } else {
-        puste++;
-        dodaj(pole, etykieta, 'puste pole');
-      }
-    });
-    for (const [nazwa, etykieta] of [
-      ['zak-rodzaje_obiektu', 'Rodzaj oddawanego obiektu'],
-      ['zak-zalaczniki', 'Załączniki']
-    ]) {
-      const pola = [...formularz.querySelectorAll(`input[name="${nazwa}"]`)];
-      if (pola.length && !pola.some(pole => pole.checked)) {
-        bezOdpowiedzi++;
-        dodaj(pola[0], etykieta, 'nic nie zaznaczono');
-      }
-    }
-    const status = document.getElementById('podsumowanie-status');
-    const szczegoly = document.getElementById('podsumowanie-lista');
-    const lista = document.getElementById('podsumowanie-pozycje');
-    status.textContent = pozycje.length
-      ? `Puste pola: ${puste} · niewybrane odpowiedzi: ${bezOdpowiedzi}.`
-      : 'Wszystkie widoczne pola i odpowiedzi są uzupełnione.';
-    szczegoly.hidden = pozycje.length === 0;
-    document.getElementById('podsumowanie-rozwin').textContent = `Pokaż ${pozycje.length} ${pozycje.length === 1 ? 'pozycję' : 'pozycji'} do sprawdzenia`;
-    lista.replaceChildren();
-    pozycje.forEach(({pole, opis}) => {
-      const wiersz = document.createElement('li');
-      const przycisk = document.createElement('button');
-      przycisk.type = 'button';
-      przycisk.textContent = opis;
-      przycisk.addEventListener('click', () => {
-        const blok = pole.closest('details');
-        if (blok) blok.open = true;
-        pole.scrollIntoView({behavior: 'smooth', block: 'center'});
-        pole.focus({preventScroll: true});
-      });
-      wiersz.append(przycisk);
-      lista.append(wiersz);
-    });
+    document.dispatchEvent(new Event('filar:zmiana'));
   }
+  {% if 'ba4' in wybrane %}
+  function aktualizujBA4() {
+    const kolejny = document.getElementById('ba4-kolejnosc').value === 'kolejny';
+    const blok = document.getElementById('ba4-kolejny');
+    blok.hidden = !kolejny;
+    blok.querySelectorAll('input, select, textarea').forEach(p => {
+      p.disabled = !kolejny;
+      p.required = kolejny && p.tagName !== 'TEXTAREA';
+    });
+    const stan = document.getElementById('ba4-stan').value;
+    blok.querySelector('textarea').required = kolejny && ['zagubiony', 'zniszczony', 'inne'].includes(stan);
+  }
+  document.getElementById('ba4-kolejnosc').addEventListener('change', aktualizujBA4);
+  document.getElementById('ba4-stan').addEventListener('change', aktualizujBA4);
+  window.addEventListener('pageshow', () => { aktualizujBA4(); aktualizujPodsumowanie(); });
+  aktualizujBA4();
+  {% endif %}
+  {% if 'egib' in wybrane %}
+  function aktualizujEGiB() {
+    formularz.querySelector('[name="egib-email"]').required = document.getElementById('egib-zgoda-email').checked;
+  }
+  document.getElementById('egib-zgoda-email').addEventListener('change', aktualizujEGiB);
+  window.addEventListener('pageshow', aktualizujEGiB);
+  aktualizujEGiB();
+  {% endif %}
   formularz.addEventListener('input', aktualizujPodsumowanie);
   formularz.addEventListener('change', aktualizujPodsumowanie);
   aktualizujPodsumowanie();
-  formularz.addEventListener('submit', e => {
-    if (zapisz && e.submitter === zapisz) {
-      zapisz.classList.add('w-toku');
-      zapisz.querySelector('.etykieta').textContent = 'Zapisuję…';
-    }
-  });
   window.addEventListener('pageshow', () => {
+    aktualizujFormat();
     if (zapisz) {
       zapisz.classList.remove('w-toku');
       zapisz.querySelector('.etykieta').textContent = 'Zapisz dokumenty w folderze';

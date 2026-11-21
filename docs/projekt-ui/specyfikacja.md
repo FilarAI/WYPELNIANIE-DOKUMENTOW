@@ -1,3 +1,5 @@
+> Specyfikacja historyczna v1. Aktualny system opisuje DESIGN.md, a wdrożony kierunek: docs/projekt-ui/propozycja-v2/PLAN-I-DESIGN.md.
+
 # Dokumenty FILAR – specyfikacja interfejsu
 
 Źródło prawdy dla wyglądu programu. Makiety (`makieta-*.webp`, `komponenty.webp`) pokazują kierunek,
