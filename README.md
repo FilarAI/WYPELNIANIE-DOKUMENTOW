@@ -26,7 +26,10 @@ Wszystko działa na Twoim komputerze. Pliki nie są nigdzie wysyłane.
 3. Na pulpicie pojawi się ikona **Dokumenty FILAR**. Kliknij ją, żeby uruchomić program.
    Ikona wskazuje pobrany folder programu, więc nie przenoś go ani nie usuwaj.
 
-Jeśli folder `WYPELNIANIE-DOKUMENTOW` już jest na pulpicie, zamiast `git clone` zaktualizuj go:
+**Aktualizacje są automatyczne:** przy każdym kliknięciu ikony program pobiera najnowszą wersję
+z gałęzi `main` (bez internetu startuje obecna). Do `main` wysyłaj więc tylko sprawdzone wersje.
+
+Ręczna aktualizacja (np. gdy zmienił się `instaluj_mac.sh`):
 
 ```bash
 cd ~/Desktop/WYPELNIANIE-DOKUMENTOW
