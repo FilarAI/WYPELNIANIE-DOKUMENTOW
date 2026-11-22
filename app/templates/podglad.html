@@ -255,6 +255,9 @@
       <button type="button" class="przycisk przycisk-neutralny" id="wybierz-folder" onclick="wybierzFolder()">Wybierz…</button>
     </div>
     <p class="podpowiedz" id="komunikat-folderu">Program zapamięta wybrany folder na następny raz. Istniejące pliki nie zostaną nadpisane.</p>
+    <label class="pole nazwa-zestawu"><span>Nazwa folderu z dokumentami (opcjonalnie)</span>
+      <input type="text" name="nazwa_zestawu" id="nazwa_zestawu" maxlength="100" placeholder="Np. Kowalski – pozwolenie na budowę" autocomplete="off"></label>
+    <p class="podpowiedz">Dokumenty trafią do podfolderu o tej nazwie, a ZIP dostanie tę nazwę. Puste pole: zapis prosto do folderu docelowego.</p>
 
     {% if not blokada_zestawu %}<div class="akcje pasek-generowania">
       <span class="status-generowania" id="status-generowania" role="status">Sprawdź dane przed generowaniem</span>

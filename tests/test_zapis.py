@@ -86,3 +86,22 @@ def test_okno_wyboru_folderu_anulowane(klient, monkeypatch):
 def test_okno_wyboru_folderu_poza_macos(klient, monkeypatch):
     monkeypatch.setattr(zapis.sys, "platform", "linux")
     assert "tylko na macOS" in klient.post("/wybierz-folder").get_json()["blad"]
+
+
+def test_zapis_do_podfolderu_z_nazwa(klient, tmp_path):
+    for _ in range(2):  # drugi zapis trafia do tego samego podfolderu, bez nadpisywania
+        odp = klient.post("/generuj", data=FORMULARZ | {"akcja": "zapisz", "folder_zapisu": str(tmp_path),
+                                                        "nazwa_zestawu": "Kowalski / Rabka: ul. Słoneczna"},
+                          headers={"X-Requested-With": "fetch"})
+        assert odp.status_code == 200
+    podfolder = tmp_path / "Kowalski Rabka ul. Słoneczna"
+    assert odp.json["folder"] == str(podfolder)
+    assert "Pelnomocnictwo_Testowy (2).docx" in {p.name for p in podfolder.iterdir()}
+    assert zapis.ostatni_folder() == str(tmp_path)
+
+
+def test_zip_z_wlasna_nazwa(klient):
+    odp = klient.post("/generuj", data=FORMULARZ | {"nazwa_zestawu": "Szymański – zjazd"})
+    naglowek = odp.headers["Content-Disposition"]
+    assert odp.status_code == 200 and 'filename="Szymanski - zjazd.zip"' in naglowek
+    assert "filename*=UTF-8''Szyma%C5%84ski%20%E2%80%93%20zjazd.zip" in naglowek

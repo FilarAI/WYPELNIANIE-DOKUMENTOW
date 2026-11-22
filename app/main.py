@@ -6,6 +6,7 @@ Uruchomienie: python -m app.main [--port 5050] [--bez-przegladarki]
 from __future__ import annotations
 
 import argparse
+from urllib.parse import quote
 import base64
 import datetime
 import os
@@ -302,25 +303,31 @@ def generuj():
         return Response("Podaj co najmniej jednego inwestora (imię i nazwisko). Wróć do formularza.", status=400,
                         mimetype="text/plain; charset=utf-8")
     pliki = generuj_dokumenty(dane)
+    nazwa_zestawu = zapis.bezpieczna_nazwa(request.form.get("nazwa_zestawu", ""))
 
     if request.form.get("akcja") == "zapisz":
         try:
             folder = zapis.sprawdz_folder(request.form.get("folder_zapisu", ""))
-            zapisane = zapis.zapisz_pliki(folder, pliki)
+            cel = folder / nazwa_zestawu if nazwa_zestawu else folder
+            cel.mkdir(exist_ok=True)
+            zapisane = zapis.zapisz_pliki(cel, pliki)
         except ValueError as e:
             return (jsonify(blad=str(e)), 400) if request.headers.get("X-Requested-With") == "fetch" else (render_template("zapisano.html", blad=str(e)), 400)
         except OSError as e:
             return (jsonify(blad=f"Nie udało się zapisać plików: {e.strerror}."), 500) if request.headers.get("X-Requested-With") == "fetch" else (render_template("zapisano.html", blad=f"Nie udało się zapisać plików: {e.strerror}."), 500)
         zapis.zapamietaj_folder(str(folder))
         if request.headers.get("X-Requested-With") == "fetch":
-            return jsonify(folder=str(folder), pliki=[p.name for p in zapisane])
-        return render_template("zapisano.html", folder=folder, zapisane=[p.name for p in zapisane])
+            return jsonify(folder=str(cel), pliki=[p.name for p in zapisane])
+        return render_template("zapisano.html", folder=cel, zapisane=[p.name for p in zapisane])
 
     pierwszy = next(iter(pliki)).rsplit(".", 1)[0]
     nazwa_zip = (("Dokumenty_" + pierwszy[len("Pelnomocnictwo_"):]) if pierwszy.startswith("Pelnomocnictwo_")
                  else "Dokumenty_" + pierwszy) + ".zip"
+    if nazwa_zestawu:
+        nazwa_zip = nazwa_zestawu + ".zip"
     return Response(spakuj(pliki), mimetype="application/zip",
-                    headers={"Content-Disposition": f'attachment; filename="{nazwa_zip}"'})
+                    headers={"Content-Disposition": f'attachment; filename="{zapis.nazwa_ascii(nazwa_zip)}"; '
+                                                    f"filename*=UTF-8''{quote(nazwa_zip)}"})
 
 
 @app.post("/wybierz-folder")

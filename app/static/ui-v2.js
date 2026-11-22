@@ -289,7 +289,8 @@
         $('#gotowe-opis').textContent = names.length === 1 ? 'Zapisano 1 dokument.' : `Zapisano dokumenty: ${names.length}.`;
       } else {
         const blob = await response.blob(), url = URL.createObjectURL(blob), link = document.createElement('a');
-        const name = /filename="([^"]+)"/.exec(response.headers.get('Content-Disposition') || '')?.[1] || 'Dokumenty_FILAR.zip';
+        const header = response.headers.get('Content-Disposition') || '', utf = /filename\*=UTF-8''([^;]+)/.exec(header)?.[1];
+        const name = (utf && decodeURIComponent(utf)) || /filename="([^"]+)"/.exec(header)?.[1] || 'Dokumenty_FILAR.zip';
         link.href = url; link.download = name; link.click(); names = [name]; folder = '~/Downloads';
         $('#gotowe-tytul').textContent = 'Gotowe – archiwum ZIP pobrane';
         $('#gotowe-opis').textContent = 'Plik ZIP jest w folderze Pobrane.';

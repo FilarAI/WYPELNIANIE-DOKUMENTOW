@@ -7,8 +7,10 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
+import unicodedata
 from pathlib import Path
 
 
@@ -58,6 +60,18 @@ def _wolna_nazwa(folder: Path, nazwa: str) -> Path:
         cel = folder / f"{Path(nazwa).stem} ({nr}){Path(nazwa).suffix}"
         nr += 1
     return cel
+
+
+def bezpieczna_nazwa(tekst: str) -> str:
+    """Nazwa folderu/ZIP wpisana przez użytkownika, bez znaków niedozwolonych w nazwach plików."""
+    tekst = re.sub(r'[\\/:*?"<>|\x00-\x1f]', " ", tekst)
+    return " ".join(tekst.split()).strip(" .")[:100]
+
+
+def nazwa_ascii(tekst: str) -> str:
+    """Zapasowa nazwa pliku do nagłówka HTTP (bez polskich znaków)."""
+    tekst = tekst.replace("–", "-").replace("—", "-").replace("ł", "l").replace("Ł", "L")
+    return " ".join(unicodedata.normalize("NFKD", tekst).encode("ascii", "ignore").decode().split()) or "Dokumenty"
 
 
 def zapisz_pliki(folder: Path, pliki: dict[str, bytes]) -> list[Path]:

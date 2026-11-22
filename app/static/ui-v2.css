@@ -28,3 +28,4 @@
 .ekran-gotowe .lista-plikow{background:var(--powierzchnia)}.ekran-gotowe .akcje-dodatkowe{gap:12px}
 /* Pasek kroków 1–4: ta sama szerokość i środek na każdym ekranie. */
 .kroki{width:100%;max-width:880px;margin-inline:auto}
+.nazwa-zestawu{display:flex;margin-top:16px}
