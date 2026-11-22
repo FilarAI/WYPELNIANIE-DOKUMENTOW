@@ -145,3 +145,18 @@ def test_rozne_miejscowosci_blokuja_nawet_przy_zgodnym_znaku():
     d.save(b)
     dane = odczytaj_zestaw([("decyzja", "a.docx", a), ("decyzja", "b.docx", b.getvalue())])
     assert dane["blokada_zestawu"]
+
+
+def zly_plik():
+    d = Document()
+    d.add_paragraph("Decyzja w sprawie lokalizacji zjazdu z drogi powiatowej")
+    b = io.BytesIO()
+    d.save(b)
+    return b.getvalue()
+
+
+def test_zly_plik_nie_blokuje_dobrego():
+    dane = odczytaj_zestaw([("decyzja", "zjazd.docx", zly_plik()), ("decyzja", "decyzja.docx", decyzja())])
+    assert dane["inwestorzy"] and dane["zrodla"] == ["decyzja.docx"]
+    assert any(p["nazwa"] == "zjazd.docx" and "Pominięty" in p["typ"] for p in dane["pliki_zrodlowe"])
+    assert any("zjazd.docx" in o["komunikat"] and "pominięty" in o["komunikat"] for o in dane["ostrzezenia"])

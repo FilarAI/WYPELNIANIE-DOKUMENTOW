@@ -109,21 +109,33 @@ def _ustaw(dane: dict, pole: str, wartosc: str) -> None:
 def odczytaj_zestaw(pliki: list[tuple[str, str, bytes]]) -> dict:
     if not 1 <= len(pliki) <= 3:
         raise ValueError("Wgraj od jednego do trzech plików.")
-    odczytane = []
+    odczytane, pominiete = [], []
     for typ, nazwa, zawartosc in pliki:
         if typ not in RODZAJE_ZRODEL:
             raise ValueError("Wybierz poprawny typ każdego pliku.")
-        linie, ocr = odczytaj_tekst(zawartosc, nazwa)
-        if typ == "obiegowka" and nazwa.lower().endswith(".docx"):
-            zrodlo = _z_obiegowki(zawartosc, nazwa)
-        else:
-            zrodlo = odczytaj_zrodlo(linie, typ, nazwa)
+        try:
+            linie, ocr = odczytaj_tekst(zawartosc, nazwa)
+            if typ == "obiegowka" and nazwa.lower().endswith(".docx"):
+                zrodlo = _z_obiegowki(zawartosc, nazwa)
+            else:
+                zrodlo = odczytaj_zrodlo(linie, typ, nazwa)
+        except ValueError as e:
+            # Nierozpoznany plik nie blokuje reszty zestawu; blokuje dopiero, gdy żaden się nie odczytał.
+            pominiete.append((nazwa, str(e)))
+            continue
         if ocr:
             zrodlo["uwagi"].append("Odczyt skanu PDF wymaga szczególnie dokładnego sprawdzenia.")
         odczytane.append(zrodlo)
+    if not odczytane:
+        raise ValueError(pominiete[0][1] if len(pominiete) == 1 else
+                         " ".join(f"{nazwa}: {blad}" for nazwa, blad in pominiete))
 
     dane = _puste_dane()
-    dane["pliki_zrodlowe"] = [{"nazwa": s["plik"], "typ": RODZAJE_ZRODEL[s["typ"]]} for s in odczytane]
+    dane["pliki_zrodlowe"] = ([{"nazwa": s["plik"], "typ": RODZAJE_ZRODEL[s["typ"]]} for s in odczytane] +
+                              [{"nazwa": nazwa, "typ": "Pominięty – nie rozpoznano"} for nazwa, _ in pominiete])
+    dane["ostrzezenia"].extend({"pole": "zrodla", "komunikat":
+                                f"Plik {nazwa} został pominięty: {blad} Dane wzięto z pozostałych plików."}
+                               for nazwa, blad in pominiete)
     dane["zrodla"] = [s["plik"] for s in odczytane]
     for s in odczytane:
         dane["ostrzezenia"].extend({"pole": "zrodla", "komunikat": f"{s['plik']}: {x}"} for x in s["uwagi"])
