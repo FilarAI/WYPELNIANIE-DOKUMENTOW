@@ -38,7 +38,7 @@
 {# Pasek kroków kreatora: krok = numer aktywnego kroku (1–4). #}
 {% macro kroki(krok) -%}
 <ol class="kroki" aria-label="Postęp">
-  {% for nazwa in ['Pliki', 'Dokumenty', 'Dane i generowanie'] %}
+  {% for nazwa in ['Pliki', 'Dokumenty', 'Dane i generowanie', 'Gotowe'] %}
   {% set nr = loop.index %}
   <li class="krok {{ 'ukonczony' if nr < krok else ('aktywny' if nr == krok else '') }}"
       {% if nr == krok %}aria-current="step"{% endif %}>

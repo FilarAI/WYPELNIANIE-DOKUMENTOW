@@ -259,34 +259,45 @@
   const back = $('#powrot-wybor');
   back?.addEventListener('click', async event => { event.preventDefault(); const result = await check(); if (result && !result.wygaslo) location.href = back.href; else pokazPole(status); });
   // Walidacja i wynik pozostają na stronie: po błędzie użytkownik nie traci formularza.
-  const errorBox = $('#blad-generowania'), resultBox = $('#wynik-generowania');
+  const errorBox = $('#blad-generowania');
+  // Krok 4: ekran sukcesu w tej samej stronie, żeby „Wróć do formularza” nie gubił wpisanych danych.
+  const steps = $$('.kroki .krok'), stepsHtml = steps.map(step => [step.className, step.querySelector('.krok-kolko').innerHTML]);
+  function pokazGotowe(on) {
+    $('#tresc > .wejscie:not(#ekran-gotowe)').hidden = on; $('#tresc > .uklad-pracy').hidden = on; $('#ekran-gotowe').hidden = !on;
+    steps.forEach((step, i) => { step.className = on ? (i < 3 ? 'krok ukonczony' : 'krok aktywny') : stepsHtml[i][0];
+      step.querySelector('.krok-kolko').innerHTML = on && i < 3 ? stepsHtml[0][1] : stepsHtml[i][1];
+      if (step.className.includes('aktywny')) step.setAttribute('aria-current', 'step'); else step.removeAttribute('aria-current'); });
+    window.scrollTo(0, 0); if (on) $('#gotowe-tytul').focus();
+  }
+  $('#gotowe-wroc')?.addEventListener('click', () => pokazGotowe(false));
   form.addEventListener('submit', async event => {
     event.preventDefault(); if (generationBusy) return;
     const invalid = markFields();
     if (invalid.length) { pokazPole(invalid[0]); schedule(); return; }
     generationBusy = true; if ($('#przycisk-zapisz')) { $('#przycisk-zapisz').classList.add('w-toku'); $('.etykieta', $('#przycisk-zapisz')).textContent = 'Generuję dokumenty…'; } clearTimeout(timer); form.classList.add('generowanie-zajete'); form.setAttribute('aria-busy','true');
-    errorBox.hidden = true; resultBox.hidden = true; exportStatus.textContent = 'Generuję dokumenty…';
+    errorBox.hidden = true; exportStatus.textContent = 'Generuję dokumenty…';
     const buttons = $$('button,input,select,textarea', form), disabled = buttons.map(button => button.disabled);
     const data = new FormData(form); data.set('akcja', event.submitter?.value || 'zapisz'); buttons.forEach(button => button.disabled = true);
     try {
       const response = await fetch(form.action, {method:'POST', body:data, headers:{'X-Requested-With':'fetch'}});
       const json = (response.headers.get('Content-Type') || '').includes('application/json');
       if (!response.ok) { const body = json ? (await response.json()).blad : await response.text(); throw new Error(response.status >= 500 ? 'Nie udało się wygenerować dokumentów. Spróbuj ponownie lub sprawdź folder zapisu.' : body); }
-      $('#wynik-pliki').replaceChildren();
+      let names, folder = '';
       if (json) {
-        const result = await response.json(); $('#wynik-opis').textContent = 'Zapisano w folderze: ' + result.folder;
-        result.pliki.forEach(name => { const li = document.createElement('li'); li.textContent = name; $('#wynik-pliki').append(li); });
-        const open = document.createElement('button'); open.type = 'button'; open.className = 'przycisk-tekstowy'; open.textContent = 'Pokaż folder';
-        open.addEventListener('click', async () => { try { const body = new FormData(); body.set('folder', result.folder); const response = await fetch('/pokaz-folder',{method:'POST',body}); if (!response.ok) throw new Error(); } catch { open.textContent = 'Nie udało się otworzyć folderu. Otwórz ścieżkę powyżej.'; } });
-        const li = document.createElement('li'); li.append(open); $('#wynik-pliki').append(li);
+        const result = await response.json(); names = result.pliki; folder = result.folder;
+        $('#gotowe-tytul').textContent = 'Gotowe – dokumenty zapisane';
+        $('#gotowe-opis').textContent = names.length === 1 ? 'Zapisano 1 dokument.' : `Zapisano dokumenty: ${names.length}.`;
       } else {
         const blob = await response.blob(), url = URL.createObjectURL(blob), link = document.createElement('a');
         const name = /filename="([^"]+)"/.exec(response.headers.get('Content-Disposition') || '')?.[1] || 'Dokumenty_FILAR.zip';
-        link.href = url; link.download = name; link.textContent = 'Pobierz ponownie: ' + name;
-        const li = document.createElement('li'); li.append(link); $('#wynik-pliki').append(li); link.click();
-        $('#wynik-opis').textContent = 'Archiwum ZIP jest gotowe. Jeśli pobieranie nie rozpoczęło się automatycznie, użyj linku poniżej.';
+        link.href = url; link.download = name; link.click(); names = [name]; folder = '~/Downloads';
+        $('#gotowe-tytul').textContent = 'Gotowe – archiwum ZIP pobrane';
+        $('#gotowe-opis').textContent = 'Plik ZIP jest w folderze Pobrane.';
       }
-      resultBox.hidden = false; pokazPole(resultBox); exportStatus.textContent = 'Dokumenty wygenerowane. Możesz poprawić dane i wygenerować ponownie.';
+      $('#gotowe-pliki').replaceChildren(...names.map(name => { const li = $('#wzor-pliku').content.firstElementChild.cloneNode(true); $('.plik-nazwa', li).textContent = name; return li; }));
+      $('#gotowe-folder').textContent = folder; $('#gotowe-sciezka').hidden = !json; $('#gotowe-komunikat').hidden = true;
+      $('#gotowe-finder').onclick = async () => { const msg = $('#gotowe-komunikat'); try { const body = new FormData(); body.set('folder', folder); const response = await fetch('/pokaz-folder',{method:'POST',body}); if (!response.ok) throw new Error(); msg.hidden = true; } catch { msg.textContent = 'Nie udało się otworzyć Findera. Folder: ' + folder; msg.hidden = false; } };
+      pokazGotowe(true); exportStatus.textContent = 'Dokumenty wygenerowane. Możesz poprawić dane i wygenerować ponownie.';
     } catch (error) {
       errorBox.textContent = error.message || 'Nie udało się połączyć z aplikacją.'; errorBox.hidden = false; pokazPole(errorBox); exportStatus.textContent = 'Nie wygenerowano dokumentów. Popraw wskazane dane i spróbuj ponownie.';
     } finally {

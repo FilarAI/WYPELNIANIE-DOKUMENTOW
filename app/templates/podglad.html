@@ -94,7 +94,6 @@
 
   <div class="zadania-v2 sekcja" id="zadania-v2"><h2>Do sprawdzenia</h2><p id="status-walidacji" role="status" aria-live="polite">Sprawdzam wymagane dane…</p><ul id="zadania-lista"></ul><p class="podpowiedz">Pola opcjonalne nie są traktowane jako braki. Rozbieżności w źródłach wymagają osobnego sprawdzenia poniżej.</p></div>
   <div class="komunikat blad" id="blad-generowania" tabindex="-1" role="alert" hidden></div>
-  <section class="sekcja" id="wynik-generowania" tabindex="-1" hidden><h2>Dokumenty gotowe</h2><p id="wynik-opis"></p><ul id="wynik-pliki"></ul></section>
   {% if token_wgrania %}<input type="hidden" name="token_wgrania" value="{{ token_wgrania }}">{% endif %}
   <input type="hidden" name="wybor_potwierdzony" value="tak">
   {% for kod in wybrane %}<input type="hidden" name="dokumenty" value="{{ kod }}">{% endfor %}
@@ -271,6 +270,22 @@
 </div><aside class="kontekst-pracy"><h2>W tej sprawie</h2><p>{{ wybrane|length }} typów dokumentów</p><nav aria-label="Sekcje formularza" id="nawigacja-sekcji"></nav>
 {% if token_wgrania %}<a id="powrot-wybor" class="przycisk-tekstowy" href="{{ url_for('powrot_do_wyboru', token=token_wgrania, dokumenty=wybrane) }}">Zmień wybór dokumentów</a>{% endif %}
 <p class="podpowiedz">Zmiany formularza zachowujemy w pamięci aplikacji przez czas ważności plików.</p></aside></div>
+<section class="wynik wejscie ekran-gotowe" id="ekran-gotowe" hidden>
+  <span class="wynik-ikona sukces"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="rysuj" d="M20 6 9 17l-5-5"/></svg></span>
+  <h1 id="gotowe-tytul" tabindex="-1">Gotowe – dokumenty zapisane</h1>
+  <p class="podtytul" id="gotowe-opis"></p>
+  <ul class="lista-plikow" id="gotowe-pliki"></ul>
+  <div class="sciezka" id="gotowe-sciezka"><span class="sciezka-etykieta">Zapisano w folderze:</span><div class="sciezka-pole">{{ m.ikona('folder') }}<span id="gotowe-folder"></span></div></div>
+  <div class="akcje akcje-pion">
+    <button type="button" class="przycisk przycisk-szeroki" id="gotowe-finder">{{ m.ikona('folder') }} Pokaż w Finderze</button>
+    <p class="podpowiedz" id="gotowe-komunikat" hidden></p>
+    <div class="akcje-dodatkowe">
+      <button type="button" class="przycisk przycisk-drugorzedny" id="gotowe-wroc">{{ m.ikona('wstecz') }} Wróć do formularza</button>
+      <a class="przycisk przycisk-drugorzedny" href="{{ url_for('start') }}">{{ m.ikona('plus') }} Nowa sprawa</a>
+    </div>
+  </div>
+  <template id="wzor-pliku"><li><span class="plik-ikona">{{ m.ikona('plik') }}</span><span class="plik-nazwa"></span><span class="plik-status">{{ m.ikona('ok') }}</span></li></template>
+</section>
 <script id="szkic-formularza" type="application/json">{{ szkic|default([])|tojson }}</script>
 <template id="wzor-inwestora">{{ inwestor('__N__', {'plec': 'M'}) }}</template>
 
