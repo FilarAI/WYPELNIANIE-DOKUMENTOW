@@ -52,9 +52,9 @@ def informacje_o_programie():
 
 
 def _wersja_stylu() -> int:
-    # Czas zmiany styl.css w adresie arkusza: po aktualizacji programu przeglądarka pobiera nowy wygląd.
+    # Czas zmiany plików wyglądu w adresie: po aktualizacji programu przeglądarka pobiera nowy wygląd.
     try:
-        return int(os.path.getmtime(os.path.join(app.static_folder, "styl.css")))
+        return int(max(os.path.getmtime(os.path.join(app.static_folder, n)) for n in ("styl.css", "ui-v2.css", "ui-v2.js")))
     except OSError:
         return 0
 
