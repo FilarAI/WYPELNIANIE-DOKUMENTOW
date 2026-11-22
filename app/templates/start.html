@@ -2,7 +2,7 @@
 {% import "_makra.html" as m %}
 {% set krok = 1 %}
 {% block tresc %}
-<section class="wejscie">
+<section class="wejscie wejscie-start">
   <h1>Wgraj pliki źródłowe</h1>
   <p class="podtytul">Dodaj pliki jednej inwestycji. Sprawdzimy ich odczyt i podpowiemy rodzaj dokumentu.</p>
   {% if blad %}<div class="komunikat blad" role="alert">{{ m.ikona('blad') }}<div><b>Nie udało się wczytać plików</b><p>{{ blad }}</p></div></div>{% endif %}
