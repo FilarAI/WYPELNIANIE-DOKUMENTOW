@@ -59,7 +59,7 @@ NOWY_TARG_2026 = docx(
 )
 
 # Limanowa 2018: mocno zaszumiony OCR, parametry w jednej linii, obręb nazwą (bez numeru TERYT).
-LIMANOWA_2018 = docx(
+LIMANOWA_DANE = (
     "SIANUSIA LIMANUWSKI", "34-600 Limanowa", "BA.0Z.6740.1.10.2018", "(ne rejestru orgenu wydajecago decyme)",
     "Mazana Do/na. 27 SZerM C 2018 oku", "DECYZJA NR 160/2018",
     "po rozpatrzeniu wniosku o pozwolenie na budowę z 15.05.2018 roku,",
@@ -72,6 +72,7 @@ LIMANOWA_2018 = docx(
     "Uzasadnionle", "15.05.2018 roku, inwestor Pani Maria Próbka, złożyla wniosek o wydanie pozwolenia na budowę",
     "Z up. STAROSTY LIMANOWSKIEGO",
 )
+LIMANOWA_2018 = docx(*LIMANOWA_DANE)
 
 
 def test_nowy_targ_2020_przelamane_zdanie_i_dopelniacz():
@@ -115,3 +116,25 @@ def test_limanowa_zaszumiony_ocr():
 def test_pelnomocnik_nie_jest_inwestorem():
     d = odczytaj_zestaw([("decyzja", "b.docx", NOWY_TARG_2026)])
     assert all("Jachimowsk" not in i["imie_nazwisko"] for i in d["inwestorzy"])
+
+
+def test_zniekształcona_miejscowosc_z_tego_samego_kodu_w_dokumencie():
+    # OCR zepsuł nazwę w sentencji, ale lista „Otrzymują” podaje ją poprawnie przy tym samym kodzie.
+    linie = [x.replace("34-730 Mszana Dolna", "34-730 Mrna Dol a sand") for x in LIMANOWA_DANE]
+    d = odczytaj_zestaw([("decyzja", "c.docx", docx(*linie, "Otrzymują:", "1. Pani Maria Próbka, zam. ul. Szkolna 3, 34-730 Mszana Dolna."))])
+    inw = d["inwestorzy"][0]
+    assert (inw["miejscowosc"], inw["poczta"], inw["gmina"]) == ("Mszana Dolna", "Mszana Dolna", "Mszana Dolna")
+    assert not any("przyjęto" in o["komunikat"] for o in d["ostrzezenia"])  # pewne – bez ostrzeżenia
+
+
+def test_zniekształcona_miejscowosc_bez_drugiego_wystapienia_to_propozycja():
+    linie = [x.replace("34-730 Mszana Dolna", "34-730 Mszana Doina") for x in LIMANOWA_DANE]
+    d = odczytaj_zestaw([("decyzja", "c.docx", docx(*linie))])
+    assert d["inwestorzy"][0]["miejscowosc"] == "Mszana Dolna"
+    assert any("„Mszana Doina”, przyjęto „Mszana Dolna”" in o["komunikat"] for o in d["ostrzezenia"])
+
+
+def test_nieczytelna_miejscowosc_nie_jest_zgadywana():
+    from app import teryt
+    assert teryt.popraw_miejscowosc("Mrna Dol a sand") == ("Mrna Dol a sand", False)  # Mszana Dolna ≈ Tarnawa Dolna
+    assert teryt.popraw_miejscowosc("Rabka-Zdrój", "34-700") == ("Rabka-Zdrój", True)

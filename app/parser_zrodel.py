@@ -139,6 +139,20 @@ def _adres_z_linii(wiersze: list[tuple[int, str]]) -> tuple[str, tuple[int, str]
     return None
 
 
+def _popraw_miejscowosci(adres: dict, linie: list[tuple[int, str]], identyfikator: str, uwagi: list) -> None:
+    """Miejscowość i pocztę zniekształcone przez OCR zamienia na nazwy z listy GUS (SIMC)."""
+    tekst, stara_poczta = [t for _, t in linie], adres["poczta"]
+    for pole, kod in (("poczta", adres["kod_pocztowy"]), ("miejscowosc", "")):
+        stara = adres[pole]
+        if pole == "miejscowosc" and stara == stara_poczta:
+            adres[pole] = adres["poczta"]  # ta sama nazwa co poczta – już poprawiona
+            continue
+        nowa, pewna = teryt.popraw_miejscowosc(stara, kod, tekst, identyfikator)
+        adres[pole] = nowa
+        if nowa != stara and not pewna:
+            uwagi.append(f"Ze skanu odczytano „{stara}”, przyjęto „{nowa}” (lista miejscowości GUS) – sprawdź adres inwestora.")
+
+
 def _dane_decyzji(linie: list[tuple[int, str]], plik: str) -> tuple[dict, dict, list, list]:
     pola, dowody, inwestorzy, uwagi = {}, {}, [], []
     start = _start_decyzji(linie)
@@ -269,6 +283,7 @@ def _dane_decyzji(linie: list[tuple[int, str]], plik: str) -> tuple[dict, dict, 
         dowody["inwestorzy"] = _dowod(wiersz, plik)
         adres = _adres_z_linii([wiersz] + [w for w in sentencja if w is not wiersz])
         adres_pola = _adres_inwestora(adres[0]) if adres else _adres_inwestora("")
+        _popraw_miejscowosci(adres_pola, linie, pola.get("adres.identyfikator_dzialki", ""), uwagi)
         jednostka = teryt.z_miejscowosci(adres_pola["miejscowosc"], pola.get("adres.identyfikator_dzialki", ""))
         inwestorzy = [{"imie_nazwisko": osoba, "plec": zgadnij_plec(osoba), **adres_pola,
                        **vars(jednostka or teryt.Jednostka())} for osoba in osoby]

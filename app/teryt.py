@@ -7,7 +7,9 @@ from __future__ import annotations
 
 import csv
 import re
+from collections import Counter
 from dataclasses import dataclass
+from difflib import SequenceMatcher
 from functools import lru_cache
 from pathlib import Path
 
@@ -42,6 +44,51 @@ def _simc():
         for r in csv.DictReader(f, delimiter=";"):
             wynik.setdefault(r["NAZWA"].lower(), []).append((r["WOJ"], r["POW"], r["GMI"], r["RODZ_GMI"]))
     return wynik
+
+
+@lru_cache(maxsize=1)
+def _nazwy():
+    """{nazwa małymi literami: nazwa oryginalna} i {województwo: [nazwy]} z SIMC."""
+    oryginalne, wg_woj = {}, {}
+    with open(DANE / "simc.csv", encoding="utf-8") as f:
+        for r in csv.DictReader(f, delimiter=";"):
+            oryginalne[r["NAZWA"].lower()] = r["NAZWA"]
+            wg_woj.setdefault(r["WOJ"], set()).add(r["NAZWA"])
+    return oryginalne, wg_woj
+
+
+def popraw_miejscowosc(nazwa: str, kod_pocztowy: str = "", tekst=(), preferowany_kod: str = "") -> tuple[str, bool]:
+    """Poprawia nazwę miejscowości zniekształconą przez OCR. Zwraca (nazwa, pewna).
+
+    1. Nazwa jest w SIMC → bez zmian.
+    2. Ten sam kod pocztowy stoi w innym miejscu dokumentu przy nazwie z SIMC → ta nazwa (pewna).
+    3. Najbardziej podobna nazwa z województwa działki (domyślnie małopolskiego), tylko gdy wyraźnie
+       wygrywa z drugą → propozycja do sprawdzenia. Inaczej nazwa bez zmian.
+    """
+    oryginalne, wg_woj = _nazwy()
+    if not nazwa or nazwa.strip().lower() in oryginalne:
+        return nazwa, True
+    if kod_pocztowy:
+        znalezione = Counter()
+        for linia in tekst:
+            for m in re.finditer(re.escape(kod_pocztowy) + r"\s+([^\d,.;:()]+)", linia):
+                slowa = m.group(1).split()[:4]
+                for n in range(len(slowa), 0, -1):
+                    kandydat = " ".join(slowa[:n]).lower()
+                    if kandydat in oryginalne:
+                        # „Mszana” z linii „34-730 Mszana Doina” to urwana zła nazwa, nie potwierdzenie.
+                        if not nazwa.lower().startswith(kandydat):
+                            znalezione[kandydat] += 1
+                        break
+        if znalezione:
+            return oryginalne[znalezione.most_common(1)[0][0]], True
+    m = WZOR_IDENTYFIKATORA.search(preferowany_kod or "")
+    oceny = sorted(((SequenceMatcher(None, nazwa.lower(), n.lower()).ratio(), n)
+                    for n in wg_woj.get(m.group(1) if m else "12", ())), reverse=True)[:2]
+    # ponytail: progi dobrane na kilku przykładach (0,7 i przewaga 0,1) – korygować przy fałszywych trafieniach.
+    if oceny and oceny[0][0] >= 0.7 and (len(oceny) < 2 or oceny[0][0] - oceny[1][0] >= 0.1):
+        return oceny[0][1], False
+    return nazwa, False
 
 
 def jednostka_z_kodu(woj: str, pow: str, gmi: str) -> Jednostka:
